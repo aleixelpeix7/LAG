@@ -117,7 +117,7 @@ OneCompiler Link: https://onecompiler.com/html/43rjjm8te
       iframe.contentWindow.document.addEventListener('touchstart', showAdOnClick);
     }).catch((err) => {
       console.error('Error:', err);
-      alert('Oyun yüklenemedi.');
+      alert("No s'ha pogut carregar el joc.");
     });
   }
 
@@ -132,11 +132,11 @@ OneCompiler Link: https://onecompiler.com/html/43rjjm8te
         newWindow.document.addEventListener('pointerdown', showAdOnClick);
         newWindow.document.addEventListener('touchstart', showAdOnClick);
       } else {
-        alert('Tam ekran açılamadı.');
+        alert('Error en el mode de pantalla completa.');
       }
     }).catch((err) => {
       console.error('Error:', err);
-      alert('Tam ekran yüklenemedi.');
+      alert("No s'ha pogut carregar la pantalla completa.");
     });
   }
 </script></body></html>
