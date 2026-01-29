@@ -117,7 +117,8 @@ OneCompiler Link: https://onecompiler.com/html/43rjjm8te
       iframe.contentWindow.document.addEventListener('touchstart', showAdOnClick);
     }).catch((err) => {
       console.error('Error:', err);
-      alert("No s'ha pogut carregar el joc.");
+      console.warn("No s'ha pogut carregar des de la cache, carregant directament...");
+
     });
   }
 
