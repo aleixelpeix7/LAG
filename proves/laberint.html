@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Laberint per Nivells | LAG</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <style>
+    :root{
+      --bg:#002244;
+      --accent:#FFDF20;
+      --muted:rgba(255,255,255,0.08);
+      --wall:#0b3d91;
+      --floor:#081728;
+      --player:#FFBF69;
+      --goal:#7CCF35;
+      --canvas-size:520px; /* mida fixa del canvas */
+      --grid-size:23; /* nombre de cel·les per costat (imparell recomanat) */
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      background:var(--bg);
+      color:#FAFAF9;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+      padding:18px;
+    }
+
+    /* Enllaç "Inici" absolut com a l'exemple */
+    .enllac-inici {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      font-size: 20px;
+      color: #E7180B;
+      text-decoration: underline;
+      font-weight: bold;
+      z-index: 1200;
+    }
+    .enllac-inici:hover { color:#FB2C36; }
+
+    /* Barra superior centrada com al teu estil però amb logo i links */
+    nav{
+      width:100%;
+      max-width:980px;
+      background:rgba(0,0,0,0.7);
+      padding:14px 18px;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      position:relative;
+      z-index:1100;
+    }
+    nav ul{list-style:none;display:flex;gap:18px;align-items:center;margin:0;padding:0}
+    nav li.logo img{height:56px}
+    nav a{color:#fff;text-decoration:none;font-weight:700}
+    nav a:hover{color:#ffff66}
+
+    /* Layout central */
+    main{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:980px;position:relative}
+    .meta{display:flex;gap:10px;align-items:center}
+
+    /* Canvas mida fixa */
+    #gameWrap{position:relative;width:var(--canvas-size);height:var(--canvas-size)}
+    canvas{width:var(--canvas-size);height:var(--canvas-size);display:block;background:var(--floor);border-radius:8px;border:2px solid rgba(255,255,255,0.03)}
+    /* Botons sobre canvas */
+    .canvas-button{
+      position:absolute;background:var(--accent);color:#0b2218;border:0;padding:8px 12px;border-radius:8px;font-weight:800;cursor:pointer;z-index:30;box-shadow:0 10px 24px rgba(0,0,0,0.5)
+    }
+    #startButton{left:50%;top:50%;transform:translate(-50%,-50%)}
+    #nextLevelBtn{left:50%;top:50%;transform:translate(-50%,-50%);display:none}
+    #pauseBtn{right:12px;top:12px;transform:none;background:transparent;color:var(--accent);border:1px solid var(--muted);padding:6px 8px}
+    #solveBtn{left:12px;top:12px;transform:none;background:transparent;color:var(--accent);border:1px solid var(--muted);padding:6px 8px}
+
+    /* HUD (nivell, temps, passos) */
+    .hud{
+      position:absolute;left:12px;bottom:12px;padding:8px 10px;background:rgba(0,0,0,0.45);border-radius:8px;color:#dff6c5;font-weight:700;z-index:20;font-size:13px;
+      display:flex;gap:12px;align-items:center;
+    }
+
+    /* Responsive */
+    @media (max-width:560px){
+      :root{--canvas-size:92vw}
+      nav{padding:10px;border-radius:8px}
+      canvas{border-radius:6px}
+      .canvas-button{padding:8px 10px}
+      #pauseBtn,#solveBtn{display:block}
+    }
+  </style>
+</head>
+<body>
+
+  <a class="enllac-inici" href="index.html">Inici</a>
+
+  <nav>
+    <ul style="align-items:center">
+      <li class="logo"><a href="index.html"><img src="assets/logo.png" alt="Logo LAG"></a></li>
+    </ul>
+    <ul style="align-items:center">
+      <li><a href="https://lagg.netlify.app/contacte">Contactar</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="meta" style="align-items:center">
+      <div style="color:#cfeea6;font-weight:800">Laberint per Nivells</div>
+      <div style="color:rgba(255,255,255,0.65)">Mida: <strong id="gridLabel"></strong>×<strong id="gridLabel2"></strong></div>
+      <div style="color:rgba(255,255,255,0.65)">Nivell: <strong id="levelLabel">1</strong></div>
+    </div>
+
+    <div id="gameWrap" aria-live="polite">
+      <canvas id="mazeCanvas" width="700" height="700" aria-label="Laberint"></canvas>
+
+      <button id="startButton" class="canvas-button" aria-label="Començar">▶️ Començar</button>
+      <button id="nextLevelBtn" class="canvas-button" aria-label="Següent nivell">➡️ Següent nivell</button>
+      <button id="pauseBtn" class="canvas-button" aria-label="Pausa" style="display:none">⏸</button>
+      <button id="solveBtn" class="canvas-button" aria-label="Mostra camí" style="display:none">🧭 Mostra camí</button>
+
+      <div class="hud" id="hud">
+        <div>Temps: <span id="time">0.0s</span></div>
+        <div>Passos: <span id="steps">0</span></div>
+      </div>
+    </div>
+  </main>
+
+<script>
+/* Laberint per nivells (mateixa mida) + nav com enllaç Inici absolut */
+(() => {
+  const canvas = document.getElementById('mazeCanvas');
+  const ctx = canvas.getContext('2d');
+  const startButton = document.getElementById('startButton');
+  const nextLevelBtn = document.getElementById('nextLevelBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const solveBtn = document.getElementById('solveBtn');
+  const timeEl = document.getElementById('time');
+  const stepsEl = document.getElementById('steps');
+  const levelLabel = document.getElementById('levelLabel');
+  const gridLabel = document.getElementById('gridLabel');
+  const gridLabel2 = document.getElementById('gridLabel2');
+
+  const GRID = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--grid-size')) || 23;
+  const CANVAS_PX = 700;
+  canvas.width = CANVAS_PX;
+  canvas.height = CANVAS_PX;
+
+  let cols = GRID, rows = GRID;
+  gridLabel.textContent = cols;
+  gridLabel2.textContent = rows;
+
+  let maze = [];
+  let player = {x:0,y:0};
+  let goal = {x:cols-1,y:rows-1};
+  let steps = 0;
+  let running = false;
+  let startTime = 0;
+  let timerRAF = null;
+  let solvingPath = null;
+
+  let level = 1;
+  const baseMinPath = Math.floor((cols + rows) / 3);
+  const perLevelIncrease = Math.floor((cols + rows) / 12);
+
+  function generateMaze(w,h){
+    const grid = [];
+    for(let y=0;y<h;y++){
+      grid[y]=[];
+      for(let x=0;x<w;x++){
+        grid[y][x] = {x,y,visited:false,walls:[true,true,true,true]};
+      }
+    }
+    const stack=[];
+    const start=grid[0][0];
+    start.visited=true;
+    stack.push(start);
+    const dirs=[
+      {dx:0,dy:-1,wall:0,opp:2},
+      {dx:1,dy:0,wall:1,opp:3},
+      {dx:0,dy:1,wall:2,opp:0},
+      {dx:-1,dy:0,wall:3,opp:1},
+    ];
+    while(stack.length){
+      const cur = stack[stack.length-1];
+      const n = [];
+      for(const d of dirs){
+        const nx=cur.x+d.dx, ny=cur.y+d.dy;
+        if(nx>=0&&nx<w&&ny>=0&&ny<h && !grid[ny][nx].visited) n.push({d,nx,ny});
+      }
+      if(n.length){
+        const pick = n[Math.floor(Math.random()*n.length)];
+        const nxt = grid[pick.ny][pick.nx];
+        cur.walls[pick.d.wall] = false;
+        nxt.walls[pick.d.opp] = false;
+        nxt.visited = true;
+        stack.push(nxt);
+      } else stack.pop();
+    }
+    grid[0][0].walls[3]=false;
+    grid[h-1][w-1].walls[1]=false;
+    return grid;
+  }
+
+  function shortestPathLength(m, start, goal){
+    const h = m.length, w = m[0].length;
+    const q = [];
+    const visited = Array(h).fill(0).map(()=>Array(w).fill(false));
+    q.push({x:start.x,y:start.y,d:0});
+    visited[start.y][start.x]=true;
+    while(q.length){
+      const cur = q.shift();
+      if(cur.x===goal.x && cur.y===goal.y) return cur.d;
+      const dirs = [
+        {dir:'up',dx:0,dy:-1, check:()=> !m[cur.y][cur.x].walls[0]},
+        {dir:'right',dx:1,dy:0, check:()=> !m[cur.y][cur.x].walls[1]},
+        {dir:'down',dx:0,dy:1, check:()=> !m[cur.y][cur.x].walls[2]},
+        {dir:'left',dx:-1,dy:0, check:()=> !m[cur.y][cur.x].walls[3]},
+      ];
+      for(const d of dirs){
+        if(!d.check()) continue;
+        const nx = cur.x + d.dx, ny = cur.y + d.dy;
+        if(nx<0||ny<0||nx>=w||ny>=h) continue;
+        if(!visited[ny][nx]){
+          visited[ny][nx]=true;
+          q.push({x:nx,y:ny,d:cur.d+1});
+        }
+      }
+    }
+    return Infinity;
+  }
+
+  function generateValidMaze(minLen){
+    const maxAttempts = 120;
+    let last = null;
+    for(let i=0;i<maxAttempts;i++){
+      const m = generateMaze(cols,rows);
+      last = m;
+      const len = shortestPathLength(m, {x:0,y:0}, {x:cols-1,y:rows-1});
+      if(len >= minLen) return m;
+    }
+    return last;
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const cs = canvas.width / cols;
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--floor') || '#081728';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--wall') || '#0b3d91';
+    ctx.lineWidth = Math.max(1, cs/12);
+    ctx.lineCap = 'square';
+    for(let y=0;y<rows;y++){
+      for(let x=0;x<cols;x++){
+        const cell = maze[y][x];
+        const px = x*cs, py = y*cs;
+        ctx.beginPath();
+        if(cell.walls[0]){ ctx.moveTo(px,py); ctx.lineTo(px+cs,py); }
+        if(cell.walls[1]){ ctx.moveTo(px+cs,py); ctx.lineTo(px+cs,py+cs); }
+        if(cell.walls[2]){ ctx.moveTo(px+cs,py+cs); ctx.lineTo(px,py+cs); }
+        if(cell.walls[3]){ ctx.moveTo(px,py+cs); ctx.lineTo(px,py); }
+        ctx.stroke();
+      }
+    }
+
+    if(solvingPath){
+      ctx.fillStyle = 'rgba(124,207,53,0.12)';
+      for(const p of solvingPath){
+        ctx.fillRect(p.x*cs+1, p.y*cs+1, cs-2, cs-2);
+      }
+    }
+
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--goal') || '#7CCF35';
+    ctx.beginPath();
+    ctx.arc(goal.x*cs + cs/2, goal.y*cs + cs/2, cs*0.32, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--player') || '#FFBF69';
+    ctx.beginPath();
+    ctx.arc(player.x*cs + cs/2, player.y*cs + cs/2, cs*0.28, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function canMoveFrom(x,y,dir){
+    const cell = maze[y][x];
+    if(dir==='up') return !cell.walls[0];
+    if(dir==='right') return !cell.walls[1];
+    if(dir==='down') return !cell.walls[2];
+    if(dir==='left') return !cell.walls[3];
+    return false;
+  }
+
+  function tryMove(dir){
+    if(!running) return false;
+    if(!canMoveFrom(player.x,player.y,dir)) return false;
+    let nx = player.x, ny = player.y;
+    if(dir==='up') ny--;
+    if(dir==='down') ny++;
+    if(dir==='left') nx--;
+    if(dir==='right') nx++;
+    if(nx<0||ny<0||nx>=cols||ny>=rows) return false;
+    player.x = nx; player.y = ny;
+    steps++;
+    updateHUD();
+    draw();
+    checkWin();
+    return true;
+  }
+
+  function checkWin(){
+    if(player.x===goal.x && player.y===goal.y){
+      running = false;
+      startButton.style.display = 'none';
+      nextLevelBtn.style.display = 'block';
+      pauseBtn.style.display = 'none';
+      solveBtn.style.display = 'none';
+      setTimeout(()=> alert(`Has guanyat el nivell ${level}! Temps: ${((performance.now()-startTime)/1000).toFixed(2)}s  Passos: ${steps}`), 80);
+    }
+  }
+
+  function findPath(start, goal){
+    const q = [];
+    const visited = Array(rows).fill(0).map(()=>Array(cols).fill(false));
+    const parent = Array(rows).fill(0).map(()=>Array(cols).fill(null));
+    q.push({x:start.x,y:start.y});
+    visited[start.y][start.x] = true;
+    while(q.length){
+      const cur = q.shift();
+      if(cur.x===goal.x && cur.y===goal.y){
+        const path = [];
+        let p = cur;
+        while(p){
+          path.push({x:p.x,y:p.y});
+          p = parent[p.y][p.x];
+        }
+        return path.reverse();
+      }
+      const dirs = [
+        {dir:'up',dx:0,dy:-1},
+        {dir:'right',dx:1,dy:0},
+        {dir:'down',dx:0,dy:1},
+        {dir:'left',dx:-1,dy:0},
+      ];
+      for(const d of dirs){
+        if(!canMoveFrom(cur.x,cur.y,d.dir)) continue;
+        const nx = cur.x + d.dx, ny = cur.y + d.dy;
+        if(nx<0||ny<0||nx>=cols||ny>=rows) continue;
+        if(!visited[ny][nx]){
+          visited[ny][nx] = true;
+          parent[ny][nx] = cur;
+          q.push({x:nx,y:ny});
+        }
+      }
+    }
+    return null;
+  }
+
+  function solveMaze(){
+    solvingPath = findPath(player, goal);
+    draw();
+  }
+
+  let lastMove = 0;
+  window.addEventListener('keydown', (e)=>{
+    if(!running) return;
+    const now = performance.now();
+    if(now - lastMove < 60) return;
+    const k = e.key.toLowerCase();
+    let moved = false;
+    if(k==='arrowup'||k==='w') moved = tryMove('up');
+    if(k==='arrowdown'||k==='s') moved = tryMove('down');
+    if(k==='arrowleft'||k==='a') moved = tryMove('left');
+    if(k==='arrowright'||k==='d') moved = tryMove('right');
+    if(moved) lastMove = now;
+  });
+
+  startButton.addEventListener('click', ()=>{
+    running = true;
+    startTime = performance.now();
+    startButton.style.display = 'none';
+    pauseBtn.style.display = 'block';
+    solveBtn.style.display = 'block';
+    updateHUD();
+  });
+  pauseBtn.addEventListener('click', ()=>{
+    running = !running;
+    pauseBtn.textContent = running ? '⏸' : '⏯';
+  });
+  solveBtn.addEventListener('click', ()=> { solveMaze(); });
+
+  nextLevelBtn.addEventListener('click', ()=>{
+    level++;
+    levelLabel.textContent = level;
+    nextLevelBtn.style.display = 'none';
+    startLevel(level);
+  });
+
+  function updateHUD(){
+    stepsEl.textContent = steps;
+    timeEl.textContent = ((performance.now()-startTime)/1000).toFixed(1) + 's';
+  }
+
+  function startLevel(n){
+    const minLen = baseMinPath + (n-1) * perLevelIncrease;
+    startButton.style.display = 'block';
+    startButton.textContent = 'Generant...';
+    startButton.disabled = true;
+    setTimeout(()=>{
+      maze = generateValidMaze(minLen);
+      player = {x:0,y:0};
+      goal = {x:cols-1,y:rows-1};
+      steps = 0;
+      startTime = performance.now();
+      running = false;
+      solvingPath = null;
+      updateHUD();
+      draw();
+      startButton.textContent = '▶️ Començar';
+      startButton.disabled = false;
+      pauseBtn.style.display = 'none';
+      solveBtn.style.display = 'none';
+    }, 20);
+  }
+
+  function generateValidMaze(minPathLen){
+    const maxAttempts = 120;
+    let last = null;
+    for(let i=0;i<maxAttempts;i++){
+      const m = generateMaze(cols,rows);
+      last = m;
+      const len = shortestPathLength(m, {x:0,y:0}, {x:cols-1,y:rows-1});
+      if(len >= minPathLen) return m;
+    }
+    return last;
+  }
+
+  function boot(){
+    level = 1;
+    levelLabel.textContent = level;
+    gridLabel.textContent = cols;
+    gridLabel2.textContent = rows;
+    startLevel(level);
+    function tick(){
+      if(running) updateHUD();
+      timerRAF = requestAnimationFrame(tick);
+    }
+    timerRAF = requestAnimationFrame(tick);
+  }
+
+  window.__lab = {regen:()=> startLevel(level), next: ()=> { level++; startLevel(level);}};
+
+  boot();
+})();
+</script>
+</body>
+</html>
