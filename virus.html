@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>Hacker Virus Loader</title>
+    <style>
+        body {
+            background: #000;
+            color: #00ff00;
+            font-family: "Courier New", monospace;
+            font-size: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #terminal {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            width: 600px;
+            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 20px #00ff00;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .dots::after {
+            content: "";
+            animation: dots 1s infinite steps(4);
+        }
+
+        @keyframes dots {
+            0% { content: ""; }
+            25% { content: "."; }
+            50% { content: ".."; }
+            75% { content: "..."; }
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #000;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            cursor: pointer;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #003300;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal">
+        <p id="line1">Descarregant virus<span class="dots"></span></p>
+        <p id="line2" class="hidden">Executant virus<span class="dots"></span></p>
+        <p id="line3" class="hidden">Tasca finalitzada.</p>
+        <button id="openVirusBtn" class="hidden">Obrir virus.bat</button>
+    </div>
+
+    <script>
+        const line1 = document.getElementById("line1");
+        const line2 = document.getElementById("line2");
+        const line3 = document.getElementById("line3");
+        const openVirusBtn = document.getElementById("openVirusBtn");
+
+        setTimeout(() => {
+            line2.classList.remove("hidden");
+        }, 3000);
+
+        setTimeout(() => {
+            line3.classList.remove("hidden");
+            openVirusBtn.classList.remove("hidden");
+        }, 6000);
+
+        openVirusBtn.addEventListener("click", () => {
+            window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
+        });
+    </script>
+</body>
+</html>
