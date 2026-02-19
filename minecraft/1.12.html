@@ -29,31 +29,77 @@ OneCompiler Link: https://onecompiler.com/html/43rjjm8te
 
 -->
 
+
 <head>
   <meta charset="UTF-8" />
   <title>Minecraft 1.12 | LAG</title>
   <link rel="icon" href="assets/favicon_minecraft.png" type="image/png" />
+
+  <!-- Font Minecraftia -->
+  <style>
+    @font-face {
+      font-family: "Minecraftia";
+      src: url("assets/Minecraftia.woff") format("woff");
+    }
+  </style>
 </head>
 
-<html><head><base target="_blank"><script id="gamemonetize-sdk">Couldn't find the requested file /sedk.js in testamalame/sef.</script></head><body><div id="container">
+<body>
+<div id="container">
   <iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen=""></iframe>
+
+  <!-- Botó centrat i translúcid -->
   <button class="play-button" type="button" onclick="PlayTo(this)">JUGAR</button>
+
   <p id="unblocked-text">G+</p>
 </div>
 
 <style>
-  .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; }
-  .play-button:hover { background: #002244; }
-  .fullscreen-button { padding: 10px 15px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 14px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; }
-  .fullscreen-button:hover { background: #4a148c; }
-  body, html { margin: 0; padding: 0; overflow: hidden; height: 100%;}
+  body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+    background-image: url("assets/dirt_background.png");
+    background-repeat: repeat;
+    background-size: 128px 128px;
+  }
+
+  /* Botó estil Minecraft */
+  .play-button {
+    padding: 25px 60px;
+    background: rgba(0, 0, 0, 0.35); /* translúcid */
+    border: 4px solid #3c2a1e;
+    border-radius: 8px;
+    color: #fff;
+    font-family: "Minecraftia", Arial, sans-serif;
+    font-size: 36px;
+    text-shadow: 4px 4px #000;
+    cursor: pointer;
+
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    z-index: 1001;
+    transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
+  }
+
+  .play-button:hover {
+    background: rgba(0, 0, 0, 0.55);
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+
+  .play-button:active {
+    transform: translate(-50%, -50%) scale(0.97);
+  }
 </style>
 
 <script>
-
   const DB_NAME = 'GameCacheDB';
   const STORE_NAME = 'GameFiles';
-  const CACHE_DURATION = 90 * 24 * 60 * 60 * 1000; // 3 ay
+  const CACHE_DURATION = 90 * 24 * 60 * 60 * 1000;
   const FILE_URL = 'https://cdn.jsdelivr.net/gh/PlanetDogeCodes/Eagletcraft-1.12@main/source%20file/egc1-12.xml';
   const SDK_URL = 'https://cdn.jsdelivr.net/gh/testamalame/sef@main/sedk.js';
 
@@ -105,8 +151,6 @@ OneCompiler Link: https://onecompiler.com/html/43rjjm8te
     });
   }
 
-
-
   function PlayTo(button) {
     const iframe = document.getElementById("fr");
     getFileFromCache(FILE_URL).then((text) => {
@@ -121,7 +165,6 @@ OneCompiler Link: https://onecompiler.com/html/43rjjm8te
     }).catch((err) => {
       console.error('Error:', err);
       console.warn("No s'ha pogut carregar des de la cache, carregant directament...");
-
     });
   }
 
@@ -143,4 +186,5 @@ OneCompiler Link: https://onecompiler.com/html/43rjjm8te
       alert("No s'ha pogut carregar la pantalla completa.");
     });
   }
-</script></body></html>
+</script>
+</body>
