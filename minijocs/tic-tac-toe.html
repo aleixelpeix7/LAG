@@ -94,12 +94,15 @@
     /* GAME AREA */
     #gameArea{display:none;width:100%;flex-direction:column;align-items:center;gap:10px}
     #status{font-weight:700;color:var(--gold)}
+
+    /* ---------- IMPORTANT: grid fixes to prevent row resizing ---------- */
     .board{
       width:100%;
       max-width:360px;
       aspect-ratio:1/1;
       display:grid;
       grid-template-columns:repeat(3,1fr);
+      grid-auto-rows: 1fr; /* each row has equal height and won't expand with content */
       gap:6px;
       padding:8px;
       background:#111;border-radius:8px;border:2px solid rgba(255,255,255,0.03);
@@ -110,6 +113,11 @@
       display:flex;align-items:center;justify-content:center;
       font-size:48px;font-weight:900;color:var(--gold);cursor:pointer;user-select:none;
       transition:transform .08s, background .12s;
+      min-height:0; /* prevents content from forcing row expansion */
+      min-width:0;  /* prevents overflow horizontally */
+      line-height:1; /* avoids extra vertical spacing from font leading */
+      padding:0;     /* ensure padding doesn't change cell size */
+      overflow:hidden; /* keep content contained */
     }
     .cell:hover{transform:scale(1.03);background:#002b55}
     .cell.disabled{cursor:default;opacity:0.75}
@@ -293,10 +301,8 @@
       resetAll();
       menu.style.display = 'none';
       gameArea.style.display = 'flex';
-      // if bot and bot plays first (we'll let X always start)
       updateStatus();
       if(vsBot && currentPlayer==='O' && difficulty){
-        // not used since X starts; kept for extensibility
         setTimeout(botTurn, 300);
       }
     });
@@ -394,17 +400,16 @@
         // move piece
         board[idx] = currentPlayer;
         board[selectedPiece] = null;
-        cells[idx].textContent = currentPlayer;
-        cells[idx].classList.add('disabled');
-        cells[selectedPiece].textContent = '';
+        cells[selectedPiece].textContent = "";
         cells[selectedPiece].classList.remove('disabled');
         cells[selectedPiece].style.background = '';
+        cells[idx].textContent = currentPlayer;
+        cells[idx].classList.add('disabled');
         selectedPiece = null;
 
         const winner = checkWinner();
         if(winner){ finishGame(winner); return; }
 
-        // switch
         currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
         updateStatus();
 
@@ -557,18 +562,6 @@
         }
       }
 
-      // block opponent potential win by moving
-      for(const from of myPieces){
-        for(const to of empties){
-          const copy = board.slice();
-          copy[from] = null; copy[to] = 'O';
-          if(checkWinnerForBoard(copy,'X')){
-            // this move would allow X to win next; skip it
-            continue;
-          }
-        }
-      }
-
       // otherwise pick random move
       const from = myPieces[Math.floor(Math.random()*myPieces.length)];
       const to = empties[Math.floor(Math.random()*empties.length)];
@@ -657,5 +650,6 @@
   </script>
 </body>
 </html>
+
 
 
