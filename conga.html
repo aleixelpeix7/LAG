@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <title>La Conga dels Bitxos Raros</title>
+    <style>
+        body {
+            background-color: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #conga-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .bitxo {
+            font-size: 80px;
+            animation: conga-move 0.6s infinite alternate ease-in-out;
+            user-select: none;
+        }
+
+        /* L'efecte de ball de la web matias.me */
+        @keyframes conga-move {
+            0% { transform: translateY(0) rotate(-10deg) scale(1); }
+            100% { transform: translateY(-30px) rotate(10deg) scale(1.2); }
+        }
+
+        /* Cada bitxo té un petit retard per fer l'efecte de "onada" */
+        .bitxo:nth-child(2n) { animation-delay: 0.1s; }
+        .bitxo:nth-child(3n) { animation-delay: 0.2s; }
+        .bitxo:nth-child(4n) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <div id="conga-container">
+        <!-- Els bitxos apareixeran aquí -->
+    </div>
+
+    <script>
+        const container = document.getElementById('conga-container');
+        const emojis = ['🦜', '👽', '👾', '🤡', '🍄', '🐱‍👤'];
+
+        function afegirBitxo() {
+            const span = document.createElement('span');
+            span.className = 'bitxo';
+            // Tria un bitxo aleatori de la llista
+            span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            container.appendChild(span);
+        }
+
+        // Comencem amb 5 bitxos i n'afegim un cada segon fins a 15
+        for(let i=0; i<6; i++) afegirBitxo();
+        
+        const interval = setInterval(() => {
+            if (container.children.length < 15) {
+                afegirBitxo();
+            } else {
+                clearInterval(interval);
+            }
+        }, 800);
+    </script>
+</body>
+</html>
