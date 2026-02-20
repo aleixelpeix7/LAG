@@ -28,60 +28,63 @@
       padding:18px;
     }
 
-    /* NAV (igual que al projecte) */
+    /* NAV (copiat i adaptat de serp.html per ser idèntica) */
     nav {
-    background-color: rgba(0, 0, 0, 0.7);
-    position: sticky;
-    top: 0;
-    width: 100%;
-    z-index: 100;
-    padding: 1rem 2rem;
-  }
+      background-color: rgba(0, 0, 0, 0.7);
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      padding: 1rem 2rem;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav li.logo {
+      display: flex;
+      align-items: center;
+    }
+    nav li.logo a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    nav li.logo img {
+      height: 60px;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    nav li.enllacos {
+      display: flex;
+      gap: 2rem;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+    nav a:hover {
+      color: #ffff66;
+    }
+    .enllac-inici {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 20px;
+      color: #FF2056;
+      text-decoration: underline;
+      font-weight: bold;
+      z-index: 1000;
+    }
+    .enllac-inici:hover {
+      color: #FF637E;
+    }
 
-  nav ul {
-    list-style: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  nav li.logo {
-    display: flex;
-    align-items: center;
-  }
-
-  nav li.logo a {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-  }
-
-  nav li.logo img {
-    height: 60px;
-    margin-right: 0.5rem;
-    vertical-align: middle;
-  }
-
-  nav li.enllacos {
-    display: flex;
-    gap: 2rem;
-  }
-
-  nav a {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    transition: color 0.3s;
-  }
-
-  nav a:hover {
-    color: #ffff66;
-  }
-
-     h1{ margin:0; font-size:20px; }
-    #gameWrap {
-      position:relative;
-      width:var(--wrap-w);
+    h1{font-size:20px;margin-top:6px}
 
     /* CONTAINER (requadre estil serp) */
     .outer-frame{
@@ -110,19 +113,6 @@
       padding:8px 10px;border-radius:8px;color:#fff;font-weight:600;cursor:pointer;
     }
     .option.selected{outline:2px solid var(--accent);transform:translateY(-2px)}
-
-    /* toggle switch */
-    .toggle{
-      width:56px;height:30px;background:#123;border-radius:20px;position:relative;cursor:pointer;
-      display:inline-block;border:1px solid rgba(255,255,255,0.04)
-    }
-    .toggle .knob{
-      position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;
-      background:var(--gold);transition:all .18s ease;
-      box-shadow:0 2px 6px rgba(0,0,0,0.4)
-    }
-    .toggle.on{background:rgba(255,255,255,0.06)}
-    .toggle.on .knob{left:29px;background:var(--gold)}
 
     /* difficulty select */
     .difficulty{display:flex;gap:8px}
@@ -188,7 +178,9 @@
   <nav>
     <ul>
       <li class="logo">
-        <a href="https://lagg.netlify.app"><img src="assets/logo.png" alt="Logo GLS" /></a>
+        <a href="https://lagg.netlify.app">
+          <img src="assets/logo.png" alt="Logo GLS" />
+        </a>
       </li>
       <li class="enllacos">
         <a href="https://lagg.netlify.app">Inici</a>
@@ -197,6 +189,8 @@
         <a href="https://lagg.netlify.app/contacte">Contactar</a>
       </li>
     </ul>
+    <!-- Link igual que a serp.html (posició absoluta) -->
+    <a class="enllac-inici" href="https://lagg.netlify.app">Inici</a>
   </nav>
 
   <h1>⭕ 3 en ratlla ❌</h1>
@@ -691,6 +685,7 @@
   </script>
 </body>
 </html>
+
 
 
 
