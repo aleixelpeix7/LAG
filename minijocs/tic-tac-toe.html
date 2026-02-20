@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>3 en ratlla | LAG</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #002244;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #FAFAF9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    nav {
+      background-color: rgba(0, 0, 0, 0.7);
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      padding: 1rem 2rem;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav li.logo {
+      display: flex;
+      align-items: center;
+    }
+    nav li.logo a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    nav li.logo img {
+      height: 60px;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    nav li.enllacos {
+      display: flex;
+      gap: 2rem;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+    nav a:hover {
+      color: #ffff66;
+    }
+
+    :root {
+      --wrap-w: 400px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    #gameWrap {
+      position: relative;
+      width: var(--wrap-w);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    #status {
+      margin-top: 8px;
+      font-size: 16px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 4px;
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 1 / 1;
+      background: #222;
+      border: 2px solid #555;
+      padding: 6px;
+      border-radius: 4px;
+    }
+
+    .cell {
+      background: #00152e;
+      border: 1px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: bold;
+      color: #FFDF20;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      user-select: none;
+    }
+
+    .cell:hover {
+      background: #002b55;
+      transform: scale(1.02);
+    }
+
+    .cell.disabled {
+      cursor: default;
+      opacity: 0.7;
+      transform: none;
+    }
+
+    .cell.win {
+      background: #0b6623;
+      color: #ffffff;
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: #FFDF20;
+      color: #FB2C36;
+      border: 1px solid #888;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      user-select: none;
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li class="logo">
+        <a href="https://lagg.netlify.app">
+          <img src="assets/logo.png" alt="Logo GLS" />
+        </a>
+      </li>
+      <li class="enllacos">
+        <a href="https://lagg.netlify.app">Inici</a>
+        <a href="https://lagg.netlify.app/minijocs/">Minijocs</a>
+        <a href="https://lagg.netlify.app/minecraft/">Minecraft</a>
+        <a href="https://lagg.netlify.app/contacte">Contactar</a>
+      </li>
+    </ul>
+  </nav>
+
+  <h1>⭕ 3 en ratlla ❌</h1>
+
+  <div id="gameWrap">
+    <div id="status">Torn del jugador: <strong>X</strong></div>
+
+    <div class="board" id="board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="resetBtn">🔁 Reiniciar</button>
+    </div>
+  </div>
+
+  <script>
+    const boardEl = document.getElementById('board');
+    const cells = Array.from(boardEl.querySelectorAll('.cell'));
+    const statusEl = document.getElementById('status');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let currentPlayer = 'X';
+    let board = Array(9).fill(null);
+    let gameOver = false;
+
+    const winningCombos = [
+      [0,1,2],
+      [3,4,5],
+      [6,7,8],
+      [0,3,6],
+      [1,4,7],
+      [2,5,8],
+      [0,4,8],
+      [2,4,6]
+    ];
+
+    function setStatus(text) {
+      statusEl.innerHTML = text;
+    }
+
+    function handleCellClick(e) {
+      const cell = e.target;
+      const index = parseInt(cell.getAttribute('data-index'), 10);
+
+      if (gameOver || board[index] !== null) return;
+
+      board[index] = currentPlayer;
+      cell.textContent = currentPlayer;
+      cell.classList.add('disabled');
+
+      const winnerInfo = checkWinner();
+      if (winnerInfo) {
+        gameOver = true;
+        highlightWin(winnerInfo.combo);
+        setStatus(`🎉 Ha guanyat el jugador: <strong>${winnerInfo.player}</strong>`);
+        disableAll();
+        return;
+      }
+
+      if (board.every(v => v !== null)) {
+        gameOver = true;
+        setStatus('🤝 Empat!');
+        disableAll();
+        return;
+      }
+
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      setStatus(`Torn del jugador: <strong>${currentPlayer}</strong>`);
+    }
+
+    function checkWinner() {
+      for (const combo of winningCombos) {
+        const [a,b,c] = combo;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return { player: board[a], combo };
+        }
+      }
+      return null;
+    }
+
+    function highlightWin(combo) {
+      combo.forEach(i => {
+        cells[i].classList.add('win');
+      });
+    }
+
+    function disableAll() {
+      cells.forEach(c => c.classList.add('disabled'));
+    }
+
+    function resetGame() {
+      board = Array(9).fill(null);
+      currentPlayer = 'X';
+      gameOver = false;
+      cells.forEach(c => {
+        c.textContent = '';
+        c.classList.remove('disabled', 'win');
+      });
+      setStatus('Torn del jugador: <strong>X</strong>');
+    }
+
+    cells.forEach(cell => {
+      cell.addEventListener('click', handleCellClick);
+    });
+
+    resetBtn.addEventListener('click', resetGame);
+  </script>
+</body>
+</html>
