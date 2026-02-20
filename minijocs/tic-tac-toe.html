@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>3 en ratlla | LAG</title>
   <link rel="icon" href="assets/favicon.png" type="image/png" />
+
   <style>
+    /* ------------------ ESTILS GLOBALS ------------------ */
     body {
       margin: 0;
       padding: 0;
@@ -22,6 +24,8 @@
       padding: 0;
       box-sizing: border-box;
     }
+
+    /* ------------------ NAV ------------------ */
     nav {
       background-color: rgba(0, 0, 0, 0.7);
       position: sticky;
@@ -40,15 +44,9 @@
       display: flex;
       align-items: center;
     }
-    nav li.logo a {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-    }
     nav li.logo img {
       height: 60px;
       margin-right: 0.5rem;
-      vertical-align: middle;
     }
     nav li.enllacos {
       display: flex;
@@ -64,15 +62,26 @@
       color: #ffff66;
     }
 
-    :root {
-      --wrap-w: 400px;
+    /* ------------------ REQUADRE DEL JOC ------------------ */
+    #gameContainer {
+      margin-top: 20px;
+      background: #00152e;
+      border: 3px solid #0af;
+      border-radius: 10px;
+      padding: 20px;
+      width: 420px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 0 20px rgba(0,255,255,0.3);
     }
 
     h1 {
-      margin: 0;
-      font-size: 20px;
+      margin-top: 10px;
+      font-size: 24px;
     }
 
+    /* ------------------ MENÚ INICIAL ------------------ */
     #menu {
       margin-top: 20px;
       display: flex;
@@ -80,7 +89,6 @@
       gap: 12px;
       align-items: center;
     }
-
     .menu-btn {
       background: #FFDF20;
       color: #FB2C36;
@@ -91,40 +99,27 @@
       border-radius: 6px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
       font-weight: 600;
-      width: 220px;
+      width: 260px;
       text-align: center;
     }
-
     .menu-btn:hover {
       filter: brightness(1.05);
     }
 
-    #gameWrap {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      width: var(--wrap-w);
-      margin-top: 12px;
-    }
-
-    #status {
-      margin-top: 8px;
-      font-size: 16px;
-    }
-
+    /* ------------------ TAULER ------------------ */
     .board {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 4px;
       width: 100%;
-      max-width: 400px;
+      max-width: 360px;
       aspect-ratio: 1 / 1;
       background: #222;
       border: 2px solid #555;
       padding: 6px;
       border-radius: 4px;
+      margin-top: 10px;
     }
-
     .cell {
       background: #00152e;
       border: 1px solid #555;
@@ -138,31 +133,21 @@
       transition: background 0.2s, transform 0.1s;
       user-select: none;
     }
-
     .cell:hover {
       background: #002b55;
       transform: scale(1.02);
     }
-
     .cell.disabled {
       cursor: default;
       opacity: 0.7;
       transform: none;
     }
-
     .cell.win {
       background: #0b6623;
       color: #ffffff;
     }
 
-    .controls {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
+    /* ------------------ BOTONS ------------------ */
     .btn {
       background: #FFDF20;
       color: #FB2C36;
@@ -174,15 +159,45 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
       user-select: none;
       font-weight: 600;
+      margin-top: 10px;
     }
-
     .btn:hover {
       filter: brightness(1.05);
     }
+
+    /* ------------------ OVERLAY FINAL ------------------ */
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: white;
+      font-size: 28px;
+      z-index: 200;
+    }
+    #overlay button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 18px;
+      border-radius: 8px;
+      background: #FFDF20;
+      color: #FB2C36;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
   </style>
 </head>
+
 <body>
 
+  <!-- NAV -->
   <nav>
     <ul>
       <li class="logo">
@@ -205,10 +220,11 @@
   <div id="menu">
     <button class="menu-btn" onclick="startGame('friend')">👥 Contra un amic</button>
     <button class="menu-btn" onclick="startGame('bot')">🤖 Contra el bot</button>
+    <button class="menu-btn" onclick="startGame('three')">🔄 Mode 3 peces</button>
   </div>
 
   <!-- JOC -->
-  <div id="gameWrap">
+  <div id="gameContainer">
     <div id="status">Torn del jugador: <strong>X</strong></div>
 
     <div class="board" id="board">
@@ -223,22 +239,32 @@
       <div class="cell" data-index="8"></div>
     </div>
 
-    <div class="controls">
-      <button class="btn" onclick="resetGame()">🔁 Reiniciar</button>
-    </div>
+    <button class="btn" onclick="resetGame()">🔁 Reiniciar</button>
+  </div>
+
+  <!-- OVERLAY FINAL -->
+  <div id="overlay">
+    <div id="overlayText"></div>
+    <button onclick="returnToMenu()">Tornar al menú</button>
   </div>
 
   <script>
-    const boardEl = document.getElementById('board');
-    const cells = Array.from(boardEl.querySelectorAll('.cell'));
-    const statusEl = document.getElementById('status');
-    const menu = document.getElementById('menu');
-    const gameWrap = document.getElementById('gameWrap');
+    const boardEl = document.getElementById("board");
+    const cells = Array.from(boardEl.querySelectorAll(".cell"));
+    const statusEl = document.getElementById("status");
+    const menu = document.getElementById("menu");
+    const gameContainer = document.getElementById("gameContainer");
+    const overlay = document.getElementById("overlay");
+    const overlayText = document.getElementById("overlayText");
 
-    let mode = "friend"; 
-    let currentPlayer = 'X';
+    let mode = "friend";
+    let currentPlayer = "X";
     let board = Array(9).fill(null);
     let gameOver = false;
+
+    let placedX = 0;
+    let placedO = 0;
+    let selectedPiece = null;
 
     const winningCombos = [
       [0,1,2],[3,4,5],[6,7,8],
@@ -249,7 +275,8 @@
     function startGame(selectedMode) {
       mode = selectedMode;
       menu.style.display = "none";
-      gameWrap.style.display = "flex";
+      gameContainer.style.display = "flex";
+      resetGame();
     }
 
     function setStatus(text) {
@@ -257,14 +284,21 @@
     }
 
     function handleCellClick(e) {
-      const cell = e.target;
-      const index = parseInt(cell.getAttribute('data-index'));
+      if (gameOver) return;
 
-      if (gameOver || board[index] !== null) return;
+      const cell = e.target;
+      const index = parseInt(cell.getAttribute("data-index"));
+
+      if (mode === "three") {
+        handleThreePieceMode(index);
+        return;
+      }
+
+      if (board[index] !== null) return;
 
       board[index] = currentPlayer;
       cell.textContent = currentPlayer;
-      cell.classList.add('disabled');
+      cell.classList.add("disabled");
 
       const winner = checkWinner();
       if (winner) return endGame(winner);
@@ -272,7 +306,7 @@
 
       if (mode === "bot" && currentPlayer === "X") {
         currentPlayer = "O";
-        setStatus(`Torn del bot...`);
+        setStatus("Torn del bot...");
         setTimeout(botMove, 400);
       } else {
         currentPlayer = currentPlayer === "X" ? "O" : "X";
@@ -280,6 +314,53 @@
       }
     }
 
+    /* ------------------ MODE 3 PECES ------------------ */
+    function handleThreePieceMode(index) {
+      const cell = cells[index];
+
+      if (board[index] === currentPlayer) {
+        selectedPiece = index;
+        cell.style.background = "#004080";
+        return;
+      }
+
+      if (selectedPiece !== null) {
+        if (board[index] !== null) return;
+
+        board[index] = currentPlayer;
+        board[selectedPiece] = null;
+
+        cells[selectedPiece].textContent = "";
+        cells[selectedPiece].style.background = "";
+        cells[selectedPiece].classList.remove("disabled");
+
+        cell.textContent = currentPlayer;
+        cell.classList.add("disabled");
+
+        selectedPiece = null;
+
+      } else {
+        if (board[index] !== null) return;
+
+        if (currentPlayer === "X" && placedX < 3) {
+          placedX++;
+        } else if (currentPlayer === "O" && placedO < 3) {
+          placedO++;
+        } else return;
+
+        board[index] = currentPlayer;
+        cell.textContent = currentPlayer;
+        cell.classList.add("disabled");
+      }
+
+      const winner = checkWinner();
+      if (winner) return endGame(winner);
+
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      setStatus(`Torn del jugador: <strong>${currentPlayer}</strong>`);
+    }
+
+    /* ------------------ BOT ------------------ */
     function botMove() {
       if (gameOver) return;
 
@@ -293,7 +374,7 @@
       if (board.every(v => v !== null)) return endGame("draw");
 
       currentPlayer = "X";
-      setStatus(`Torn del jugador: <strong>X</strong>`);
+      setStatus("Torn del jugador: <strong>X</strong>");
     }
 
     function findWinningMove(player) {
@@ -312,6 +393,7 @@
       return free[Math.floor(Math.random() * free.length)];
     }
 
+    /* ------------------ FINAL ------------------ */
     function checkWinner() {
       for (const combo of winningCombos) {
         const [a,b,c] = combo;
@@ -325,23 +407,37 @@
 
     function endGame(result) {
       gameOver = true;
+      overlay.style.display = "flex";
+
       if (result === "draw") {
-        setStatus("🤝 Empat!");
+        overlayText.textContent = "🤝 Empat!";
       } else {
-        setStatus(`🎉 Ha guanyat: <strong>${result}</strong>`);
+        overlayText.textContent = `🎉 Ha guanyat: ${result}`;
       }
-      cells.forEach(c => c.classList.add("disabled"));
     }
 
+    function returnToMenu() {
+      overlay.style.display = "none";
+      gameContainer.style.display = "none";
+      menu.style.display = "flex";
+    }
+
+    /* ------------------ RESET ------------------ */
     function resetGame() {
       board = Array(9).fill(null);
       currentPlayer = "X";
       gameOver = false;
+      placedX = 0;
+      placedO = 0;
+      selectedPiece = null;
+
       cells.forEach(c => {
         c.textContent = "";
         c.classList.remove("disabled", "win");
+        c.style.background = "";
       });
-      setStatus(`Torn del jugador: <strong>X</strong>`);
+
+      setStatus("Torn del jugador: <strong>X</strong>");
     }
 
     cells.forEach(cell => cell.addEventListener("click", handleCellClick));
@@ -349,4 +445,5 @@
 
 </body>
 </html>
+
 
