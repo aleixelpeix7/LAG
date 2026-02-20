@@ -28,20 +28,27 @@
       padding:18px;
     }
 
-    /* NAV (copiat i adaptat de serp.html per ser idèntica) */
+    /* NAV (replicat per ser idèntic a serp.html) */
     nav {
       background-color: rgba(0, 0, 0, 0.7);
-      position: sticky;
-      top: 0;
+      /* No sticky: deixar espai i no enganxar als costats */
+      position: relative;
+      margin: 12px 0;               /* separació superior i inferior */
+      padding: 1rem 0;              /* padding vertical, horitzontal controlat per ul */
       width: 100%;
       z-index: 100;
-      padding: 1rem 2rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;     /* centra el contingut (ul) */
     }
+    /* el ul té l'amplada del wrap per coincidir amb la resta del layout */
     nav ul {
       list-style: none;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      width: var(--wrap-w);
+      padding: 0 1rem;
     }
     nav li.logo {
       display: flex;
@@ -70,15 +77,18 @@
     nav a:hover {
       color: #ffff66;
     }
+
+    /* Enllaç "Inici" vermell a l'esquerra, igual que a serp.html */
     .enllac-inici {
       position: absolute;
-      top: 20px;
-      left: 20px;
-      font-size: 20px;
+      /* col·locat a l'esquerra del bloc central (wrap) */
+      left: calc(50% - 210px); /* 50% - half of --wrap-w (420/2 = 210) */
+      top: 12px;
+      font-size: 18px;
       color: #FF2056;
       text-decoration: underline;
       font-weight: bold;
-      z-index: 1000;
+      z-index: 110;
     }
     .enllac-inici:hover {
       color: #FF637E;
@@ -171,11 +181,21 @@
 
     /* small */
     .muted{font-size:13px;color:#cfd8e3}
+
+    /* Responsive tweak so nav left link stays visible on narrow screens */
+    @media (max-width:480px){
+      .enllac-inici{left:10px; top:8px; font-size:16px}
+      nav ul{width:calc(100% - 40px)}
+      .outer-frame{width:calc(100% - 40px)}
+    }
   </style>
 </head>
 <body>
 
   <nav>
+    <!-- enllaç vermell a l'esquerra, igual que a serp.html -->
+    <a class="enllac-inici" href="https://lagg.netlify.app">Inici</a>
+
     <ul>
       <li class="logo">
         <a href="https://lagg.netlify.app">
@@ -189,8 +209,6 @@
         <a href="https://lagg.netlify.app/contacte">Contactar</a>
       </li>
     </ul>
-    <!-- Link igual que a serp.html (posició absoluta) -->
-    <a class="enllac-inici" href="https://lagg.netlify.app">Inici</a>
   </nav>
 
   <h1>⭕ 3 en ratlla ❌</h1>
@@ -685,6 +703,7 @@
   </script>
 </body>
 </html>
+
 
 
 
