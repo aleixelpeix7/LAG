@@ -6,32 +6,21 @@
   <title>3 en ratlla | LAG</title>
   <link rel="icon" href="assets/favicon.png" type="image/png" />
   <style>
-    /* ====== BASE ====== */
-    :root {
-      --wrap-w: 400px;
-      --accent: #0af;
-      --bg: #002244;
-      --panel: #00152e;
-      --gold: #FFDF20;
-      --red: #FB2C36;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* BASE (adaptat perquè la barra sigui idèntica a serp.html) */
     body {
-      min-height: 100vh;
-      background: var(--bg);
-      color: #FAFAF9;
+      margin: 0;
+      padding: 0;
+      background-color: #002244;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #FAFAF9;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
-      padding-bottom: 24px;
     }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    h1 { font-size: 20px; margin-top: 6px; }
-
-    /* ====== NAV (replicada per ser idèntica a serp.html) ====== */
+    /* NAV (copiat/replicat per ser idèntic a serp.html) */
     nav {
       background-color: rgba(0, 0, 0, 0.7);
       position: sticky;
@@ -40,18 +29,12 @@
       z-index: 100;
       padding: 1rem 2rem;
     }
-
-    /* centrem el contingut de la nav amb l'amplada del wrap */
     nav ul {
       list-style: none;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      width: var(--wrap-w);
-      margin: 0 auto;
-      padding: 0;
     }
-
     nav li.logo {
       display: flex;
       align-items: center;
@@ -66,41 +49,48 @@
       margin-right: 0.5rem;
       vertical-align: middle;
     }
-
     nav li.enllacos {
       display: flex;
       gap: 2rem;
-      align-items: center;
     }
-
     nav a {
       color: white;
       text-decoration: none;
       font-weight: bold;
       transition: color 0.3s;
     }
-    nav a:hover { color: #ffff66; }
+    nav a:hover {
+      color: #ffff66;
+    }
 
-    /* Enllaç "Inici" vermell a l'esquerra del wrap (idèntic a serp.html) */
+    /* Enllaç "Inici" vermell a l'esquerra, igual que a serp.html */
     .enllac-inici {
       position: absolute;
-      left: calc(50% - 210px); /* 50% - (wrap/2 + 10px) per col·locar-lo a l'esquerra del requadre */
       top: 20px;
+      left: 20px;
       font-size: 20px;
       color: #FF2056;
       text-decoration: underline;
       font-weight: bold;
-      z-index: 110;
+      z-index: 1000;
     }
-    .enllac-inici:hover { color: #FF637E; }
+    .enllac-inici:hover {
+      color: #FF637E;
+    }
 
-    /* ====== WRAP / REQUADRE (estil serp) ====== */
+    /* wrap width igual que serp.html */
+    :root { --wrap-w:400px; }
+
+    h1 { margin: 0; font-size: 20px; }
+
+    /* gameWrap: posició i amplada com a serp.html */
     #gameWrap {
       position: relative;
       width: var(--wrap-w);
       margin-top: 12px;
     }
 
+    /* Requadre interior (estètica similar a la versió anterior) */
     .panel {
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
       border-radius: 10px;
@@ -113,30 +103,30 @@
       gap: 10px;
     }
 
-    /* ====== MENU ====== */
+    /* MENU */
     #menu { width: 100%; display:flex; flex-direction:column; gap:10px; align-items:center; }
     .menu-row { width:100%; display:flex; justify-content:space-between; align-items:center; padding:6px 4px; }
-    .label { font-weight:700; color: var(--gold); }
+    .label { font-weight:700; color:#FFDF20; }
     .switch { display:flex; gap:8px; align-items:center; }
     .option {
-      background: var(--panel);
+      background: #00152e;
       border: 1px solid rgba(255,255,255,0.03);
-      padding: 8px 10px;
-      border-radius: 8px;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
+      padding:8px 10px;
+      border-radius:8px;
+      color:#fff;
+      font-weight:600;
+      cursor:pointer;
     }
-    .option.selected { outline: 2px solid var(--accent); transform: translateY(-2px); }
+    .option.selected { outline:2px solid #0af; transform:translateY(-2px); }
 
     .difficulty { display:flex; gap:8px; }
     .diff-btn { padding:6px 10px; border-radius:8px; background:#0b2a3f; color:#fff; cursor:pointer; font-weight:700; }
-    .diff-btn.sel { outline:2px solid var(--accent); transform:translateY(-2px); }
+    .diff-btn.sel { outline:2px solid #0af; transform:translateY(-2px); }
 
     #playBtn {
       margin-top:6px;
-      background: var(--gold);
-      color: var(--red);
+      background:#FFDF20;
+      color:#FB2C36;
       padding:10px 18px;
       border-radius:10px;
       border:none;
@@ -145,33 +135,33 @@
       width:100%;
     }
 
-    /* ====== GAME AREA ====== */
+    /* GAME AREA */
     #gameArea { display:none; width:100%; flex-direction:column; align-items:center; gap:10px; }
-    #status { font-weight:700; color: var(--gold); }
+    #status { font-weight:700; color:#FFDF20; }
 
+    /* GRID fixes to prevent row resizing */
     .board {
       width:100%;
       max-width:360px;
       aspect-ratio: 1/1;
       display:grid;
       grid-template-columns: repeat(3, 1fr);
-      grid-auto-rows: 1fr; /* files iguals */
+      grid-auto-rows: 1fr; /* clau: files iguals */
       gap:6px;
       padding:8px;
       background:#111;
       border-radius:8px;
       border:2px solid rgba(255,255,255,0.03);
     }
-
     .cell {
-      background: var(--panel);
+      background:#00152e;
       border-radius:6px;
       display:flex;
       align-items:center;
       justify-content:center;
       font-size:48px;
       font-weight:900;
-      color: var(--gold);
+      color:#FFDF20;
       cursor:pointer;
       user-select:none;
       transition: transform .08s, background .12s;
@@ -186,42 +176,55 @@
     .cell.win { background:#0b6623; color:#fff; }
 
     .controls { display:flex; gap:8px; justify-content:center; width:100%; }
-    .btn { background: var(--gold); color: var(--red); padding:8px 12px; border-radius:8px; border:none; font-weight:800; cursor:pointer; }
+    .btn { background:#FFDF20; color:#FB2C36; padding:8px 12px; border-radius:8px; border:none; font-weight:800; cursor:pointer; }
 
-    /* ====== OVERLAY dins del gameWrap (només cobreix el requadre) ====== */
-    #gameOverlay {
-      position: absolute;
-      inset: 0;
+    /* Overlay final */
+    #overlay {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.78);
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.6);
-      border-radius: 10px;
-      z-index: 250;
+      z-index: 300;
     }
     .overlay-card {
       background: linear-gradient(180deg,#012233,#001522);
-      padding: 18px;
-      border-radius: 10px;
-      border: 2px solid rgba(10,170,255,0.08);
-      text-align:center;
-      color:#fff;
-      min-width:240px;
+      padding: 22px;
+      border-radius: 12px;
+      border: 3px solid rgba(10,170,255,0.12);
+      text-align: center;
+      color: #fff;
+      min-width: 280px;
     }
     .overlay-card h2 { margin-bottom:8px; }
-    .overlay-card button { margin-top:12px; padding:8px 12px; border-radius:8px; border:none; background:var(--gold); color:var(--red); font-weight:800; cursor:pointer; }
+    .overlay-card button {
+      margin-top:12px;
+      padding:10px 14px;
+      border-radius:8px;
+      border:none;
+      background:#FFDF20;
+      color:#FB2C36;
+      font-weight:800;
+      cursor:pointer;
+    }
 
     .muted { font-size:13px; color:#cfd8e3; }
 
+    /* responsive small tweaks */
     @media (max-width:480px){
       :root { --wrap-w: calc(100% - 40px); }
+      nav ul { padding: 0 12px; }
       .enllac-inici { left: 12px; top: 12px; font-size:16px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- NAV: estructura idèntica a serp.html -->
+  <!-- NAV: estructura i enllaç "Inici" vermell idèntics a serp.html -->
   <nav>
     <ul>
       <li class="logo">
@@ -237,13 +240,13 @@
       </li>
     </ul>
 
-    <!-- Enllaç vermell "Inici" a l'esquerra del wrap (com a serp.html) -->
+    <!-- Enllaç vermell a l'esquerra, posicionat igual que a serp.html -->
     <a class="enllac-inici" href="https://lagg.netlify.app">Inici</a>
   </nav>
 
   <h1>⭕ 3 en ratlla ❌</h1>
 
-  <!-- GAME WRAP -->
+  <!-- gameWrap: posició i amplada igual que serp.html -->
   <div id="gameWrap">
     <div class="panel">
 
@@ -280,7 +283,7 @@
         </div>
       </div>
 
-      <!-- ÀREA DE JOC -->
+      <!-- AREA DE JOC -->
       <div id="gameArea">
         <div id="status">Torn del jugador: <strong id="turnLabel">X</strong></div>
 
@@ -303,16 +306,16 @@
       </div>
 
     </div>
+  </div>
 
-    <!-- OVERLAY: cobreix només el requadre -->
-    <div id="gameOverlay" aria-hidden="true">
-      <div class="overlay-card">
-        <h2 id="overlayTitle">Resultat</h2>
-        <div id="overlayMsg" class="muted"></div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
-          <button id="overlayMenu">Tornar al menú</button>
-          <button id="overlayPlay">Jugar de nou</button>
-        </div>
+  <!-- OVERLAY -->
+  <div id="overlay">
+    <div class="overlay-card">
+      <h2 id="overlayTitle">Resultat</h2>
+      <div id="overlayMsg" class="muted"></div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+        <button id="overlayMenu">Tornar al menú</button>
+        <button id="overlayPlay">Jugar de nou</button>
       </div>
     </div>
   </div>
@@ -333,7 +336,7 @@
     const statusLabel = document.getElementById('turnLabel');
     const resetBtn = document.getElementById('resetBtn');
     const menuBtn = document.getElementById('menuBtn');
-    const gameOverlay = document.getElementById('gameOverlay');
+    const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlayTitle');
     const overlayMsg = document.getElementById('overlayMsg');
     const overlayMenu = document.getElementById('overlayMenu');
@@ -341,14 +344,16 @@
 
     /* STATE */
     let vsBot = true;
-    let piecesMode = 'infinite';
-    let difficulty = 'medium';
+    let piecesMode = 'infinite'; // 'infinite' or 'three'
+    let difficulty = 'medium'; // easy, medium, hard
     let currentPlayer = 'X';
     let board = Array(9).fill(null);
     let gameOver = false;
+
+    // three-piece mode trackers
     let placedX = 0, placedO = 0, selectedPiece = null;
 
-    /* UI handlers */
+    /* UI: toggle handlers */
     function selectOption(group, el){
       if(group==='rival'){
         vsBot = (el === optBot);
@@ -361,54 +366,76 @@
         optInfinite.classList.toggle('selected', piecesMode==='infinite');
       }
     }
+
     optFriend.addEventListener('click', ()=>selectOption('rival', optFriend));
     optBot.addEventListener('click', ()=>selectOption('rival', optBot));
     optInfinite.addEventListener('click', ()=>selectOption('pieces', optInfinite));
     optThree.addEventListener('click', ()=>selectOption('pieces', optThree));
-    diffBtns.forEach(btn=>btn.addEventListener('click', ()=>{
-      diffBtns.forEach(b=>b.classList.remove('sel'));
-      btn.classList.add('sel');
-      difficulty = btn.dataset.diff;
-    }));
+
+    diffBtns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        diffBtns.forEach(b=>b.classList.remove('sel'));
+        btn.classList.add('sel');
+        difficulty = btn.dataset.diff;
+      });
+    });
+
+    // default UI
     selectOption('rival', optBot);
     selectOption('pieces', optInfinite);
 
-    /* START */
+    /* START GAME */
     playBtn.addEventListener('click', ()=>{
       resetAll();
       menu.style.display = 'none';
       gameArea.style.display = 'flex';
       updateStatus();
+      if(vsBot && currentPlayer==='O' && difficulty){
+        setTimeout(botTurn, 300);
+      }
     });
 
-    menuBtn.addEventListener('click', showMenu);
-    overlayMenu.addEventListener('click', showMenu);
-    overlayPlay.addEventListener('click', ()=>{ gameOverlay.style.display='none'; resetAll(); });
+    /* MENU BUTTONS */
+    menuBtn.addEventListener('click', ()=>{ showMenu(); });
+    overlayMenu.addEventListener('click', ()=>{ showMenu(); });
+    overlayPlay.addEventListener('click', ()=>{ overlay.style.display='none'; resetAll(); });
 
     function showMenu(){
-      gameOverlay.style.display='none';
+      overlay.style.display='none';
       gameArea.style.display='none';
       menu.style.display='flex';
     }
 
     /* GAME LOGIC */
-    function updateStatus(){ statusLabel.textContent = currentPlayer; }
+    function updateStatus(){
+      statusLabel.textContent = currentPlayer;
+    }
 
     function resetAll(){
       board = Array(9).fill(null);
       gameOver = false;
       currentPlayer = 'X';
       placedX = 0; placedO = 0; selectedPiece = null;
-      cells.forEach(c=>{ c.textContent=''; c.classList.remove('disabled','win'); c.style.background=''; });
+      cells.forEach(c=>{
+        c.textContent=''; c.classList.remove('disabled','win'); c.style.background='';
+      });
       updateStatus();
     }
+
     resetBtn.addEventListener('click', resetAll);
 
+    /* CELL CLICK */
     cells.forEach(cell=>{
       cell.addEventListener('click', (e)=>{
         if(gameOver) return;
         const idx = parseInt(cell.dataset.index,10);
-        if(piecesMode === 'three'){ handleThreeModeClick(idx); return; }
+
+        if(piecesMode === 'three'){
+          handleThreeModeClick(idx);
+          return;
+        }
+
+        // infinite pieces mode (normal tic-tac-toe)
         if(board[idx] !== null) return;
         placeAt(idx, currentPlayer);
         afterMove();
@@ -426,41 +453,90 @@
       const winner = checkWinner();
       if(winner){ finishGame(winner); return; }
       if(board.every(v=>v!==null)){ finishGame('draw'); return; }
+
+      // switch
       currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
       updateStatus();
-      if(vsBot && currentPlayer === 'O'){ setTimeout(botTurn, 350); }
+
+      if(vsBot && currentPlayer === 'O'){
+        // bot moves after small delay
+        setTimeout(botTurn, 350);
+      }
     }
 
-    /* THREE-PIECE MODE */
+    /* THREE-PIECE MODE (variant B: can move to any empty) */
     function handleThreeModeClick(idx){
       const cell = cells[idx];
+
+      // if selecting own piece to move
       if(board[idx] === currentPlayer){
-        if(selectedPiece === idx){ selectedPiece = null; cell.style.background=''; }
-        else { if(selectedPiece !== null) cells[selectedPiece].style.background=''; selectedPiece = idx; cell.style.background='#004080'; }
+        // select/deselect
+        if(selectedPiece === idx){
+          selectedPiece = null;
+          cell.style.background = '';
+        } else {
+          // clear previous selection
+          if(selectedPiece !== null) cells[selectedPiece].style.background = '';
+          selectedPiece = idx;
+          cell.style.background = '#004080';
+        }
         return;
       }
+
+      // if clicking empty and we have a selected piece -> move
       if(board[idx] === null && selectedPiece !== null){
-        board[idx] = currentPlayer; board[selectedPiece] = null;
-        cells[selectedPiece].textContent=''; cells[selectedPiece].classList.remove('disabled'); cells[selectedPiece].style.background='';
-        cells[idx].textContent = currentPlayer; cells[idx].classList.add('disabled');
+        // move piece
+        board[idx] = currentPlayer;
+        board[selectedPiece] = null;
+        cells[selectedPiece].textContent = "";
+        cells[selectedPiece].classList.remove('disabled');
+        cells[selectedPiece].style.background = '';
+        cells[idx].textContent = currentPlayer;
+        cells[idx].classList.add('disabled');
         selectedPiece = null;
-        const winner = checkWinner(); if(winner){ finishGame(winner); return; }
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateStatus();
-        if(vsBot && currentPlayer === 'O'){ setTimeout(botTurn, 350); }
+
+        const winner = checkWinner();
+        if(winner){ finishGame(winner); return; }
+
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        updateStatus();
+
+        if(vsBot && currentPlayer === 'O'){
+          setTimeout(botTurn, 350);
+        }
         return;
       }
+
+      // if clicking empty and still placing pieces (less than 3)
       if(board[idx] === null){
-        if(currentPlayer==='X' && placedX < 3){ placedX++; board[idx]='X'; cells[idx].textContent='X'; cells[idx].classList.add('disabled'); }
-        else if(currentPlayer==='O' && placedO < 3){ placedO++; board[idx]='O'; cells[idx].textContent='O'; cells[idx].classList.add('disabled'); }
-        else return;
-        const winner = checkWinner(); if(winner){ finishGame(winner); return; }
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateStatus();
-        if(vsBot && currentPlayer === 'O'){ setTimeout(botTurn, 350); }
+        if(currentPlayer==='X' && placedX < 3){
+          placedX++; board[idx] = 'X'; cells[idx].textContent='X'; cells[idx].classList.add('disabled');
+        } else if(currentPlayer==='O' && placedO < 3){
+          placedO++; board[idx] = 'O'; cells[idx].textContent='O'; cells[idx].classList.add('disabled');
+        } else {
+          // cannot place more than 3, must select and move
+          return;
+        }
+
+        const winner = checkWinner();
+        if(winner){ finishGame(winner); return; }
+
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        updateStatus();
+
+        if(vsBot && currentPlayer === 'O'){
+          setTimeout(botTurn, 350);
+        }
       }
     }
 
-    /* WIN CHECK & FINISH */
-    const winningCombos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    /* CHECK WINNER */
+    const winningCombos = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
     function checkWinner(){
       for(const combo of winningCombos){
         const [a,b,c] = combo;
@@ -474,93 +550,193 @@
 
     function finishGame(result){
       gameOver = true;
-      overlayTitle.textContent = (result === 'draw') ? '🤝 Empat!' : `🎉 Ha guanyat: ${result}`;
-      overlayMsg.textContent = (result === 'draw') ? 'Cap jugador ha fet línia.' : `Jugador ${result} ha completat una línia.`;
-      gameOverlay.style.display = 'flex';
+      overlay.style.display = 'flex';
+      if(result === 'draw'){
+        overlayTitle.textContent = '🤝 Empat!';
+        overlayMsg.textContent = 'Cap jugador ha fet línia.';
+      } else {
+        overlayTitle.textContent = `🎉 Ha guanyat: ${result}`;
+        overlayMsg.textContent = `Jugador ${result} ha completat una línia.`;
+      }
     }
 
-    /* BOT logic (easy/medium/hard) - igual que abans */
+    /* BOT LOGIC: easy (random), medium (win/block/random), hard (minimax) */
     function botTurn(){
       if(gameOver) return;
-      if(piecesMode === 'three'){ botThreeModeMove(); return; }
-      let move;
-      if(difficulty === 'easy') move = randomMove();
-      else if(difficulty === 'medium') move = findWinningMove('O') || findWinningMove('X') || randomMove();
-      else move = minimaxMove(board, 'O').index;
-      if(move === undefined || move === null) move = randomMove();
-      placeAt(move, 'O');
-      const winner = checkWinner(); if(winner){ finishGame(winner); return; }
-      if(board.every(v=>v!==null)){ finishGame('draw'); return; }
-      currentPlayer = 'X'; updateStatus();
-    }
-    function randomMove(){ const free = board.map((v,i)=> v===null ? i : null).filter(v=>v!==null); return free[Math.floor(Math.random()*free.length)]; }
-    function findWinningMove(player){ for(const combo of winningCombos){ const [a,b,c]=combo; const line=[board[a],board[b],board[c]]; if(line.filter(v=>v===player).length===2 && line.includes(null)) return combo[line.indexOf(null)]; } return null; }
 
+      if(piecesMode === 'three'){
+        botThreeModeMove();
+        return;
+      }
+
+      let move;
+      if(difficulty === 'easy'){
+        move = randomMove();
+      } else if(difficulty === 'medium'){
+        move = findWinningMove('O') || findWinningMove('X') || randomMove();
+      } else { // hard
+        move = minimaxMove(board, 'O').index;
+      }
+
+      if(move === undefined || move === null){
+        move = randomMove();
+      }
+
+      placeAt(move, 'O');
+
+      const winner = checkWinner();
+      if(winner){ finishGame(winner); return; }
+      if(board.every(v=>v!==null)){ finishGame('draw'); return; }
+
+      currentPlayer = 'X';
+      updateStatus();
+    }
+
+    function randomMove(){
+      const free = board.map((v,i)=> v===null ? i : null).filter(v=>v!==null);
+      return free[Math.floor(Math.random()*free.length)];
+    }
+
+    function findWinningMove(player){
+      for(const combo of winningCombos){
+        const [a,b,c] = combo;
+        const line = [board[a], board[b], board[c]];
+        if(line.filter(v=>v===player).length === 2 && line.includes(null)){
+          return combo[line.indexOf(null)];
+        }
+      }
+      return null;
+    }
+
+    /* BOT for three-piece mode (variant B): if still placing, place; else move a piece */
     function botThreeModeMove(){
+      // count placed
       const countO = board.filter(v=>v==='O').length;
+      const countX = board.filter(v=>v==='X').length;
+
+      // if still placing
       if(countO < 3){
+        // try to win/block like medium, else random
         let move;
         if(difficulty === 'easy') move = randomFree();
         else if(difficulty === 'medium') move = findWinningMove('O') || findWinningMove('X') || randomFree();
         else move = minimaxMove(board, 'O').index;
         if(move===undefined) move = randomFree();
         board[move] = 'O'; cells[move].textContent='O'; cells[move].classList.add('disabled');
-        const winner = checkWinner(); if(winner){ finishGame(winner); return; }
-        currentPlayer='X'; updateStatus(); return;
+        const winner = checkWinner();
+        if(winner){ finishGame(winner); return; }
+        currentPlayer = 'X'; updateStatus();
+        return;
       }
+
+      // else must move one of its pieces to any empty
       const myPieces = board.map((v,i)=> v==='O' ? i : null).filter(v=>v!==null);
       const empties = board.map((v,i)=> v===null ? i : null).filter(v=>v!==null);
+
+      // try to find a move that wins
       for(const from of myPieces){
         for(const to of empties){
-          const copy = board.slice(); copy[from]=null; copy[to]='O';
+          const copy = board.slice();
+          copy[from] = null; copy[to] = 'O';
           if(checkWinnerForBoard(copy,'O')){
-            board[from]=null; board[to]='O';
+            // perform move
+            board[from] = null; board[to] = 'O';
             cells[from].textContent=''; cells[from].classList.remove('disabled');
             cells[to].textContent='O'; cells[to].classList.add('disabled');
-            const winner = checkWinner(); if(winner){ finishGame(winner); return; }
+            const winner = checkWinner();
+            if(winner){ finishGame(winner); return; }
             currentPlayer='X'; updateStatus(); return;
           }
         }
       }
+
+      // otherwise pick random move
       const from = myPieces[Math.floor(Math.random()*myPieces.length)];
       const to = empties[Math.floor(Math.random()*empties.length)];
-      board[from]=null; board[to]='O';
+      board[from] = null; board[to] = 'O';
       cells[from].textContent=''; cells[from].classList.remove('disabled');
       cells[to].textContent='O'; cells[to].classList.add('disabled');
-      const winner = checkWinner(); if(winner){ finishGame(winner); return; }
+
+      const winner = checkWinner();
+      if(winner){ finishGame(winner); return; }
       currentPlayer='X'; updateStatus();
     }
-    function randomFree(){ const free = board.map((v,i)=> v===null ? i : null).filter(v=>v!==null); return free[Math.floor(Math.random()*free.length)]; }
-    function checkWinnerForBoard(bd, player){ for(const combo of winningCombos){ const [a,b,c]=combo; if(bd[a] && bd[a]===bd[b] && bd[a]===bd[c] && bd[a]===player) return true; } return false; }
 
-    /* MINIMAX (hard) */
+    function randomFree(){
+      const free = board.map((v,i)=> v===null ? i : null).filter(v=>v!==null);
+      return free[Math.floor(Math.random()*free.length)];
+    }
+
+    function checkWinnerForBoard(bd, player){
+      for(const combo of winningCombos){
+        const [a,b,c] = combo;
+        if(bd[a] && bd[a] === bd[b] && bd[a] === bd[c] && bd[a] === player) return true;
+      }
+      return false;
+    }
+
+    /* MINIMAX for hard difficulty (works for infinite pieces mode) */
     function minimaxMove(newBoard, player){
       const avail = newBoard.map((v,i)=> v===null ? i : null).filter(v=>v!==null);
+
       const winner = checkWinnerStatic(newBoard);
-      if(winner === 'O') return {score:10};
-      else if(winner === 'X') return {score:-10};
-      else if(avail.length === 0) return {score:0};
+      if(winner === 'O') return {score: 10};
+      else if(winner === 'X') return {score: -10};
+      else if(avail.length === 0) return {score: 0};
+
       const moves = [];
+
       for(let i=0;i<avail.length;i++){
         const idx = avail[i];
-        const move = { index: idx };
+        const move = {};
+        move.index = idx;
         newBoard[idx] = player;
-        move.score = (player === 'O') ? minimaxMove(newBoard,'X').score : minimaxMove(newBoard,'O').score;
+
+        if(player === 'O'){
+          const result = minimaxMove(newBoard, 'X');
+          move.score = result.score;
+        } else {
+          const result = minimaxMove(newBoard, 'O');
+          move.score = result.score;
+        }
+
         newBoard[idx] = null;
         moves.push(move);
       }
+
       let bestMove;
-      if(player === 'O'){ let bestScore=-Infinity; for(const m of moves) if(m.score>bestScore){ bestScore=m.score; bestMove=m; } }
-      else { let bestScore=Infinity; for(const m of moves) if(m.score<bestScore){ bestScore=m.score; bestMove=m; } }
+      if(player === 'O'){
+        let bestScore = -Infinity;
+        for(const m of moves) if(m.score > bestScore){ bestScore = m.score; bestMove = m; }
+      } else {
+        let bestScore = Infinity;
+        for(const m of moves) if(m.score < bestScore){ bestScore = m.score; bestMove = m; }
+      }
       return bestMove;
     }
-    function checkWinnerStatic(bd){ for(const combo of winningCombos){ const [a,b,c]=combo; if(bd[a] && bd[a]===bd[b] && bd[a]===bd[c]) return bd[a]; } return null; }
 
-    /* INIT */
+    function checkWinnerStatic(bd){
+      for(const combo of winningCombos){
+        const [a,b,c] = combo;
+        if(bd[a] && bd[a] === bd[b] && bd[a] === bd[c]) return bd[a];
+      }
+      return null;
+    }
+
+    /* UTILS */
+    function updateBoardFromState(){
+      cells.forEach((c,i)=>{
+        c.textContent = board[i] || '';
+        if(board[i]) c.classList.add('disabled'); else c.classList.remove('disabled');
+      });
+    }
+
+    /* INITIAL */
     resetAll();
   </script>
 </body>
 </html>
+
 
 
 
