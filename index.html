@@ -13,6 +13,13 @@
       --link-red:#E7180B;
       --link-red-hover:#FB2C36;
     }
+#discord-widget {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    margin: 20px;
+    z-index: 9999;
+}
 
     html,body{height:100%; margin:0; padding:0;}
     *,*::before,*::after{box-sizing:border-box}
@@ -121,6 +128,17 @@
     <h1>Minecraft</h1>
     <a class="enllac" href="https://lagg.netlify.app/minecraft/">Minecraft</a>
   </main>
+<!-- Discord Widget -->
+<div id="discord-widget">
+    <iframe 
+        src="https://discord.com/widget?id=1475453126248235079&theme=dark" 
+        width="350" 
+        height="500" 
+        allowtransparency="true" 
+        frameborder="0" 
+        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
+    </iframe>
+</div>
 
   <script>
     (function () {
