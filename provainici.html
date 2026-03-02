@@ -8,7 +8,7 @@
 <style>
     body {
         margin: 0;
-        background: black;
+        background: #002244; /* COLOR QUE HAS DEMANAT */
         color: white;
         font-family: monospace;
         overflow: hidden;
@@ -18,7 +18,7 @@
     #splash {
         position: fixed;
         inset: 0;
-        background: black;
+        background: #002244;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -27,26 +27,45 @@
     }
 
     #logo {
-        width: 420px; /* MÉS GROS */
+        width: 600px; /* ENCARA MÉS GROS */
         opacity: 0;
         animation: fadeIn 1.2s forwards;
-        filter: drop-shadow(0 0 20px #0ff);
+        filter: drop-shadow(0 0 30px #00eaff);
     }
 
-    /* GLITCH LAYERS */
+    /* CAPES RGB */
     .glitch {
         position: absolute;
         top: 50%;
         left: 50%;
-        width: 420px;
+        width: 600px;
         transform: translate(-50%, -50%);
         opacity: 0;
         mix-blend-mode: screen;
     }
 
-    .glitch.red { filter: drop-shadow(-5px 0 red); }
-    .glitch.green { filter: drop-shadow(5px 0 lime); }
-    .glitch.blue { filter: drop-shadow(0 5px cyan); }
+    .glitch.r { filter: drop-shadow(-20px 0 red); }
+    .glitch.g { filter: drop-shadow(20px 0 lime); }
+    .glitch.b { filter: drop-shadow(0 20px cyan); }
+
+    /* FRANGES DE COLORS TIPUS ERROR */
+    #bars {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        background: repeating-linear-gradient(
+            to bottom,
+            rgba(255,0,0,0.25) 0px,
+            rgba(255,0,0,0.25) 8px,
+            rgba(0,255,255,0.2) 8px,
+            rgba(0,255,255,0.2) 16px,
+            rgba(255,255,0,0.2) 16px,
+            rgba(255,255,0,0.2) 24px,
+            transparent 24px,
+            transparent 32px
+        );
+        pointer-events: none;
+    }
 
     /* SCANLINES */
     #scanlines {
@@ -54,8 +73,8 @@
         inset: 0;
         background: repeating-linear-gradient(
             to bottom,
-            rgba(255,255,255,0.03) 0px,
-            rgba(255,255,255,0.03) 2px,
+            rgba(255,255,255,0.05) 0px,
+            rgba(255,255,255,0.05) 2px,
             transparent 2px,
             transparent 4px
         );
@@ -63,7 +82,7 @@
         pointer-events: none;
     }
 
-    /* MAIN CONTENT */
+    /* MAIN */
     #main {
         display: none;
         padding: 40px;
@@ -82,16 +101,16 @@
 
     @keyframes glitchShake {
         0% { transform: translate(-50%, -50%) translate(0,0); }
-        20% { transform: translate(-50%, -50%) translate(-10px, 5px); }
-        40% { transform: translate(-50%, -50%) translate(10px, -5px); }
-        60% { transform: translate(-50%, -50%) translate(-5px, -10px); }
-        80% { transform: translate(-50%, -50%) translate(5px, 10px); }
+        20% { transform: translate(-50%, -50%) translate(-35px, 15px); }
+        40% { transform: translate(-50%, -50%) translate(35px, -15px); }
+        60% { transform: translate(-50%, -50%) translate(-25px, -30px); }
+        80% { transform: translate(-50%, -50%) translate(25px, 30px); }
         100% { transform: translate(-50%, -50%) translate(0,0); }
     }
 
     @keyframes noiseFlash {
         0%, 100% { opacity: 0; }
-        50% { opacity: 0.4; }
+        50% { opacity: 0.6; }
     }
 </style>
 </head>
@@ -101,11 +120,12 @@
 <div id="splash">
     <img id="logo" src="assets/logo.png">
 
-    <!-- Capes RGB per glitch -->
-    <img class="glitch red" src="assets/logo.png">
-    <img class="glitch green" src="assets/logo.png">
-    <img class="glitch blue" src="assets/logo.png">
+    <!-- RGB glitch layers -->
+    <img class="glitch r" src="assets/logo.png">
+    <img class="glitch g" src="assets/logo.png">
+    <img class="glitch b" src="assets/logo.png">
 
+    <div id="bars"></div>
     <div id="scanlines"></div>
 </div>
 
@@ -118,18 +138,23 @@
 const splash = document.getElementById("splash");
 const main = document.getElementById("main");
 const glitchLayers = document.querySelectorAll(".glitch");
+const bars = document.getElementById("bars");
 const scanlines = document.getElementById("scanlines");
 
 setTimeout(() => {
     // Activa glitch RGB
     glitchLayers.forEach(layer => {
         layer.style.opacity = "1";
-        layer.style.animation = "glitchShake 0.15s infinite";
+        layer.style.animation = "glitchShake 0.1s infinite";
     });
 
-    // Activa scanlines
+    // Franges de colors
+    bars.style.opacity = "1";
+    bars.style.animation = "noiseFlash 0.07s infinite";
+
+    // Scanlines
     scanlines.style.opacity = "1";
-    scanlines.style.animation = "noiseFlash 0.1s infinite";
+    scanlines.style.animation = "noiseFlash 0.05s infinite";
 
     // Desapareix splash
     setTimeout(() => {
@@ -141,10 +166,11 @@ setTimeout(() => {
             main.style.display = "block";
         }, 500);
 
-    }, 700); // Duració del glitch
+    }, 1000); // Duració del glitch
 
 }, 1500); // Fade-in + pausa
 </script>
 
 </body>
 </html>
+
