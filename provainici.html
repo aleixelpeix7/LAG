@@ -22,7 +22,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 999;
+        z-index: 900;
         overflow: hidden;
     }
 
@@ -30,10 +30,9 @@
         width: 600px;
         opacity: 0;
         animation: fadeIn 1.2s forwards;
-        filter: none; /* SENSE GLOW */
+        filter: none;
     }
 
-    /* CAPES RGB */
     .glitch {
         position: absolute;
         top: 50%;
@@ -48,7 +47,6 @@
     .glitch.g { filter: drop-shadow(20px 0 lime); }
     .glitch.b { filter: drop-shadow(0 20px cyan); }
 
-    /* FRANGES DE COLORS */
     #bars {
         position: absolute;
         inset: 0;
@@ -67,7 +65,6 @@
         pointer-events: none;
     }
 
-    /* SCANLINES */
     #scanlines {
         position: absolute;
         inset: 0;
@@ -82,36 +79,35 @@
         pointer-events: none;
     }
 
-    /* EFECTE APAGADA CRT */
+    /* CAPA CRT OFF */
     #crt-off {
         position: fixed;
         inset: 0;
-        background: #002244;
-        z-index: 2000;
+        background: black;          /* FONS NEGRE DESPRÉS DE TANCAR-SE */
+        z-index: 1000;
         display: none;
-        animation: crtOff 0.6s forwards;
+        justify-content: center;
+        align-items: center;
     }
 
-    @keyframes crtOff {
-        0% { transform: scaleY(1); opacity: 1; }
-        60% { transform: scaleY(0.05); opacity: 1; }
-        100% { transform: scaleY(0); opacity: 0; }
+    #crt-line {
+        width: 100%;
+        height: 100%;
+        background: #ffffff;
+        transform-origin: center;
+        animation: crtLine 0.4s forwards;
     }
 
     /* MAIN */
     #main {
         display: none;
         padding: 40px;
-        animation: fadeInMain 0.6s forwards;
+        opacity: 0;
+        transition: opacity 0.6s ease;
     }
 
     /* ANIMACIONS */
     @keyframes fadeIn {
-        to { opacity: 1; }
-    }
-
-    @keyframes fadeInMain {
-        from { opacity: 0; }
         to { opacity: 1; }
     }
 
@@ -128,6 +124,13 @@
         0%, 100% { opacity: 0; }
         50% { opacity: 0.6; }
     }
+
+    /* línia que es tanca al centre */
+    @keyframes crtLine {
+        0%   { transform: scaleY(1); }
+        60%  { transform: scaleY(0.03); }
+        100% { transform: scaleY(0); }
+    }
 </style>
 </head>
 
@@ -135,16 +138,17 @@
 
 <div id="splash">
     <img id="logo" src="assets/logo.png">
-
     <img class="glitch r" src="assets/logo.png">
     <img class="glitch g" src="assets/logo.png">
     <img class="glitch b" src="assets/logo.png">
-
     <div id="bars"></div>
     <div id="scanlines"></div>
 </div>
 
-<div id="crt-off"></div>
+<!-- Pantalla que s’apaga -->
+<div id="crt-off">
+    <div id="crt-line"></div>
+</div>
 
 <div id="main">
     <h1>Benvingut a LAG</h1>
@@ -158,34 +162,43 @@ const glitchLayers = document.querySelectorAll(".glitch");
 const bars = document.getElementById("bars");
 const scanlines = document.getElementById("scanlines");
 const crtOff = document.getElementById("crt-off");
+const crtLine = document.getElementById("crt-line");
 
 setTimeout(() => {
+    // Activa glitch
     glitchLayers.forEach(layer => {
         layer.style.opacity = "1";
         layer.style.animation = "glitchShake 0.1s infinite";
     });
-
     bars.style.opacity = "1";
     bars.style.animation = "noiseFlash 0.07s infinite";
-
     scanlines.style.opacity = "1";
     scanlines.style.animation = "noiseFlash 0.05s infinite";
 
+    // Després del glitch, apaga pantalla
     setTimeout(() => {
-        crtOff.style.display = "block";
+        // Amaguem el splash i mostrem la capa CRT negra amb la línia
+        splash.style.display = "none";
+        crtOff.style.display = "flex";
 
-        setTimeout(() => {
-            splash.remove();
-            crtOff.remove();
-            main.style.display = "block";
-        }, 600);
+        // Quan acabi l’animació de la línia, esperem 0.5s i fem fade-in del main
+        crtLine.addEventListener("animationend", () => {
+            setTimeout(() => {
+                crtOff.style.display = "none";
+                main.style.display = "block";
+                requestAnimationFrame(() => {
+                    main.style.opacity = "1";
+                });
+            }, 500); // mig segon amb pantalla negra
+        }, { once: true });
 
-    }, 1000);
+    }, 1000); // duració del glitch
 
-}, 1500);
+}, 1500); // fade-in + pausa inicial
 </script>
 
 </body>
 </html>
+
 
 
