@@ -3,14 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>LAG — Splash realista</title>
+<title>LAG - Splash amb glitch realista</title>
 <style>
-  :root{ --bg:#002244; --fg:#cfe7ff; }
+  :root{
+    --bg:#002244;
+  }
   html,body{height:100%}
   body{
     margin:0;
     background:var(--bg);
-    color:var(--fg);
+    color:#fff;
     font-family:monospace;
     overflow:hidden;
   }
@@ -25,101 +27,111 @@
     align-items:center;
     z-index:900;
     overflow:hidden;
-    will-change:transform,filter;
   }
 
-  /* Logo (sense glow) */
+  /* Logo principal (sense glow) */
   #logo{
-    width:720px;
-    max-width:88vw;
+    width:600px; /* molt gran */
+    max-width:90vw;
     opacity:0;
-    animation:logoFadeIn 1s forwards;
-    -webkit-user-drag:none;
-    user-select:none;
-    display:block;
-    z-index:880;
-  }
-  @keyframes logoFadeIn{ to{opacity:1} }
-
-  /* Canvas overlay per glitch (cobreix tota la pantalla) */
-  #glitchCanvas{
-    position:fixed;
-    inset:0;
-    width:100%;
-    height:100%;
-    pointer-events:none;
-    z-index:995;
-    mix-blend-mode:screen;
-    opacity:0;
-    transition:opacity 120ms linear;
+    animation:fadeInLogo 1.2s forwards;
+    image-rendering: optimizeSpeed;
+    -webkit-user-drag: none;
+    user-select: none;
   }
 
-  /* capes RGB per logo (subtil) */
-  .glayer{
+  @keyframes fadeInLogo{
+    to{opacity:1}
+  }
+
+  /* Capes RGB per glitch */
+  .glitch{
     position:absolute;
     top:50%;
     left:50%;
-    width:720px;
-    max-width:88vw;
+    width:600px;
+    max-width:90vw;
     transform:translate(-50%,-50%);
     opacity:0;
     mix-blend-mode:screen;
+    transition: transform 0.06s linear, opacity 0.06s linear, clip-path 0.06s linear;
     pointer-events:none;
-    z-index:885;
+    image-rendering: optimizeSpeed;
+  }
+  .glitch.r{filter:drop-shadow(-18px 0 red)}
+  .glitch.g{filter:drop-shadow(18px 0 lime)}
+  .glitch.b{filter:drop-shadow(0 18px cyan)}
+
+  /* Franges de colors (bars) i scanlines */
+  #bars{
+    position:absolute;
+    inset:0;
+    opacity:0;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,0,0,0.22) 0px,
+      rgba(255,0,0,0.22) 6px,
+      rgba(0,255,255,0.18) 6px,
+      rgba(0,255,255,0.18) 12px,
+      rgba(255,255,0,0.15) 12px,
+      rgba(255,255,0,0.15) 18px,
+      transparent 18px,
+      transparent 28px
+    );
+    pointer-events:none;
+    transition:opacity 0.08s linear, transform 0.08s linear;
   }
 
-  /* scanlines de suport */
   #scanlines{
-    position:fixed;
+    position:absolute;
     inset:0;
     background:repeating-linear-gradient(
       to bottom,
-      rgba(255,255,255,0.03) 0px,
-      rgba(255,255,255,0.03) 2px,
+      rgba(255,255,255,0.04) 0px,
+      rgba(255,255,255,0.04) 2px,
       transparent 2px,
       transparent 4px
     );
     opacity:0;
     pointer-events:none;
-    z-index:894;
-    transition:opacity 80ms linear;
+    transition:opacity 0.06s linear, transform 0.06s linear;
   }
 
-  /* CRT OFF: dues barres (top/bottom) que es mouen cap al centre */
+  /* CRT OFF: fons negre i línia al centre */
   #crt-off{
     position:fixed;
     inset:0;
-    background:black;
+    background:black; /* fons negre real */
     z-index:1000;
     display:none;
     justify-content:center;
     align-items:center;
-    overflow:hidden;
   }
-  .crt-bar{
-    position:absolute;
-    left:0;
+  #crt-line{
     width:100%;
-    height:18vh;
-    background:linear-gradient(90deg,#00bfff,#7fdfff);
-    box-shadow:0 0 40px rgba(0,191,255,0.12) inset;
+    height:4px; /* línia prima */
+    background:#fff;
     transform-origin:center;
-    z-index:1001;
+    animation:crtLine 0.45s forwards;
   }
-  #crt-top{ top:-25vh; }
-  #crt-bottom{ bottom:-25vh; }
+  @keyframes crtLine{
+    0%{transform:scaleY(1)}
+    60%{transform:scaleY(0.03)}
+    100%{transform:scaleY(0)}
+  }
 
   /* MAIN (fade-in final) */
   #main{
     padding:40px;
     opacity:0;
     display:none;
-    transition:opacity 2.2s cubic-bezier(.22,.9,.3,1);
+    transition:opacity 2.2s ease; /* fade-in llarg */
     min-height:100vh;
     box-sizing:border-box;
     background:var(--bg);
-    z-index:1;
   }
+
+  /* petites respostes visuals per contingut */
   #main h1{margin:0 0 12px 0;font-size:clamp(28px,4vw,48px)}
   #main p{margin:0;color:#cfe7ff}
 </style>
@@ -127,19 +139,18 @@
 <body>
 
   <!-- SPLASH -->
-  <div id="splash" aria-hidden="false">
+  <div id="splash">
     <img id="logo" src="assets/logo.png" alt="LAG logo">
-    <img class="glayer" id="gR" src="assets/logo.png" alt="">
-    <img class="glayer" id="gG" src="assets/logo.png" alt="">
-    <img class="glayer" id="gB" src="assets/logo.png" alt="">
-    <canvas id="glitchCanvas" aria-hidden="true"></canvas>
-    <div id="scanlines" aria-hidden="true"></div>
+    <img class="glitch r" src="assets/logo.png" alt="">
+    <img class="glitch g" src="assets/logo.png" alt="">
+    <img class="glitch b" src="assets/logo.png" alt="">
+    <div id="bars"></div>
+    <div id="scanlines"></div>
   </div>
 
-  <!-- CRT OFF -->
-  <div id="crt-off" aria-hidden="true">
-    <div id="crt-top" class="crt-bar" aria-hidden="true"></div>
-    <div id="crt-bottom" class="crt-bar" aria-hidden="true"></div>
+  <!-- CRT OFF (pantalla que s'apaga) -->
+  <div id="crt-off">
+    <div id="crt-line"></div>
   </div>
 
   <!-- CONTINGUT PRINCIPAL -->
@@ -149,257 +160,154 @@
   </div>
 
 <script>
-/* Paràmetres */
-const initialDelay = 1000;   // espera inicial (logo fade-in)
-const glitchDuration = 2000; // durada total del glitch abans del CRT
-const blackPause = 500;      // temps en negre després CRT (ms)
-const grainDensity = 0.00014;
+/*
+  Glitch realista i imprevisible integrat:
+  - Genera moviments RGB aleatoris
+  - Clipping aleatori (franges)
+  - Bars i scanlines amb intensitat variable
+  - Durada controlada; s'atura abans de l'apagada CRT
+*/
 
-/* Elements */
 const splash = document.getElementById('splash');
 const logo = document.getElementById('logo');
-const gR = document.getElementById('gR');
-const gG = document.getElementById('gG');
-const gB = document.getElementById('gB');
-const canvas = document.getElementById('glitchCanvas');
+const glitchLayers = Array.from(document.querySelectorAll('.glitch'));
+const bars = document.getElementById('bars');
 const scanlines = document.getElementById('scanlines');
 const crtOff = document.getElementById('crt-off');
-const crtTop = document.getElementById('crt-top');
-const crtBottom = document.getElementById('crt-bottom');
+const crtLine = document.getElementById('crt-line');
 const main = document.getElementById('main');
 
-let ctx, W, H;
-let running = false;
-let timers = [];
+let glitchActive = false;
+let glitchTimer = null;
 
-/* utilitats */
-const rand = (a,b)=> a + Math.random()*(b-a);
-const rint = (a,b)=> Math.floor(rand(a,b));
-
-/* canvas setup */
-function setupCanvas(){
-  const dpr = devicePixelRatio || 1;
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
-  canvas.style.width = window.innerWidth + 'px';
-  canvas.style.height = window.innerHeight + 'px';
-  ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  W = window.innerWidth;
-  H = window.innerHeight;
+// calcula alçada del logo per fer clip-path correctes
+function getLogoHeight(){
+  const rect = logo.getBoundingClientRect();
+  return Math.max( Math.round(rect.height), 200 );
 }
 
-/* pinta franges horitzontals de colors, smear i grain (sense quadrats) */
-function paintGlitch(intensity=1){
-  if(!ctx) return;
-  ctx.clearRect(0,0,W,H);
+// genera un pas de glitch aleatori
+function doGlitchStep(){
+  if(!glitchActive) return;
 
-  // grain
-  const grainCount = Math.floor(W * H * grainDensity * intensity);
-  for(let i=0;i<grainCount;i++){
-    const x = Math.random()*W;
-    const y = Math.random()*H;
-    const a = Math.random()*0.12*intensity;
-    ctx.fillStyle = `rgba(255,255,255,${a})`;
-    ctx.fillRect(x,y,1,1);
-  }
+  const logoH = getLogoHeight();
+  glitchLayers.forEach((layer, idx) => {
+    // probabilitat d'aparició
+    layer.style.opacity = Math.random() > 0.35 ? (0.6 + Math.random()*0.4) : 0;
+    // moviment aleatori (RGB split)
+    const rx = (Math.random() - 0.5) * (20 + Math.random()*80) * (idx===0 ? -1 : (idx===1 ? 1 : 0.2));
+    const ry = (Math.random() - 0.5) * (10 + Math.random()*40) * (idx===2 ? 1 : 0.6);
+    layer.style.transform = `translate(-50%,-50%) translate(${rx}px, ${ry}px)`;
 
-  // bands horitzontals de colors (com la foto)
-  const bands = rint(6, 20);
-  for(let i=0;i<bands;i++){
-    const bandH = rint(4, 36) * (1 + Math.random()*0.6);
-    const y = Math.random()*(H - bandH);
-    const cols = [
-      `rgba(255,40,40,${0.12 + Math.random()*0.25*intensity})`,
-      `rgba(255,220,40,${0.08 + Math.random()*0.2*intensity})`,
-      `rgba(40,255,180,${0.08 + Math.random()*0.2*intensity})`,
-      `rgba(120,80,255,${0.06 + Math.random()*0.18*intensity})`,
-      `rgba(255,80,200,${0.06 + Math.random()*0.18*intensity})`
-    ];
-    const col = cols[rint(0, cols.length-1)];
-    const g = ctx.createLinearGradient(0, y, W, y + bandH);
-    g.addColorStop(0, col);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, y, W, bandH);
-
-    // smear horitzontal suau per evitar píxels quadrats
-    const smear = rint(-40, 40) * intensity;
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = `rgba(255,255,255,${0.01 * intensity})`;
-    ctx.fillRect(Math.max(0, smear), y, Math.abs(smear), bandH);
-    ctx.globalCompositeOperation = 'source-over';
-  }
-
-  // petites taques de color suaus (no quadrats)
-  if(Math.random() > 0.6){
-    const wRect = rint(40, W*0.45);
-    const hRect = rint(20, H*0.22);
-    const xRect = Math.random()*(W - wRect);
-    const yRect = Math.random()*(H - hRect);
-    ctx.fillStyle = `rgba(${rint(60,255)},${rint(60,255)},${rint(60,255)},${0.02 + Math.random()*0.06*intensity})`;
-    ctx.fillRect(xRect, yRect, wRect, hRect);
-  }
-}
-
-/* distorsió global suau (tota la splash) */
-function applyGlobalDistortion(intensity=1){
-  const tx = (Math.random()-0.5) * (4 + Math.random()*28) * intensity;
-  const ty = (Math.random()-0.5) * (3 + Math.random()*18) * intensity;
-  const rot = (Math.random()-0.5) * 0.5 * intensity;
-  splash.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
-  const blur = Math.random() > 0.75 ? (0.2 + Math.random()*1.0) * intensity : 0;
-  const hue = (Math.random()-0.5) * 18 * intensity;
-  document.body.style.filter = `hue-rotate(${hue}deg) blur(${blur}px)`;
-}
-
-/* reset */
-function resetGlobal(){
-  splash.style.transform = '';
-  document.body.style.filter = '';
-  [gR,gG,gB].forEach(g=>{
-    g.style.transform = 'translate(-50%,-50%)';
-    g.style.opacity = 0;
-    g.style.clipPath = 'inset(0 0 0 0)';
+    // clip: tallar una franja aleatòria del logo
+    const top = Math.floor(Math.random() * (logoH * 0.8));
+    const height = Math.floor(20 + Math.random() * (logoH * 0.4));
+    const bottom = Math.max(0, logoH - (top + height));
+    layer.style.clipPath = `inset(${top}px 0px ${bottom}px 0px)`;
   });
+
+  // bars i scanlines variabilitat
+  bars.style.opacity = Math.random() > 0.6 ? (0.25 + Math.random()*0.35) : (Math.random()*0.08);
+  bars.style.transform = `translateY(${(Math.random()-0.5) * 60}px)`;
+
+  scanlines.style.opacity = Math.random() > 0.5 ? (0.15 + Math.random()*0.35) : (Math.random()*0.04);
+  scanlines.style.transform = `translateY(${(Math.random()-0.5) * 20}px)`;
+
+  // interval aleatori per la següent iteració
+  const next = 30 + Math.random() * 160;
+  glitchTimer = setTimeout(doGlitchStep, next);
 }
 
-/* RGB split suau per logo */
-function applyRgbLogo(intensity=1){
-  const rxR = (Math.random()-0.5) * (4 + Math.random()*28) * -1 * intensity;
-  const rxG = (Math.random()-0.5) * (4 + Math.random()*28) * 1 * intensity;
-  const rxB = (Math.random()-0.5) * (2 + Math.random()*12) * 0.4 * intensity;
-  const ry = (Math.random()-0.5) * (1 + Math.random()*8) * intensity;
-  gR.style.transform = `translate(-50%,-50%) translate(${rxR}px, ${ry}px)`;
-  gG.style.transform = `translate(-50%,-50%) translate(${rxG}px, ${ry}px)`;
-  gB.style.transform = `translate(-50%,-50%) translate(${rxB}px, ${ry}px)`;
-  gR.style.opacity = 0.55 * intensity;
-  gG.style.opacity = 0.55 * intensity;
-  gB.style.opacity = 0.4 * intensity;
-  // clip suau per donar sensació de franja al logo
-  const logoH = Math.max(logo.getBoundingClientRect().height, 200);
-  const top = rint(0, logoH*0.6);
-  const height = rint(6, logoH*0.45);
-  const bottom = Math.max(0, logoH - (top + height));
-  [gR,gG,gB].forEach(g => g.style.clipPath = `inset(${top}px 0px ${bottom}px 0px)`);
+// inicia el glitch
+function startGlitch(){
+  if(glitchActive) return;
+  glitchActive = true;
+  // assegura que les capes tinguin la mateixa mida que el logo
+  glitchLayers.forEach(l => {
+    l.style.width = logo.getBoundingClientRect().width + 'px';
+  });
+  // arrenca passos
+  doGlitchStep();
 }
 
-/* un burst de glitch */
-function glitchBurst(intensity=1){
-  canvas.style.opacity = 1;
-  paintGlitch(0.6 + Math.random()*0.9 * intensity);
-  applyGlobalDistortion(0.6 + Math.random()*1.2 * intensity);
-  applyRgbLogo(0.6 + Math.random()*1.0 * intensity);
-  scanlines.style.opacity = 0.06 + Math.random()*0.4 * intensity;
-
-  const dur = rint(60, 260);
-  const t = setTimeout(()=>{
-    canvas.style.opacity = 0;
-    scanlines.style.opacity = 0;
-    resetGlobal();
-  }, dur);
-  timers.push(t);
-}
-
-/* loop imprevisible */
-function startGlitchLoop(totalDuration=1600){
-  if(running) return;
-  running = true;
-  const end = performance.now() + totalDuration;
-  function step(){
-    if(!running) return;
-    const group = rint(1,4);
-    for(let i=0;i<group;i++){
-      setTimeout(()=> glitchBurst(0.7 + Math.random()*1.3), rint(0, 180));
-    }
-    const next = rint(40, 260);
-    if(performance.now() < end){
-      timers.push(setTimeout(step, next));
-    } else {
-      setTimeout(()=> glitchBurst(1.4), 40);
-      setTimeout(()=> stopGlitchSmooth(), 320);
-    }
-  }
-  step();
-}
-
-/* atura i neteja */
-function stopGlitchSmooth(){
-  running = false;
-  timers.forEach(t=>clearTimeout(t));
-  timers = [];
-  canvas.style.opacity = 0;
+// atura el glitch i neteja estats visuals
+function stopGlitch(){
+  glitchActive = false;
+  if(glitchTimer) { clearTimeout(glitchTimer); glitchTimer = null; }
+  // suavitzar a zero
+  glitchLayers.forEach(l => {
+    l.style.transition = 'transform 180ms linear, opacity 180ms linear, clip-path 180ms linear';
+    l.style.opacity = 0;
+    l.style.transform = 'translate(-50%,-50%) translate(0,0)';
+    l.style.clipPath = 'inset(0px 0px 0px 0px)';
+  });
+  bars.style.transition = 'opacity 180ms linear, transform 180ms linear';
+  bars.style.opacity = 0;
+  bars.style.transform = 'translateY(0px)';
+  scanlines.style.transition = 'opacity 180ms linear, transform 180ms linear';
   scanlines.style.opacity = 0;
-  resetGlobal();
+  scanlines.style.transform = 'translateY(0px)';
 }
 
-/* CRT realista: top/bottom venen de fora i es troben al centre, es contrauen a línia */
-function playCrtAndReveal(){
-  crtOff.style.display = 'block';
-  // posicions inicials fora de pantalla
-  crtTop.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), height 220ms ease';
-  crtBottom.style.transition = 'transform 520ms cubic-bezier(.2,.9,.2,1), height 220ms ease';
-  crtTop.style.transform = 'translateY(-120vh)';
-  crtBottom.style.transform = 'translateY(120vh)';
+/* Flux principal:
+   1) Espera fade-in logo
+   2) Inicia glitch imprevisible durant X ms
+   3) Atura glitch, mostra CRT-off (fons negre + línia que es tanca)
+   4) Espera 0.5s en negre
+   5) Fade-in llarg cap al main
+*/
+const initialDelay = 1500; // fade-in logo + pausa
+const glitchDuration = 1200; // quant dura el glitch abans de CRT (ms)
+const blackPause = 500; // temps en negre després CRT (ms)
 
-  // animem cap al centre (no apareixen directament al centre)
-  requestAnimationFrame(()=>{
-    crtTop.style.transform = 'translateY(0)';
-    crtBottom.style.transform = 'translateY(0)';
-  });
+setTimeout(() => {
+  // arrenca glitch
+  startGlitch();
 
-  // quan arribin, expandim i després contraiem a línia fina
-  setTimeout(()=>{
-    crtTop.style.height = '50vh';
-    crtBottom.style.height = '50vh';
-    setTimeout(()=>{
-      crtTop.style.height = '3px';
-      crtBottom.style.height = '3px';
-    }, 220);
-  }, 520);
+  // també mostrem bars/scanlines amb petites transicions
+  bars.style.opacity = 0.18;
+  scanlines.style.opacity = 0.06;
 
-  // després de la contracció, mantenim negre i revelem main
-  setTimeout(()=>{
-    setTimeout(()=>{
-      crtOff.style.display = 'none';
-      main.style.display = 'block';
-      requestAnimationFrame(()=>{
-        main.style.opacity = '1';
-        document.body.style.overflow = 'auto';
-        main.removeAttribute('aria-hidden');
-        splash.setAttribute('aria-hidden','true');
-      });
-    }, blackPause);
-  }, 520 + 220 + 60);
-}
+  // atura el glitch després de glitchDuration
+  setTimeout(() => {
+    stopGlitch();
 
-/* resize */
-function resizeAll(){
-  setupCanvas();
-  paintGlitch(0.2);
-  const lw = logo.getBoundingClientRect().width;
-  [gR,gG,gB].forEach(g => g.style.width = lw + 'px');
-}
-window.addEventListener('resize', resizeAll);
-resizeAll();
-
-/* flux principal */
-setTimeout(()=>{
-  startGlitchLoop(glitchDuration);
-  scanlines.style.opacity = 0.05;
-
-  setTimeout(()=>{
-    stopGlitchSmooth();
-    setTimeout(()=>{
+    // petita latència per assegurar transicions visuals
+    setTimeout(() => {
+      // ocultem splash i mostrem la capa CRT negra amb la línia
       splash.style.display = 'none';
-      playCrtAndReveal();
-    }, 90);
+      crtOff.style.display = 'flex';
+
+      // quan acabi l'animació de la línia (crtLine), fem la pausa negra i el fade-in
+      crtLine.addEventListener('animationend', () => {
+        // mantenim la pantalla negra durant blackPause
+        setTimeout(() => {
+          // ocultem la capa negra i mostrem el main amb fade-in llarg
+          crtOff.style.display = 'none';
+          main.style.display = 'block';
+          // assegurem repaint abans d'iniciar la transició
+          requestAnimationFrame(() => {
+            main.style.opacity = '1';
+            // permetre scroll si cal
+            document.body.style.overflow = 'auto';
+            main.removeAttribute('aria-hidden');
+          });
+        }, blackPause);
+      }, { once: true });
+
+    }, 80);
+
   }, glitchDuration);
 
 }, initialDelay);
 
-/* neteja */
-window.addEventListener('beforeunload', ()=> stopGlitchSmooth());
+// Assegura que si la finestra canvia mida, les capes glitch s'ajustin
+window.addEventListener('resize', () => {
+  glitchLayers.forEach(l => {
+    l.style.width = logo.getBoundingClientRect().width + 'px';
+  });
+});
 </script>
 </body>
 </html>
+
