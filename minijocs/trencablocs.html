@@ -4,10 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Breakout · LAG</title>
+<link rel="icon" href="assets/favicon.png" type="image/png" />
 <style>
-/* ====== Barra superior (copiada del serp.html) ====== */
+/* Copiat literal de la barra superior de serp.html */
 body { margin: 0; padding: 0; background-color: #002244; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color: #FAFAF9; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-* { box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 nav { background-color: rgba(0, 0, 0, 0.7); position: sticky; top: 0; width: 100%; z-index: 100; padding: 1rem 2rem; }
 nav ul { list-style: none; display: flex; justify-content: space-between; align-items: center; }
 nav li.logo { display: flex; align-items: center; }
@@ -17,9 +18,9 @@ nav li.enllacos { display: flex; gap: 2rem; }
 nav a { color: white; text-decoration: none; font-weight: bold; transition: color 0.3s; }
 nav a:hover { color: #ffff66; }
 .enllac-inici { position: absolute; top: 20px; left: 20px; font-size: 20px; color: #FF2056; text-decoration: underline; font-weight: bold; z-index: 1000; }
-
-/* ====== Contenidor i canvas ====== */
 :root { --wrap-w:400px; }
+
+/* Estils del joc i menús */
 main { width: var(--wrap-w); max-width: 96%; margin-top: 10px; }
 h1 { margin: 6px 0 8px 0; font-size: 18px; }
 #gameWrap { position: relative; width: var(--wrap-w); }
@@ -29,55 +30,15 @@ canvas { display: block; width: 100%; height: auto; background: #111; border: 2p
 .lives span { display:inline-block; width:10px; height:10px; border-radius:50%; background:#fff; }
 #score { font-weight:700; }
 
-/* ====== Menús (overlays) ====== */
-.overlay {
-  position: absolute;
-  inset: 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(0,0,0,0.6);
-  z-index: 50;
-  gap: 12px;
-  flex-direction: column;
-  padding: 16px;
-}
-.menu {
-  background: linear-gradient(180deg,#0f1720,#071018);
-  border: 1px solid rgba(255,255,255,0.06);
-  padding: 18px 22px;
-  border-radius: 10px;
-  text-align:center;
-  width: 92%;
-  max-width: 360px;
-  color: #fff;
-}
-.menu h2 { margin: 0 0 8px 0; font-size: 20px; }
-.menu p { margin: 6px 0 12px 0; color: #9aa7b2; }
-.btn {
-  display:inline-block;
-  background:#FFDF20;
-  color:#111;
-  border:0;
-  padding:10px 14px;
-  border-radius:8px;
-  font-weight:700;
-  cursor:pointer;
-  margin:6px;
-}
-.small-btn {
-  background:transparent;
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.08);
-  padding:8px 10px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-/* ocults per defecte */
+/* Menús overlay */
+.overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.6); z-index:50; gap:12px; flex-direction:column; padding:16px; }
+.menu { background: linear-gradient(180deg,#0f1720,#071018); border:1px solid rgba(255,255,255,0.06); padding:18px 22px; border-radius:10px; text-align:center; width:92%; max-width:360px; color:#fff; }
+.menu h2 { margin:0 0 8px 0; font-size:20px; }
+.menu p { margin:6px 0 12px 0; color:#9aa7b2; }
+.btn { display:inline-block; background:#FFDF20; color:#111; border:0; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; margin:6px; }
+.small-btn { background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.08); padding:8px 10px; border-radius:8px; cursor:pointer; }
 .hidden { display:none; }
 
-/* petits ajustos responsius */
 @media (max-width:420px){
   nav { padding: 0.6rem 1rem; }
   nav li.logo img { height: 44px; }
@@ -87,7 +48,7 @@ canvas { display: block; width: 100%; height: auto; background: #111; border: 2p
 </head>
 <body>
 
-<!-- Barra superior exacta -->
+<!-- Barra superior copiada literalment -->
 <nav>
   <ul>
     <li class="logo">
@@ -115,14 +76,13 @@ canvas { display: block; width: 100%; height: auto; background: #111; border: 2p
       <div id="score">Puntuació: 0</div>
     </div>
 
-    <!-- Menú d'inici -->
+    <!-- Menú d'inici (s'ha eliminat el botó "Tornar a la web") -->
     <div id="startMenu" class="overlay">
       <div class="menu">
         <h2>Breakout</h2>
         <p>Prem <strong>Iniciar</strong> per començar. Mou la pala amb <strong>← →</strong> i llança la bola amb <strong>↑</strong>.</p>
         <div>
           <button id="startBtn" class="btn">Iniciar</button>
-          <button id="startToSite" class="small-btn">Tornar a la web</button>
         </div>
       </div>
     </div>
@@ -155,16 +115,14 @@ canvas { display: block; width: 100%; height: auto; background: #111; border: 2p
 </main>
 
 <script>
-/* ====== Joc Breakout amb menús ====== */
+/* Joc Breakout amb menús (start button únic, pausa amb ESC, game over) */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
 
-/* Pala i bola */
 const paddle = { width: 90, height: 12, x: (W-90)/2, speed: 7 };
 const ball = { r: 7, x: W/2, y: H-30, dx: 3, dy: -3, launched: false };
 
-/* Bricks */
 const brickCols = 8, brickPad = 6, brickOffsetLeft = 12, brickOffsetRightMargin = 8, brickOffsetTop = 36;
 const BRICK_ROWS_INIT = 5;
 const availableWidth = W - brickOffsetLeft - brickOffsetRightMargin;
@@ -176,10 +134,9 @@ const adjustedOffsetLeft = brickOffsetLeft + Math.floor(extraSpace / 2);
 
 let bricks = [], score = 0, lives = 3;
 let leftPressed = false, rightPressed = false;
-let gamePaused = true; // comencem en menú d'inici (pausat)
-let inGame = false; // indica si estem jugant (per evitar reactivar sense iniciar)
+let gamePaused = true;
+let inGame = false;
 
-/* Elements UI */
 const startMenu = document.getElementById('startMenu');
 const pauseMenu = document.getElementById('pauseMenu');
 const gameOverMenu = document.getElementById('gameOverMenu');
@@ -202,7 +159,6 @@ function initBricks(rows = BRICK_ROWS_INIT){
   }
 }
 
-/* utilitats */
 function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 function circleRectCollision(cx,cy,cr,rx,ry,rw,rh){
   const closestX = clamp(cx, rx, rx+rw);
@@ -220,14 +176,12 @@ function reflectBallFromRect(prevX,prevY,rx,ry,rw,rh){
   else { if(Math.abs(ball.dx) > Math.abs(ball.dy)) ball.dx = -ball.dx; else ball.dy = -ball.dy; }
 }
 
-/* HUD */
 function updateHUD(){
   document.getElementById('score').textContent = 'Puntuació: ' + score;
   const livesDiv = document.getElementById('lives'); livesDiv.innerHTML = '';
   for(let i=0;i<lives;i++){ const s = document.createElement('span'); livesDiv.appendChild(s); }
 }
 
-/* reset */
 function resetBallAndPaddle(){
   paddle.x = (W - paddle.width) / 2;
   ball.x = paddle.x + paddle.width / 2;
@@ -237,7 +191,6 @@ function resetBallAndPaddle(){
   ball.launched = false;
 }
 
-/* Menús: mostrar/ocultar */
 function showStartMenu(){
   gamePaused = true;
   inGame = false;
@@ -255,7 +208,6 @@ function startGame(){
   gameOverMenu.classList.add('hidden');
   gamePaused = false;
   inGame = true;
-  // no llancem la bola automàticament; l'usuari ha de prémer ArrowUp
 }
 function showPauseMenu(){
   if(!inGame) return;
@@ -274,7 +226,6 @@ function showGameOver(){
   gameOverMenu.classList.remove('hidden');
 }
 
-/* Controls */
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') leftPressed = true;
   if (e.key === 'ArrowRight') rightPressed = true;
@@ -286,7 +237,6 @@ document.addEventListener('keydown', (e) => {
     }
   }
   if (e.key === 'Escape') {
-    // toggle pausa si estem jugant
     if (!inGame) return;
     if (!gamePaused) showPauseMenu();
     else hidePauseMenu();
@@ -297,13 +247,11 @@ document.addEventListener('keyup', (e) => {
   if (e.key === 'ArrowRight') rightPressed = false;
 });
 
-/* Botons UI */
 startBtn.addEventListener('click', () => startGame());
 resumeBtn.addEventListener('click', () => hidePauseMenu());
 toMainFromPause.addEventListener('click', () => showStartMenu());
 goToMenuBtn.addEventListener('click', () => showStartMenu());
 
-/* Dibuix */
 function roundRect(ctx,x,y,w,h,r,fill,stroke){
   ctx.beginPath();
   ctx.moveTo(x+r,y);
@@ -317,7 +265,6 @@ function roundRect(ctx,x,y,w,h,r,fill,stroke){
 }
 function draw(){
   ctx.clearRect(0,0,W,H);
-  // blocs
   for(let r=0;r<bricks.length;r++){
     for(let c=0;c<brickCols;c++){
       const b = bricks[r][c];
@@ -331,18 +278,15 @@ function draw(){
       }
     }
   }
-  // bola
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
   ctx.fillStyle = '#fff';
   ctx.fill();
   ctx.closePath();
-  // pala
   ctx.fillStyle = '#fff';
   ctx.fillRect(paddle.x, H - paddle.height - 8, paddle.width, paddle.height);
 }
 
-/* Col·lisions */
 function allBricksCleared(){
   for(let r=0;r<bricks.length;r++) for(let c=0;c<brickCols;c++) if(bricks[r][c] && bricks[r][c].status === 1) return false;
   return true;
@@ -359,12 +303,11 @@ function checkBrickCollisions(prevX, prevY){
         b.status = 0;
         score++;
         updateHUD();
-        // limit de velocitat
         const MAX_SPEED = 5.2;
         ball.dx = clamp(ball.dx, -MAX_SPEED, MAX_SPEED);
         ball.dy = clamp(ball.dy, -MAX_SPEED, MAX_SPEED);
         if(allBricksCleared()){
-          initBricks(BRICK_ROWS_INIT); // reinici complet
+          initBricks(BRICK_ROWS_INIT);
         }
         return;
       }
@@ -372,11 +315,8 @@ function checkBrickCollisions(prevX, prevY){
   }
 }
 
-/* Bucle principal */
 function update(){
-  // Si estem en menú d'inici o pausa o gameover, no actualitzem la física
   if (!gamePaused) {
-    // Mou la pala
     if(rightPressed && paddle.x < W - paddle.width) paddle.x += paddle.speed;
     if(leftPressed && paddle.x > 0) paddle.x -= paddle.speed;
 
@@ -385,17 +325,14 @@ function update(){
       ball.x += ball.dx;
       ball.y += ball.dy;
     } else {
-      // si no està llançada, segueix la pala
       ball.x = paddle.x + paddle.width / 2;
       ball.y = H - paddle.height - 8 - ball.r;
     }
 
-    // parets
     if(ball.x + ball.r > W){ ball.x = W - ball.r; ball.dx = -Math.abs(ball.dx); }
     else if(ball.x - ball.r < 0){ ball.x = ball.r; ball.dx = Math.abs(ball.dx); }
     if(ball.y - ball.r < 0){ ball.y = ball.r; ball.dy = Math.abs(ball.dy); }
 
-    // pala
     const paddleY = H - paddle.height - 8;
     if(circleRectCollision(ball.x, ball.y, ball.r, paddle.x, paddleY, paddle.width, paddle.height)){
       const hitPos = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
@@ -412,24 +349,27 @@ function update(){
       }
     }
 
-    // col·lisions amb blocs
     checkBrickCollisions(prevX, prevY);
   }
 
-  // dibuix sempre (perquè el menú es veu sobre el canvas)
   draw();
   requestAnimationFrame(update);
 }
 
-/* Inici */
+/* Inicialització */
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function circleRectCollision(cx,cy,cr,rx,ry,rw,rh){ const closestX = clamp(cx, rx, rx+rw); const closestY = clamp(cy, ry, ry+rh); const dx = cx - closestX, dy = cy - closestY; return (dx*dx + dy*dy) <= (cr*cr); }
+function reflectBallFromRect(prevX,prevY,rx,ry,rw,rh){ const fromLeft = prevX <= rx; const fromRight = prevX >= rx + rw; const fromTop = prevY <= ry; const fromBottom = prevY >= ry + rh; if((fromLeft && !fromTop && !fromBottom) || (fromRight && !fromTop && !fromBottom)) ball.dx = -ball.dx; else if((fromTop && !fromLeft && !fromRight) || (fromBottom && !fromLeft && !fromRight)) ball.dy = -ball.dy; else { if(Math.abs(ball.dx) > Math.abs(ball.dy)) ball.dx = -ball.dx; else ball.dy = -ball.dy; } }
+
 initBricks(BRICK_ROWS_INIT);
 updateHUD();
 resetBallAndPaddle();
-showStartMenu(); // comencem al menú d'inici
+showStartMenu();
 update();
 </script>
 </body>
 </html>
+
 
 
 
