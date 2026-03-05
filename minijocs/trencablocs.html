@@ -4,208 +4,299 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Minijocs · Breakout</title>
-<link rel="icon" href="assets/favicon.png" type="image/png" />
 <style>
-/* Estils pres del teu serp.html per fer la pàgina idèntica */
-body { margin:0;padding:0;background-color:#002244;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:#FAFAF9;display:flex;flex-direction:column;align-items:center;gap:8px; }
-*{box-sizing:border-box}
-nav{background:rgba(0,0,0,0.7);position:sticky;top:0;width:100%;z-index:100;padding:1rem 2rem}
-nav ul{list-style:none;display:flex;justify-content:space-between;align-items:center}
-nav li.logo{display:flex;align-items:center}
-nav li.logo a{display:flex;align-items:center;text-decoration:none}
-nav li.logo img{height:60px;margin-right:0.5rem;vertical-align:middle}
-nav li.enllacos{display:flex;gap:2rem}
-nav a{color:white;text-decoration:none;font-weight:bold;transition:color .3s}
-nav a:hover{color:#ffff66}
-.enllac-inici{position:absolute;top:20px;left:20px;font-size:20px;color:#FF2056;text-decoration:underline;font-weight:bold;z-index:1000}
-:root{--wrap-w:400px}
-h1{margin:0;font-size:20px;padding:6px 0}
-#gameWrap{position:relative;width:var(--wrap-w)}
-canvas{width:100%;height:auto;display:block;background:#222;border:2px solid #555}
-#score{color:white;font-size:14px;margin:6px 0 0 0}
-.canvas-button{position:absolute;background:#FFDF20;color:#FB2C36;border:1px solid #888;padding:8px 12px;font-size:14px;cursor:pointer;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.25);user-select:none;z-index:20;transform:translateX(-50%);white-space:nowrap}
-.hidden{display:none}
+  /* Estils adaptats per ser idèntics a serp.html però amb la barra superior una mica més estreta */
+  :root{--wrap-w:400px}
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    background:#002244;
+    color:#FAFAF9;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    min-height:100vh;
+  }
 
-/* Ajust per evitar solapament de lletres a la part superior */
-header-space { height: 8px; }
-#hudTop { position: relative; margin-top: 6px; display:flex; justify-content:space-between; align-items:center; width:100%; padding:0 6px; }
-.lives { display:flex; gap:6px; align-items:center; }
-.lives span{display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff}
+  /* Barra superior més estreta (padding vertical reduït) */
+  nav{
+    width:100%;
+    background:rgba(0,0,0,0.7);
+    padding:8px 16px; /* menys padding vertical que abans */
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  nav .logo{display:flex;align-items:center;gap:8px}
+  nav .logo img{height:44px;display:block} /* logo una mica més petit verticalment */
+  nav .links{display:flex;gap:14px;align-items:center}
+  nav a{color:#fff;text-decoration:none;font-weight:700;font-size:14px}
+  nav a:hover{color:#ffff66}
+
+  h1{margin:6px 0 0 0;font-size:18px}
+
+  #gameWrap{width:var(--wrap-w); position:relative}
+  canvas{display:block;width:100%;height:auto;background:#111;border:2px solid #333;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+  #hudTop{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:0 4px}
+  .lives{display:flex;gap:6px}
+  .lives span{display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff}
+  #score{font-weight:700}
+
+  /* Botons (opcions) */
+  .canvas-button{position:absolute;left:50%;transform:translateX(-50%);top:50%;translate:0;z-index:20;background:#FFDF20;color:#111;padding:8px 12px;border-radius:6px;border:0;cursor:pointer;font-weight:700}
+  .hidden{display:none}
 </style>
 </head>
 <body>
-<nav>
-  <ul>
-    <li class="logo"><a href="https://lagg.netlify.app"><img src="assets/logo.png" alt="Logo GLS"></a></li>
-    <li class="enllacos">
-      <a href="https://lagg.netlify.app">Inici</a>
-      <a href="https://lagg.netlify.app/minijocs/">Minijocs</a>
-      <a href="https://lagg.netlify.app/minecraft/">Minecraft</a>
-      <a href="https://lagg.netlify.app/contacte">Contactar</a>
-    </li>
-  </ul>
-</nav>
+  <nav>
+    <div class="logo">
+      <!-- Si tens logo, posa la ruta correcta a l'img -->
+      <img src="assets/logo.png" alt="Logo" />
+      <div style="font-weight:800">LAG · Minijocs</div>
+    </div>
+    <div class="links">
+      <a href="#">Inici</a>
+      <a href="#">Minijocs</a>
+      <a href="#">Contacte</a>
+    </div>
+  </nav>
 
-<h1>🕹️ Breakout</h1>
+  <h1>🕹️ Breakout</h1>
 
-<div id="gameWrap">
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
-  <div id="hudTop">
-    <div class="lives" id="lives"></div>
-    <div id="score">Puntuació: 0</div>
+  <div id="gameWrap">
+    <!-- Canvas amb amplada fixa igual que a serp.html -->
+    <canvas id="gameCanvas" width="400" height="400" aria-label="Canvas del joc"></canvas>
+
+    <div id="hudTop">
+      <div class="lives" id="lives"></div>
+      <div id="score">Puntuació: 0</div>
+    </div>
+
+    <button id="startButton" class="canvas-button hidden">▶ Jugar</button>
   </div>
-  <button id="startButton" class="canvas-button hidden" aria-label="Jugar">▶ Jugar</button>
-  <button id="gameOverReset" class="canvas-button hidden" aria-label="Reiniciar">🔁 Reiniciar</button>
-</div>
 
 <script>
-/* Joc Breakout integrat */
+/* ====== Config ====== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const INTERNAL_W = canvas.width, INTERNAL_H = canvas.height;
+const W = canvas.width;
+const H = canvas.height;
 
-const paddle = { width: 90, height: 12, x: (INTERNAL_W-90)/2, speed:7 };
-const ball = { r:7, x: INTERNAL_W/2, y: INTERNAL_H-30, dx:3, dy:-3, launched:false };
+/* Pala i bola */
+const paddle = { width: 90, height: 12, x: (W-90)/2, speed: 7 };
+const ball = { r: 7, x: W/2, y: H-30, dx: 3, dy: -3, launched: false };
+
+/* Bricks: fem càlcul dinàmic per evitar tallats a la dreta */
+const brickCols = 8;
+const brickPad = 6;
+const brickOffsetLeft = 12;
+const brickOffsetTop = 36;
 const BRICK_ROWS_INIT = 5;
-const brickCols = 8, brickW = 44, brickH = 16, brickPad = 6, brickOffsetLeft = 12, brickOffsetTop = 36;
-let bricks = [];
-let score = 0, lives = 3;
-let leftPressed=false, rightPressed=false;
 
-function initBricks(rows=BRICK_ROWS_INIT){
+/* Calculem amplada de bloc perquè tot entri just dins el canvas */
+const availableWidth = W - brickOffsetLeft - 8 /* marge dret petit */;
+const brickW = Math.floor((availableWidth - (brickCols - 1) * brickPad) / brickCols);
+const brickH = 16;
+
+let bricks = [];
+let score = 0;
+let lives = 3;
+let leftPressed = false;
+let rightPressed = false;
+
+/* ====== Inicialització de blocs ====== */
+function initBricks(rows = BRICK_ROWS_INIT){
   bricks = [];
   const colors = ['#3fa9f5','#ff4b4b','#ffd93b','#4caf50','#9c27b0','#00bcd4'];
   for(let r=0;r<rows;r++){
-    const row=[];
-    for(let c=0;c<brickCols;c++) row.push({status:1,color:colors[r%colors.length]});
+    const row = [];
+    for(let c=0;c<brickCols;c++){
+      row.push({ status: 1, color: colors[r % colors.length] });
+    }
     bricks.push(row);
   }
 }
 initBricks();
 
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+/* ====== Utilitats ====== */
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 function circleRectCollision(cx,cy,cr,rx,ry,rw,rh){
   const closestX = clamp(cx, rx, rx+rw);
   const closestY = clamp(cy, ry, ry+rh);
-  const dx = cx-closestX, dy = cy-closestY;
-  return (dx*dx+dy*dy) <= (cr*cr);
+  const dx = cx - closestX, dy = cy - closestY;
+  return (dx*dx + dy*dy) <= (cr*cr);
 }
 function reflectBallFromRect(prevX,prevY,rx,ry,rw,rh){
   const fromLeft = prevX <= rx;
-  const fromRight = prevX >= rx+rw;
+  const fromRight = prevX >= rx + rw;
   const fromTop = prevY <= ry;
-  const fromBottom = prevY >= ry+rh;
+  const fromBottom = prevY >= ry + rh;
   if((fromLeft && !fromTop && !fromBottom) || (fromRight && !fromTop && !fromBottom)) ball.dx = -ball.dx;
   else if((fromTop && !fromLeft && !fromRight) || (fromBottom && !fromLeft && !fromRight)) ball.dy = -ball.dy;
   else { if(Math.abs(ball.dx) > Math.abs(ball.dy)) ball.dx = -ball.dx; else ball.dy = -ball.dy; }
 }
 
+/* ====== HUD ====== */
 function updateHUD(){
   document.getElementById('score').textContent = 'Puntuació: ' + score;
-  const livesDiv = document.getElementById('lives'); livesDiv.innerHTML='';
-  for(let i=0;i<lives;i++){ const s=document.createElement('span'); livesDiv.appendChild(s); }
+  const livesDiv = document.getElementById('lives'); livesDiv.innerHTML = '';
+  for(let i=0;i<lives;i++){ const s = document.createElement('span'); livesDiv.appendChild(s); }
 }
 updateHUD();
 
+/* ====== Reset bola i pala (bola sobre pala) ====== */
 function resetBallAndPaddle(){
-  paddle.x = (INTERNAL_W - paddle.width)/2;
-  ball.x = paddle.x + paddle.width/2;
-  ball.y = INTERNAL_H - paddle.height - 8 - ball.r;
-  ball.dx = 3 * (Math.random()>0.5?1:-1);
+  paddle.x = (W - paddle.width) / 2;
+  ball.x = paddle.x + paddle.width / 2;
+  ball.y = H - paddle.height - 8 - ball.r;
+  ball.dx = 3 * (Math.random() > 0.5 ? 1 : -1);
   ball.dy = -3;
   ball.launched = false;
 }
 resetBallAndPaddle();
 
-document.addEventListener('keydown', e=>{
-  if(e.key==='ArrowLeft') leftPressed=true;
-  if(e.key==='ArrowRight') rightPressed=true;
-  if(e.key==='ArrowUp'){ if(!ball.launched){ ball.launched=true; ball.dy = -Math.abs(ball.dy)||-3; ball.dx = (Math.random()>0.5?1:-1)*(Math.abs(ball.dx)||3); } }
+/* ====== Controls ====== */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') leftPressed = true;
+  if (e.key === 'ArrowRight') rightPressed = true;
+  if (e.key === 'ArrowUp') {
+    if (!ball.launched) {
+      ball.launched = true;
+      ball.dy = -Math.abs(ball.dy) || -3;
+      ball.dx = (Math.random() > 0.5 ? 1 : -1) * (Math.abs(ball.dx) || 3);
+    }
+  }
 });
-document.addEventListener('keyup', e=>{
-  if(e.key==='ArrowLeft') leftPressed=false;
-  if(e.key==='ArrowRight') rightPressed=false;
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'ArrowLeft') leftPressed = false;
+  if (e.key === 'ArrowRight') rightPressed = false;
 });
 
+/* ====== Dibuix ====== */
+function roundRect(ctx,x,y,w,h,r,fill,stroke){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+  if(fill) ctx.fill();
+  if(stroke) ctx.stroke();
+}
+
 function draw(){
-  ctx.clearRect(0,0,INTERNAL_W,INTERNAL_H);
-  // bricks
+  ctx.clearRect(0,0,W,H);
+
+  // blocs
   for(let r=0;r<bricks.length;r++){
     for(let c=0;c<brickCols;c++){
       const b = bricks[r][c];
-      if(b && b.status===1){
-        const bx = c*(brickW+brickPad)+brickOffsetLeft;
-        const by = r*(brickH+brickPad)+brickOffsetTop;
+      if(b && b.status === 1){
+        const bx = c * (brickW + brickPad) + brickOffsetLeft;
+        const by = r * (brickH + brickPad) + brickOffsetTop;
         ctx.fillStyle = b.color;
-        roundRect(ctx,bx,by,brickW,brickH,4,true,false);
-        ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.strokeRect(bx,by,brickW,brickH);
+        roundRect(ctx, bx, by, brickW, brickH, 4, true, false);
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.strokeRect(bx, by, brickW, brickH);
       }
     }
   }
-  // ball
-  ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); ctx.closePath();
-  // paddle
-  ctx.fillStyle='#fff'; ctx.fillRect(paddle.x,INTERNAL_H-paddle.height-8,paddle.width,paddle.height);
+
+  // bola
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.closePath();
+
+  // pala
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(paddle.x, H - paddle.height - 8, paddle.width, paddle.height);
 }
-function roundRect(ctx,x,y,w,h,r,fill,stroke){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if(fill)ctx.fill(); if(stroke)ctx.stroke(); }
 
-function allBricksCleared(){ for(let r=0;r<bricks.length;r++) for(let c=0;c<brickCols;c++) if(bricks[r][c] && bricks[r][c].status===1) return false; return true; }
+/* ====== Col·lisions amb blocs i reinici complet quan es netegen tots ====== */
+function allBricksCleared(){
+  for(let r=0;r<bricks.length;r++) for(let c=0;c<brickCols;c++) if(bricks[r][c] && bricks[r][c].status === 1) return false;
+  return true;
+}
 
-function checkBrickCollisions(prevX,prevY){
+function checkBrickCollisions(prevX, prevY){
   for(let r=0;r<bricks.length;r++){
     for(let c=0;c<brickCols;c++){
-      const b = bricks[r][c]; if(!b||b.status!==1) continue;
-      const bx = c*(brickW+brickPad)+brickOffsetLeft;
-      const by = r*(brickH+brickPad)+brickOffsetTop;
-      if(circleRectCollision(ball.x,ball.y,ball.r,bx,by,brickW,brickH)){
-        reflectBallFromRect(prevX,prevY,bx,by,brickW,brickH);
-        b.status=0; score++; updateHUD();
-        // limit de velocitat: no augmentar més enllà d'un top
-        const MAX_SPEED = 6;
+      const b = bricks[r][c];
+      if(!b || b.status !== 1) continue;
+      const bx = c * (brickW + brickPad) + brickOffsetLeft;
+      const by = r * (brickH + brickPad) + brickOffsetTop;
+      if(circleRectCollision(ball.x, ball.y, ball.r, bx, by, brickW, brickH)){
+        reflectBallFromRect(prevX, prevY, bx, by, brickW, brickH);
+        b.status = 0;
+        score++;
+        updateHUD();
+        // limit de velocitat per evitar acceleracions excessives
+        const MAX_SPEED = 5.5;
         ball.dx = clamp(ball.dx, -MAX_SPEED, MAX_SPEED);
         ball.dy = clamp(ball.dy, -MAX_SPEED, MAX_SPEED);
+
         if(allBricksCleared()){
-          // Re-inicialitza tot el panell com a l'inici (no una sola fila)
+          // Re-inicialitza TOT el panell com a l'inici (no una sola fila)
           initBricks(BRICK_ROWS_INIT);
         }
-        return;
+        return; // només una col·lisió per frame
       }
     }
   }
 }
 
+/* ====== Bucle principal ====== */
 function update(){
-  if(!ball.launched){ ball.x = paddle.x + paddle.width/2; ball.y = INTERNAL_H - paddle.height - 8 - ball.r; }
-  if(rightPressed && paddle.x < INTERNAL_W - paddle.width) paddle.x += paddle.speed;
+  if(!ball.launched){
+    ball.x = paddle.x + paddle.width / 2;
+    ball.y = H - paddle.height - 8 - ball.r;
+  }
+
+  if(rightPressed && paddle.x < W - paddle.width) paddle.x += paddle.speed;
   if(leftPressed && paddle.x > 0) paddle.x -= paddle.speed;
 
   const prevX = ball.x, prevY = ball.y;
-  if(ball.launched){ ball.x += ball.dx; ball.y += ball.dy; }
+  if(ball.launched){
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+  }
 
-  // walls
-  if(ball.x + ball.r > INTERNAL_W){ ball.x = INTERNAL_W - ball.r; ball.dx = -Math.abs(ball.dx); }
+  // xocs amb parets
+  if(ball.x + ball.r > W){ ball.x = W - ball.r; ball.dx = -Math.abs(ball.dx); }
   else if(ball.x - ball.r < 0){ ball.x = ball.r; ball.dx = Math.abs(ball.dx); }
   if(ball.y - ball.r < 0){ ball.y = ball.r; ball.dy = Math.abs(ball.dy); }
 
-  // paddle collision
-  const paddleY = INTERNAL_H - paddle.height - 8;
-  if(circleRectCollision(ball.x,ball.y,ball.r,paddle.x,paddleY,paddle.width,paddle.height)){
-    const hitPos = (ball.x - (paddle.x + paddle.width/2)) / (paddle.width/2);
+  // xoc amb pala
+  const paddleY = H - paddle.height - 8;
+  if(circleRectCollision(ball.x, ball.y, ball.r, paddle.x, paddleY, paddle.width, paddle.height)){
+    const hitPos = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
     ball.dx = 5 * hitPos;
     ball.dy = -Math.abs(ball.dy);
     ball.y = paddleY - ball.r - 0.5;
-  } else if(ball.y + ball.r > INTERNAL_H){
-    lives--; updateHUD();
-    if(lives<=0){ setTimeout(()=>{ alert('Has perdut 😢'); location.reload(); },50); }
-    else resetBallAndPaddle();
+  } else if(ball.y + ball.r > H){
+    lives--;
+    updateHUD();
+    if(lives <= 0){
+      setTimeout(()=>{ alert('Has perdut 😢'); location.reload(); }, 50);
+    } else {
+      resetBallAndPaddle();
+    }
   }
 
-  checkBrickCollisions(prevX,prevY);
+  checkBrickCollisions(prevX, prevY);
   draw();
   requestAnimationFrame(update);
 }
+
 update();
 </script>
 </body>
 </html>
+
 
