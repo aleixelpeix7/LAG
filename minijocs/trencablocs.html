@@ -5,78 +5,83 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Minijocs · Breakout</title>
 <style>
-  /* Estils adaptats per ser idèntics a serp.html però amb la barra superior una mica més estreta */
+  /* Estils copiats/ajustats per coincidir amb serp.html (barra superior més estreta) */
   :root{--wrap-w:400px}
   *{box-sizing:border-box}
   body{
     margin:0;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
     background:#002244;
     color:#FAFAF9;
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap:8px;
     min-height:100vh;
   }
 
-  /* Barra superior més estreta (padding vertical reduït) */
+  /* Barra superior: padding vertical reduït per ser igual a serp.html */
   nav{
     width:100%;
-    background:rgba(0,0,0,0.7);
-    padding:8px 16px; /* menys padding vertical que abans */
+    background:rgba(0,0,0,0.65);
+    padding:6px 16px; /* més estreta verticalment */
     display:flex;
     align-items:center;
     justify-content:space-between;
     gap:12px;
+    border-bottom:1px solid rgba(255,255,255,0.03);
   }
-  nav .logo{display:flex;align-items:center;gap:8px}
-  nav .logo img{height:44px;display:block} /* logo una mica més petit verticalment */
-  nav .links{display:flex;gap:14px;align-items:center}
-  nav a{color:#fff;text-decoration:none;font-weight:700;font-size:14px}
-  nav a:hover{color:#ffff66}
+  .nav-left{display:flex;align-items:center;gap:10px}
+  .nav-left img{height:44px;display:block} /* mida logo igualada */
+  .nav-title{font-weight:800;font-size:16px;letter-spacing:0.2px}
+  .nav-links{display:flex;gap:12px;align-items:center}
+  .nav-links a{color:#fff;text-decoration:none;font-weight:700;font-size:13px}
+  .nav-links a:hover{color:#ffff66}
 
-  h1{margin:6px 0 0 0;font-size:18px}
+  main{width:var(--wrap-w);max-width:96%;margin-top:10px}
 
-  #gameWrap{width:var(--wrap-w); position:relative}
+  h1{margin:6px 0 8px 0;font-size:18px}
+
+  #gameWrap{position:relative}
   canvas{display:block;width:100%;height:auto;background:#111;border:2px solid #333;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
   #hudTop{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:0 4px}
   .lives{display:flex;gap:6px}
   .lives span{display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff}
   #score{font-weight:700}
 
-  /* Botons (opcions) */
-  .canvas-button{position:absolute;left:50%;transform:translateX(-50%);top:50%;translate:0;z-index:20;background:#FFDF20;color:#111;padding:8px 12px;border-radius:6px;border:0;cursor:pointer;font-weight:700}
+  .canvas-button{position:absolute;left:50%;transform:translateX(-50%);top:50%;z-index:20;background:#FFDF20;color:#111;padding:8px 12px;border-radius:6px;border:0;cursor:pointer;font-weight:700}
   .hidden{display:none}
 </style>
 </head>
 <body>
   <nav>
-    <div class="logo">
-      <!-- Si tens logo, posa la ruta correcta a l'img -->
-      <img src="assets/logo.png" alt="Logo" />
-      <div style="font-weight:800">LAG · Minijocs</div>
+    <div class="nav-left">
+      <!-- Si tens logo, posa la ruta correcta a l'img; si no, deixa aquest alt text -->
+      <img src="assets/logo.png" alt="Logo LAG" />
+      <div class="nav-title">LAG · Minijocs</div>
     </div>
-    <div class="links">
+    <div class="nav-links" aria-hidden="true">
       <a href="#">Inici</a>
       <a href="#">Minijocs</a>
+      <a href="#">Minecraft</a>
       <a href="#">Contacte</a>
     </div>
   </nav>
 
-  <h1>🕹️ Breakout</h1>
+  <main>
+    <h1>🕹️ Breakout</h1>
 
-  <div id="gameWrap">
-    <!-- Canvas amb amplada fixa igual que a serp.html -->
-    <canvas id="gameCanvas" width="400" height="400" aria-label="Canvas del joc"></canvas>
+    <div id="gameWrap">
+      <!-- Canvas amb amplada fixa igual que a serp.html -->
+      <canvas id="gameCanvas" width="400" height="400" aria-label="Canvas del joc"></canvas>
 
-    <div id="hudTop">
-      <div class="lives" id="lives"></div>
-      <div id="score">Puntuació: 0</div>
+      <div id="hudTop">
+        <div class="lives" id="lives"></div>
+        <div id="score">Puntuació: 0</div>
+      </div>
+
+      <button id="startButton" class="canvas-button hidden">▶ Jugar</button>
     </div>
-
-    <button id="startButton" class="canvas-button hidden">▶ Jugar</button>
-  </div>
+  </main>
 
 <script>
 /* ====== Config ====== */
@@ -89,17 +94,23 @@ const H = canvas.height;
 const paddle = { width: 90, height: 12, x: (W-90)/2, speed: 7 };
 const ball = { r: 7, x: W/2, y: H-30, dx: 3, dy: -3, launched: false };
 
-/* Bricks: fem càlcul dinàmic per evitar tallats a la dreta */
+/* Bricks: càlcul dinàmic per evitar tallats a la dreta */
 const brickCols = 8;
 const brickPad = 6;
 const brickOffsetLeft = 12;
+const brickOffsetRightMargin = 8; // marge dret per evitar tallats
 const brickOffsetTop = 36;
 const BRICK_ROWS_INIT = 5;
 
 /* Calculem amplada de bloc perquè tot entri just dins el canvas */
-const availableWidth = W - brickOffsetLeft - 8 /* marge dret petit */;
+const availableWidth = W - brickOffsetLeft - brickOffsetRightMargin;
 const brickW = Math.floor((availableWidth - (brickCols - 1) * brickPad) / brickCols);
 const brickH = 16;
+
+/* Si per arrodoniment sobra espai, centrem la graella ajustant offsetLeft */
+const totalBricksWidth = brickCols * brickW + (brickCols - 1) * brickPad;
+const extraSpace = (W - brickOffsetRightMargin - brickOffsetLeft) - totalBricksWidth;
+const adjustedOffsetLeft = brickOffsetLeft + Math.floor(extraSpace / 2);
 
 let bricks = [];
 let score = 0;
@@ -191,12 +202,12 @@ function roundRect(ctx,x,y,w,h,r,fill,stroke){
 function draw(){
   ctx.clearRect(0,0,W,H);
 
-  // blocs
+  // blocs (usant adjustedOffsetLeft per centrar i evitar tallats)
   for(let r=0;r<bricks.length;r++){
     for(let c=0;c<brickCols;c++){
       const b = bricks[r][c];
       if(b && b.status === 1){
-        const bx = c * (brickW + brickPad) + brickOffsetLeft;
+        const bx = c * (brickW + brickPad) + adjustedOffsetLeft;
         const by = r * (brickH + brickPad) + brickOffsetTop;
         ctx.fillStyle = b.color;
         roundRect(ctx, bx, by, brickW, brickH, 4, true, false);
@@ -229,7 +240,7 @@ function checkBrickCollisions(prevX, prevY){
     for(let c=0;c<brickCols;c++){
       const b = bricks[r][c];
       if(!b || b.status !== 1) continue;
-      const bx = c * (brickW + brickPad) + brickOffsetLeft;
+      const bx = c * (brickW + brickPad) + adjustedOffsetLeft;
       const by = r * (brickH + brickPad) + brickOffsetTop;
       if(circleRectCollision(ball.x, ball.y, ball.r, bx, by, brickW, brickH)){
         reflectBallFromRect(prevX, prevY, bx, by, brickW, brickH);
@@ -237,7 +248,7 @@ function checkBrickCollisions(prevX, prevY){
         score++;
         updateHUD();
         // limit de velocitat per evitar acceleracions excessives
-        const MAX_SPEED = 5.5;
+        const MAX_SPEED = 5.2;
         ball.dx = clamp(ball.dx, -MAX_SPEED, MAX_SPEED);
         ball.dy = clamp(ball.dy, -MAX_SPEED, MAX_SPEED);
 
@@ -298,5 +309,6 @@ update();
 </script>
 </body>
 </html>
+
 
 
