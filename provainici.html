@@ -3,16 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>LAG - Splash amb glitch realista</title>
+<title>LAG - Splash realista</title>
 <style>
-  :root{
-    --bg:#002244;
-  }
+  :root{ --bg:#002244; --fg:#cfe7ff; }
   html,body{height:100%}
   body{
     margin:0;
     background:var(--bg);
-    color:#fff;
+    color:var(--fg);
     font-family:monospace;
     overflow:hidden;
   }
@@ -29,40 +27,50 @@
     overflow:hidden;
   }
 
-  /* Logo principal (sense glow) */
+  /* Logo base (sense glow) */
   #logo{
-    width:600px; /* molt gran */
-    max-width:90vw;
+    width:680px;
+    max-width:86vw;
     opacity:0;
-    animation:fadeInLogo 1.2s forwards;
-    image-rendering: optimizeSpeed;
-    -webkit-user-drag: none;
-    user-select: none;
+    animation:logoFadeIn 1.1s forwards;
+    image-rendering:optimizeSpeed;
+    -webkit-user-drag:none;
+    user-select:none;
+    display:block;
   }
+  @keyframes logoFadeIn{ to{opacity:1} }
 
-  @keyframes fadeInLogo{
-    to{opacity:1}
-  }
-
-  /* Capes RGB per glitch */
+  /* Capes per RGB split (es mouen amb JS) */
   .glitch{
     position:absolute;
     top:50%;
     left:50%;
-    width:600px;
-    max-width:90vw;
+    width:680px;
+    max-width:86vw;
     transform:translate(-50%,-50%);
     opacity:0;
     mix-blend-mode:screen;
-    transition: transform 0.06s linear, opacity 0.06s linear, clip-path 0.06s linear;
     pointer-events:none;
-    image-rendering: optimizeSpeed;
+    image-rendering:optimizeSpeed;
   }
-  .glitch.r{filter:drop-shadow(-18px 0 red)}
-  .glitch.g{filter:drop-shadow(18px 0 lime)}
-  .glitch.b{filter:drop-shadow(0 18px cyan)}
+  .glitch.r{ filter: hue-rotate(0deg) saturate(1.6) }
+  .glitch.g{ filter: hue-rotate(80deg) saturate(1.6) }
+  .glitch.b{ filter: hue-rotate(180deg) saturate(1.6) }
 
-  /* Franges de colors (bars) i scanlines */
+  /* Canvas de soroll i artefactes */
+  #noiseCanvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:905;
+    mix-blend-mode:screen;
+    opacity:0;
+    transition:opacity 120ms linear;
+  }
+
+  /* Bars i scanlines */
   #bars{
     position:absolute;
     inset:0;
@@ -79,9 +87,9 @@
       transparent 28px
     );
     pointer-events:none;
-    transition:opacity 0.08s linear, transform 0.08s linear;
+    transition:opacity 80ms linear, transform 80ms linear;
+    z-index:902;
   }
-
   #scanlines{
     position:absolute;
     inset:0;
@@ -94,14 +102,25 @@
     );
     opacity:0;
     pointer-events:none;
-    transition:opacity 0.06s linear, transform 0.06s linear;
+    transition:opacity 60ms linear, transform 60ms linear;
+    z-index:903;
+  }
+
+  /* petits blocs de compressió (visual) */
+  .block {
+    position:absolute;
+    background:rgba(255,255,255,0.02);
+    mix-blend-mode:screen;
+    pointer-events:none;
+    z-index:904;
+    transition:transform 80ms linear, opacity 120ms linear;
   }
 
   /* CRT OFF: fons negre i línia al centre */
   #crt-off{
     position:fixed;
     inset:0;
-    background:black; /* fons negre real */
+    background:black;
     z-index:1000;
     display:none;
     justify-content:center;
@@ -109,15 +128,16 @@
   }
   #crt-line{
     width:100%;
-    height:4px; /* línia prima */
-    background:#fff;
+    height:3px;
+    background:linear-gradient(90deg,#fff,#cfe7ff);
     transform-origin:center;
-    animation:crtLine 0.45s forwards;
+    animation:crtLine 0.45s cubic-bezier(.2,.9,.2,1) forwards;
+    box-shadow:0 0 12px rgba(255,255,255,0.08) inset;
   }
   @keyframes crtLine{
-    0%{transform:scaleY(1)}
-    60%{transform:scaleY(0.03)}
-    100%{transform:scaleY(0)}
+    0%{ transform: scaleY(1); opacity:1 }
+    60%{ transform: scaleY(0.02); opacity:1 }
+    100%{ transform: scaleY(0); opacity:0 }
   }
 
   /* MAIN (fade-in final) */
@@ -125,13 +145,12 @@
     padding:40px;
     opacity:0;
     display:none;
-    transition:opacity 2.2s ease; /* fade-in llarg */
+    transition:opacity 2.2s cubic-bezier(.22,.9,.3,1);
     min-height:100vh;
     box-sizing:border-box;
     background:var(--bg);
+    z-index:1;
   }
-
-  /* petites respostes visuals per contingut */
   #main h1{margin:0 0 12px 0;font-size:clamp(28px,4vw,48px)}
   #main p{margin:0;color:#cfe7ff}
 </style>
@@ -139,18 +158,20 @@
 <body>
 
   <!-- SPLASH -->
-  <div id="splash">
+  <div id="splash" aria-hidden="false">
     <img id="logo" src="assets/logo.png" alt="LAG logo">
     <img class="glitch r" src="assets/logo.png" alt="">
     <img class="glitch g" src="assets/logo.png" alt="">
     <img class="glitch b" src="assets/logo.png" alt="">
+    <canvas id="noiseCanvas"></canvas>
     <div id="bars"></div>
     <div id="scanlines"></div>
+    <!-- blocs visuals (creats per JS) -->
   </div>
 
   <!-- CRT OFF (pantalla que s'apaga) -->
-  <div id="crt-off">
-    <div id="crt-line"></div>
+  <div id="crt-off" aria-hidden="true">
+    <div id="crt-line" aria-hidden="true"></div>
   </div>
 
   <!-- CONTINGUT PRINCIPAL -->
@@ -160,12 +181,12 @@
   </div>
 
 <script>
-/*
-  Glitch realista i imprevisible integrat:
-  - Genera moviments RGB aleatoris
-  - Clipping aleatori (franges)
-  - Bars i scanlines amb intensitat variable
-  - Durada controlada; s'atura abans de l'apagada CRT
+/* Glitch i CRT molt més realista:
+   - canvas genera soroll, scanline flicker i petites distorsions
+   - slices aleatòries (clip + translate) amb timings irregulars
+   - blocs de compressió que apareixen i desapareixen
+   - RGB split amb intensitat variable
+   - CRT final: línia que es tanca, fons negre 0.5s, després fade-in llarg
 */
 
 const splash = document.getElementById('splash');
@@ -173,140 +194,274 @@ const logo = document.getElementById('logo');
 const glitchLayers = Array.from(document.querySelectorAll('.glitch'));
 const bars = document.getElementById('bars');
 const scanlines = document.getElementById('scanlines');
+const noiseCanvas = document.getElementById('noiseCanvas');
 const crtOff = document.getElementById('crt-off');
 const crtLine = document.getElementById('crt-line');
 const main = document.getElementById('main');
 
-let glitchActive = false;
-let glitchTimer = null;
+let glitchRunning = false;
+let glitchHandles = [];
+let noiseCtx, noiseW, noiseH;
+let blocks = [];
 
-// calcula alçada del logo per fer clip-path correctes
-function getLogoHeight(){
-  const rect = logo.getBoundingClientRect();
-  return Math.max( Math.round(rect.height), 200 );
+// utilitats
+const rand = (a,b)=> a + Math.random()*(b-a);
+const rint = (a,b)=> Math.floor(rand(a,b));
+
+// prepara canvas de soroll
+function setupNoiseCanvas(){
+  noiseCanvas.width = window.innerWidth * devicePixelRatio;
+  noiseCanvas.height = window.innerHeight * devicePixelRatio;
+  noiseCanvas.style.width = window.innerWidth + 'px';
+  noiseCanvas.style.height = window.innerHeight + 'px';
+  noiseCtx = noiseCanvas.getContext('2d');
+  noiseCtx.scale(devicePixelRatio, devicePixelRatio);
+  noiseW = window.innerWidth;
+  noiseH = window.innerHeight;
 }
 
-// genera un pas de glitch aleatori
-function doGlitchStep(){
-  if(!glitchActive) return;
+// pinta soroll i artefactes al canvas
+function paintNoise(intensity=0.25){
+  if(!noiseCtx) return;
+  noiseCtx.clearRect(0,0,noiseW,noiseH);
 
-  const logoH = getLogoHeight();
-  glitchLayers.forEach((layer, idx) => {
-    // probabilitat d'aparició
-    layer.style.opacity = Math.random() > 0.35 ? (0.6 + Math.random()*0.4) : 0;
-    // moviment aleatori (RGB split)
-    const rx = (Math.random() - 0.5) * (20 + Math.random()*80) * (idx===0 ? -1 : (idx===1 ? 1 : 0.2));
-    const ry = (Math.random() - 0.5) * (10 + Math.random()*40) * (idx===2 ? 1 : 0.6);
-    layer.style.transform = `translate(-50%,-50%) translate(${rx}px, ${ry}px)`;
+  // soroll aleatori (grain)
+  const grain = Math.floor( noiseW * noiseH * 0.00008 * (0.5 + intensity) );
+  for(let i=0;i<grain;i++){
+    const x = Math.random()*noiseW;
+    const y = Math.random()*noiseH;
+    const a = Math.random()*0.12*intensity;
+    noiseCtx.fillStyle = `rgba(255,255,255,${a})`;
+    noiseCtx.fillRect(x,y,1,1);
+  }
 
-    // clip: tallar una franja aleatòria del logo
-    const top = Math.floor(Math.random() * (logoH * 0.8));
-    const height = Math.floor(20 + Math.random() * (logoH * 0.4));
+  // petites línies horitzontals (glitch streaks)
+  const streaks = rint(1, 6);
+  for(let s=0;s<streaks;s++){
+    const y = Math.random()*noiseH;
+    const h = rint(1, 6);
+    const w = rint(40, noiseW*0.9);
+    const x = Math.random()*(noiseW - w);
+    noiseCtx.fillStyle = `rgba(${rint(120,255)},${rint(80,255)},${rint(80,255)},${0.06 + Math.random()*0.18*intensity})`;
+    noiseCtx.fillRect(x, y, w, h);
+  }
+
+  // blocs de compressió (rects translúcids)
+  blocks.forEach(b=>{
+    noiseCtx.fillStyle = `rgba(255,255,255,${0.02 + Math.random()*0.06})`;
+    noiseCtx.fillRect(b.x, b.y, b.w, b.h);
+  });
+}
+
+// crea blocs visuals (simulen artefactes de compressió)
+function createBlocks(){
+  // neteja
+  blocks.forEach(()=>{});
+  blocks = [];
+  const n = rint(6, 14);
+  for(let i=0;i<n;i++){
+    const w = rint(30, 220);
+    const h = rint(6, 80);
+    const x = Math.random()*(window.innerWidth - w);
+    const y = Math.random()*(window.innerHeight - h);
+    blocks.push({x,y,w,h});
+  }
+}
+
+// ajusta mides i elements
+function resizeAll(){
+  setupNoiseCanvas();
+  glitchLayers.forEach(l=>{
+    l.style.width = logo.getBoundingClientRect().width + 'px';
+  });
+  createBlocks();
+  paintNoise(0.2);
+}
+window.addEventListener('resize', resizeAll);
+
+// efecte d'una sola "explosió" de glitch (slices + rgb + blocks)
+function glitchBurst(intensity=1){
+  // slices: per cada capa, fem varies franges que es mouen
+  const logoRect = logo.getBoundingClientRect();
+  const logoH = Math.max(logoRect.height, 200);
+  glitchLayers.forEach((layer, idx)=>{
+    // decideix si visible
+    const visible = Math.random() > 0.35;
+    layer.style.opacity = visible ? (0.5 + Math.random()*0.5)*intensity : 0;
+    // moviment RGB
+    const rx = (Math.random()-0.5) * (20 + Math.random()*120) * (idx===0 ? -1 : (idx===1 ? 1 : 0.3));
+    const ry = (Math.random()-0.5) * (6 + Math.random()*40) * (idx===2 ? 1 : 0.6);
+    layer.style.transform = `translate(-50%,-50%) translate(${rx}px, ${ry}px) rotate(${(Math.random()-0.5)*1.2}deg)`;
+    // clip slices: fem 2-4 franges per capa
+    const slices = rint(2,5);
+    const top = rint(0, logoH*0.6);
+    const height = rint(20, logoH*0.45);
     const bottom = Math.max(0, logoH - (top + height));
     layer.style.clipPath = `inset(${top}px 0px ${bottom}px 0px)`;
   });
 
-  // bars i scanlines variabilitat
-  bars.style.opacity = Math.random() > 0.6 ? (0.25 + Math.random()*0.35) : (Math.random()*0.08);
-  bars.style.transform = `translateY(${(Math.random()-0.5) * 60}px)`;
+  // bars i scanlines
+  bars.style.opacity = Math.random() > 0.5 ? (0.18 + Math.random()*0.4)*intensity : (0.02 + Math.random()*0.06);
+  bars.style.transform = `translateY(${(Math.random()-0.5)*80}px)`;
+  scanlines.style.opacity = Math.random() > 0.4 ? (0.08 + Math.random()*0.45)*intensity : (0.02 + Math.random()*0.04);
+  scanlines.style.transform = `translateY(${(Math.random()-0.5)*30}px)`;
 
-  scanlines.style.opacity = Math.random() > 0.5 ? (0.15 + Math.random()*0.35) : (Math.random()*0.04);
-  scanlines.style.transform = `translateY(${(Math.random()-0.5) * 20}px)`;
+  // noise canvas visible i pintem amb intensitat
+  noiseCanvas.style.opacity = 0.9 * intensity;
+  paintNoise(0.2 + Math.random()*0.6*intensity);
 
-  // interval aleatori per la següent iteració
-  const next = 30 + Math.random() * 160;
-  glitchTimer = setTimeout(doGlitchStep, next);
-}
-
-// inicia el glitch
-function startGlitch(){
-  if(glitchActive) return;
-  glitchActive = true;
-  // assegura que les capes tinguin la mateixa mida que el logo
-  glitchLayers.forEach(l => {
-    l.style.width = logo.getBoundingClientRect().width + 'px';
+  // blocs: mouem alguns blocs
+  blocks.forEach(b=>{
+    if(Math.random() > 0.6){
+      b.x += (Math.random()-0.5)*40;
+      b.y += (Math.random()-0.5)*20;
+    }
   });
-  // arrenca passos
-  doGlitchStep();
+
+  // després d'un curt lapse, suavitzem
+  setTimeout(()=>{
+    glitchLayers.forEach(l=>{
+      l.style.transition = 'transform 220ms cubic-bezier(.2,.9,.2,1), opacity 220ms linear, clip-path 220ms linear';
+      l.style.transform = 'translate(-50%,-50%) translate(0,0)';
+      l.style.opacity = 0;
+      l.style.clipPath = 'inset(0px 0px 0px 0px)';
+    });
+    bars.style.transition = 'opacity 220ms linear, transform 220ms linear';
+    bars.style.opacity = 0;
+    bars.style.transform = 'translateY(0px)';
+    scanlines.style.transition = 'opacity 220ms linear, transform 220ms linear';
+    scanlines.style.opacity = 0;
+    scanlines.style.transform = 'translateY(0px)';
+    noiseCanvas.style.opacity = 0;
+  }, rint(80, 260));
 }
 
-// atura el glitch i neteja estats visuals
-function stopGlitch(){
-  glitchActive = false;
-  if(glitchTimer) { clearTimeout(glitchTimer); glitchTimer = null; }
-  // suavitzar a zero
-  glitchLayers.forEach(l => {
-    l.style.transition = 'transform 180ms linear, opacity 180ms linear, clip-path 180ms linear';
-    l.style.opacity = 0;
+// loop de glitch imprevisible (no periòdic)
+function startGlitchLoop(duration=1400){
+  if(glitchRunning) return;
+  glitchRunning = true;
+  const end = performance.now() + duration;
+  function step(){
+    if(!glitchRunning) return;
+    // cada iteració fem 1-3 bursts ràpids
+    const bursts = rint(1,3);
+    for(let i=0;i<bursts;i++){
+      setTimeout(()=> glitchBurst(0.6 + Math.random()*0.9), rint(0, 160));
+    }
+    // interval variable abans del següent grup
+    const next = rint(60, 220);
+    if(performance.now() < end){
+      glitchHandles.push(setTimeout(step, next));
+    } else {
+      // acabem: fem un últim burst més fort i resolució
+      setTimeout(()=> glitchBurst(1.2), 40);
+      setTimeout(()=> stopGlitchSmooth(), 260);
+    }
+  }
+  step();
+}
+
+// atura i neteja el glitch
+function stopGlitchSmooth(){
+  glitchRunning = false;
+  glitchHandles.forEach(h=>clearTimeout(h));
+  glitchHandles = [];
+  // neteja transicions
+  glitchLayers.forEach(l=>{
+    l.style.transition = 'transform 260ms cubic-bezier(.2,.9,.2,1), opacity 260ms linear, clip-path 260ms linear';
     l.style.transform = 'translate(-50%,-50%) translate(0,0)';
+    l.style.opacity = 0;
     l.style.clipPath = 'inset(0px 0px 0px 0px)';
   });
-  bars.style.transition = 'opacity 180ms linear, transform 180ms linear';
+  bars.style.transition = 'opacity 260ms linear, transform 260ms linear';
   bars.style.opacity = 0;
   bars.style.transform = 'translateY(0px)';
-  scanlines.style.transition = 'opacity 180ms linear, transform 180ms linear';
+  scanlines.style.transition = 'opacity 260ms linear, transform 260ms linear';
   scanlines.style.opacity = 0;
   scanlines.style.transform = 'translateY(0px)';
+  noiseCanvas.style.opacity = 0;
 }
 
-/* Flux principal:
-   1) Espera fade-in logo
-   2) Inicia glitch imprevisible durant X ms
-   3) Atura glitch, mostra CRT-off (fons negre + línia que es tanca)
-   4) Espera 0.5s en negre
-   5) Fade-in llarg cap al main
-*/
-const initialDelay = 1500; // fade-in logo + pausa
-const glitchDuration = 1200; // quant dura el glitch abans de CRT (ms)
-const blackPause = 500; // temps en negre després CRT (ms)
+// flux principal: fade-in logo -> glitch realista -> CRT off -> black pause -> fade-in main
+const initialDelay = 1200;   // logo fade-in + petita pausa
+const glitchDuration = 1600; // durada del glitch realista
+const blackPause = 500;      // temps en negre després CRT
 
-setTimeout(() => {
-  // arrenca glitch
-  startGlitch();
+// inicialitzacions
+resizeAll();
 
-  // també mostrem bars/scanlines amb petites transicions
-  bars.style.opacity = 0.18;
-  scanlines.style.opacity = 0.06;
+// arrenca tot
+setTimeout(()=>{
+  // fem visible les capes glitch (opacity controlat per JS)
+  glitchLayers.forEach(l=> l.style.opacity = 0);
+  // arrenca loop de glitch
+  startGlitchLoop(glitchDuration);
 
-  // atura el glitch després de glitchDuration
-  setTimeout(() => {
-    stopGlitch();
+  // també fem que el canvas i bars tinguin una presència inicial
+  bars.style.opacity = 0.12;
+  scanlines.style.opacity = 0.05;
 
-    // petita latència per assegurar transicions visuals
-    setTimeout(() => {
-      // ocultem splash i mostrem la capa CRT negra amb la línia
+  // quan acabi el glitchDuration, aturem i fem CRT
+  setTimeout(()=>{
+    stopGlitchSmooth();
+
+    // petita latència per suavitzar
+    setTimeout(()=>{
+      // ocultem splash i mostrem CRT-off (fons negre amb línia que es tanca)
       splash.style.display = 'none';
       crtOff.style.display = 'flex';
 
-      // quan acabi l'animació de la línia (crtLine), fem la pausa negra i el fade-in
-      crtLine.addEventListener('animationend', () => {
-        // mantenim la pantalla negra durant blackPause
-        setTimeout(() => {
-          // ocultem la capa negra i mostrem el main amb fade-in llarg
+      // quan acabi l'animació de la línia, fem la pausa negra i el fade-in
+      crtLine.addEventListener('animationend', ()=>{
+        setTimeout(()=>{
           crtOff.style.display = 'none';
           main.style.display = 'block';
-          // assegurem repaint abans d'iniciar la transició
-          requestAnimationFrame(() => {
+          // repaint i fade-in llarg
+          requestAnimationFrame(()=> {
             main.style.opacity = '1';
-            // permetre scroll si cal
             document.body.style.overflow = 'auto';
             main.removeAttribute('aria-hidden');
+            splash.setAttribute('aria-hidden','true');
           });
         }, blackPause);
-      }, { once: true });
+      }, { once:true });
 
-    }, 80);
+    }, 90);
 
   }, glitchDuration);
 
 }, initialDelay);
 
-// Assegura que si la finestra canvia mida, les capes glitch s'ajustin
-window.addEventListener('resize', () => {
-  glitchLayers.forEach(l => {
-    l.style.width = logo.getBoundingClientRect().width + 'px';
-  });
+// pinta soroll en bucle suau per donar vida al fons mentre dura el glitch
+let noiseLoop = null;
+function startNoiseLoop(){
+  let t = 0;
+  function loop(){
+    t += 1;
+    // intensitat lleugerament oscil·lant
+    const intensity = 0.12 + 0.12 * Math.sin(t * 0.12) + (Math.random()*0.08);
+    paintNoise(intensity);
+    noiseLoop = requestAnimationFrame(loop);
+  }
+  loop();
+}
+function stopNoiseLoop(){
+  if(noiseLoop) cancelAnimationFrame(noiseLoop);
+  noiseLoop = null;
+}
+startNoiseLoop();
+
+// ajustaments finals
+window.addEventListener('resize', ()=> {
+  resizeAll();
 });
+
+// assegura que al sortir del splash tot està net
+function cleanupAll(){
+  stopGlitchSmooth();
+  stopNoiseLoop();
+}
+window.addEventListener('beforeunload', cleanupAll);
 </script>
 </body>
 </html>
