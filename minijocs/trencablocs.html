@@ -1,253 +1,392 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
   <title>Minijoc Breakout</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      margin: 0;
-      background: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    #jocContainer {
-      position: relative;
-    }
-
-    canvas {
-      background: #000;
-      border: 2px solid #444;
-      display: block;
-    }
-
-    #info {
-      position: absolute;
-      top: 5px;
-      left: 5px;
-      right: 5px;
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      pointer-events: none;
-    }
-
-    .lives span {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 4px;
-      background: #fff;
-    }
+    /* Estil general similar a serp.html: centrat, fons fosc, canvas amb marc */
+    html,body{height:100%;margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:#0b0b0f;color:#fff;display:flex;align-items:center;justify-content:center}
+    #app{width:520px;max-width:96%;position:relative}
+    header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#0f1720;border-radius:8px 8px 0 0;border:1px solid #222}
+    header .title{font-weight:700}
+    header .icons{display:flex;gap:8px;align-items:center}
+    .icon{width:18px;height:18px;border-radius:3px;background:#222;display:inline-block}
+    #gameWrap{background:#071018;padding:12px;border:1px solid #222;border-top:0;border-radius:0 0 8px 8px}
+    canvas{display:block;background:#000;border-radius:4px;border:4px solid #111;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+    #hud{position:absolute;left:24px;top:18px;right:24px;display:flex;justify-content:space-between;pointer-events:none}
+    #hud .left,#hud .right{display:flex;gap:8px;align-items:center}
+    #hud .lives span{display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff}
+    #hud .score{font-weight:700;letter-spacing:1px}
+    /* petits estils per instruccions */
+    #controlsNote{margin-top:8px;color:#9aa7b2;font-size:13px;text-align:center}
   </style>
 </head>
 <body>
-  <div id="jocContainer">
-    <canvas id="joc" width="480" height="320"></canvas>
-    <div id="info">
-      <div class="lives" id="lives"></div>
-      <div id="score">Punts: 0</div>
+  <div id="app" role="application" aria-label="Breakout">
+    <header>
+      <div class="title">Minijocs · Breakout</div>
+      <div class="icons">
+        <div class="icon" title="Pantalla completa"></div>
+        <div class="icon" title="So"></div>
+        <div class="icon" title="Sortir"></div>
+      </div>
+    </header>
+
+    <div id="gameWrap">
+      <div id="hud">
+        <div class="left">
+          <div class="lives" id="lives" aria-hidden="true"></div>
+        </div>
+        <div class="right">
+          <div class="score" id="score">Punts: 0</div>
+        </div>
+      </div>
+
+      <canvas id="game" width="480" height="360" aria-label="Canvas del joc"></canvas>
+      <div id="controlsNote">Fletxes esquerra/dreta per moure. Prem <strong>Fletxa amunt</strong> per llançar la bola.</div>
     </div>
   </div>
 
   <script>
-    const canvas = document.getElementById("joc");
-    const ctx = canvas.getContext("2d");
+    /* ====== Config i variables ====== */
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
 
-    // Mides bàsiques
-    const paddleHeight = 10;
-    const paddleWidth = 75;
-    let paddleX = (canvas.width - paddleWidth) / 2;
+    const paddle = {
+      width: 90,
+      height: 12,
+      x: (canvas.width - 90) / 2,
+      speed: 7
+    };
 
-    const ballRadius = 6;
-    let x = canvas.width / 2;
-    let y = canvas.height - 30;
-    let dx = 3;
-    let dy = -3;
+    const ball = {
+      r: 7,
+      x: canvas.width / 2,
+      y: canvas.height - 30,
+      dx: 3,
+      dy: -3,
+      launched: false
+    };
 
-    let rightPressed = false;
-    let leftPressed = false;
-
-    // Bricks
-    const brickRowCount = 5;
-    const brickColumnCount = 8;
-    const brickWidth = 50;
-    const brickHeight = 16;
-    const brickPadding = 6;
-    const brickOffsetTop = 40;
+    // Bricks: fem-ho per files (rows x cols) per facilitar inserir files a dalt
+    let brickRows = 5;
+    const brickCols = 8;
+    const brickW = 50;
+    const brickH = 18;
+    const brickPad = 6;
     const brickOffsetLeft = 15;
+    let brickOffsetTop = 40;
 
+    // Matriu de files: bricks[r][c]
     let bricks = [];
-    for (let c = 0; c < brickColumnCount; c++) {
-      bricks[c] = [];
-      for (let r = 0; r < brickRowCount; r++) {
-        // Pots canviar colors per files per fer-ho més xulo
-        const colors = ["#3fa9f5", "#ff4b4b", "#ffd93b", "#4caf50", "#9c27b0"];
-        bricks[c][r] = {
-          x: 0,
-          y: 0,
-          status: 1,
-          color: colors[r % colors.length]
-        };
-      }
-    }
 
     let score = 0;
     let lives = 3;
 
-    document.addEventListener("keydown", keyDownHandler, false);
-    document.addEventListener("keyup", keyUpHandler, false);
+    // Controls
+    let leftPressed = false;
+    let rightPressed = false;
 
-    function keyDownHandler(e) {
-      if (e.key === "Right" || e.key === "ArrowRight") {
-        rightPressed = true;
-      } else if (e.key === "Left" || e.key === "ArrowLeft") {
-        leftPressed = true;
+    /* ====== Inicialització ====== */
+    function initBricks(rows) {
+      bricks = [];
+      const colors = ['#3fa9f5','#ff4b4b','#ffd93b','#4caf50','#9c27b0','#00bcd4'];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < brickCols; c++) {
+          row.push({
+            status: 1,
+            color: colors[r % colors.length]
+          });
+        }
+        bricks.push(row);
       }
     }
 
-    function keyUpHandler(e) {
-      if (e.key === "Right" || e.key === "ArrowRight") {
-        rightPressed = false;
-      } else if (e.key === "Left" || e.key === "ArrowLeft") {
-        leftPressed = false;
+    initBricks(brickRows);
+    updateHUD();
+
+    /* ====== Utilitats ====== */
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    // Detecció cercle-rectangle robusta
+    function circleRectCollision(cx, cy, cr, rx, ry, rw, rh) {
+      const closestX = clamp(cx, rx, rx + rw);
+      const closestY = clamp(cy, ry, ry + rh);
+      const dx = cx - closestX;
+      const dy = cy - closestY;
+      return (dx * dx + dy * dy) <= (cr * cr);
+    }
+
+    // Quan hi ha col·lisió amb un bloc, calculem si ha de reflectir en X o Y
+    function reflectBallFromRect(cx, cy, cr, rx, ry, rw, rh, prevX, prevY) {
+      // Determineu la direcció del rebot comparant la posició prèvia
+      const fromLeft = prevX <= rx;
+      const fromRight = prevX >= rx + rw;
+      const fromTop = prevY <= ry;
+      const fromBottom = prevY >= ry + rh;
+
+      // Prioritzem invertir segons la cara per la qual venia la bola
+      if ((fromLeft && !fromTop && !fromBottom) || (fromRight && !fromTop && !fromBottom)) {
+        ball.dx = -ball.dx;
+      } else if ((fromTop && !fromLeft && !fromRight) || (fromBottom && !fromLeft && !fromRight)) {
+        ball.dy = -ball.dy;
+      } else {
+        // Cas ambigu: invertim la component més gran
+        if (Math.abs(ball.dx) > Math.abs(ball.dy)) ball.dx = -ball.dx;
+        else ball.dy = -ball.dy;
       }
     }
 
-    function collisionDetection() {
-      for (let c = 0; c < brickColumnCount; c++) {
-        for (let r = 0; r < brickRowCount; r++) {
-          const b = bricks[c][r];
-          if (b.status === 1) {
-            if (
-              x > b.x &&
-              x < b.x + brickWidth &&
-              y > b.y &&
-              y < b.y + brickHeight
-            ) {
-              dy = -dy;
-              b.status = 0;
-              score++;
-              if (score === brickRowCount * brickColumnCount) {
-                alert("Has guanyat! 🎉");
-                document.location.reload();
-              }
-            }
-          }
+    /* ====== Entrada teclat ====== */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') leftPressed = true;
+      if (e.key === 'ArrowRight') rightPressed = true;
+      if (e.key === 'ArrowUp') {
+        // Llança la bola si encara no està llançada
+        if (!ball.launched) {
+          ball.launched = true;
+          // assegurem velocitats inicials
+          ball.dy = -Math.abs(ball.dy) || -3;
+          ball.dx = (Math.random() > 0.5 ? 1 : -1) * (Math.abs(ball.dx) || 3);
         }
       }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft') leftPressed = false;
+      if (e.key === 'ArrowRight') rightPressed = false;
+    });
+
+    /* ====== Dibuix ====== */
+    function drawPaddle() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(paddle.x, canvas.height - paddle.height - 8, paddle.width, paddle.height);
     }
 
     function drawBall() {
       ctx.beginPath();
-      ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-      ctx.fillStyle = "#fff";
-      ctx.fill();
-      ctx.closePath();
-    }
-
-    function drawPaddle() {
-      ctx.beginPath();
-      ctx.rect(paddleX, canvas.height - paddleHeight - 5, paddleWidth, paddleHeight);
-      ctx.fillStyle = "#fff";
+      ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
       ctx.fill();
       ctx.closePath();
     }
 
     function drawBricks() {
-      for (let c = 0; c < brickColumnCount; c++) {
-        for (let r = 0; r < brickRowCount; r++) {
-          if (bricks[c][r].status === 1) {
-            const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
-            const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
-            bricks[c][r].x = brickX;
-            bricks[c][r].y = brickY;
-            ctx.beginPath();
-            ctx.rect(brickX, brickY, brickWidth, brickHeight);
-            ctx.fillStyle = bricks[c][r].color;
-            ctx.fill();
-            ctx.closePath();
+      for (let r = 0; r < bricks.length; r++) {
+        for (let c = 0; c < brickCols; c++) {
+          const b = bricks[r][c];
+          if (b && b.status === 1) {
+            const bx = c * (brickW + brickPad) + brickOffsetLeft;
+            const by = r * (brickH + brickPad) + brickOffsetTop;
+            ctx.fillStyle = b.color;
+            roundRect(ctx, bx, by, brickW, brickH, 4, true, false);
+            // petit ressalt
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.strokeRect(bx, by, brickW, brickH);
           }
         }
       }
     }
 
-    function drawScore() {
-      document.getElementById("score").textContent = "Punts: " + score;
+    // rectangle arrodonit util
+    function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+      if (typeof r === 'undefined') r = 5;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
     }
 
-    function drawLives() {
-      const livesDiv = document.getElementById("lives");
-      livesDiv.innerHTML = "";
-      for (let i = 0; i < lives; i++) {
-        const span = document.createElement("span");
-        livesDiv.appendChild(span);
+    /* ====== Lògica de col·lisions amb blocs ====== */
+    function checkBrickCollisions(prevX, prevY) {
+      for (let r = 0; r < bricks.length; r++) {
+        for (let c = 0; c < brickCols; c++) {
+          const b = bricks[r][c];
+          if (!b || b.status !== 1) continue;
+          const bx = c * (brickW + brickPad) + brickOffsetLeft;
+          const by = r * (brickH + brickPad) + brickOffsetTop;
+          if (circleRectCollision(ball.x, ball.y, ball.r, bx, by, brickW, brickH)) {
+            // reflect segons la cara d'impacte
+            reflectBallFromRect(ball.x, ball.y, ball.r, bx, by, brickW, brickH, prevX, prevY);
+            b.status = 0;
+            score++;
+            updateHUD();
+            // accelerem lleugerament cada x punts per fer-ho més dinàmic
+            if (score % 12 === 0) {
+              ball.dx *= 1.05;
+              ball.dy *= 1.05;
+            }
+            // comprovem si ja no queden blocs actius
+            if (allBricksCleared()) {
+              // afegim una nova fila a dalt i baixem les existents
+              addNewRowAtTop();
+            }
+            return; // només una col·lisió per frame per evitar múltiples rebotets
+          }
+        }
       }
     }
 
-    function resetBallAndPaddle() {
-      x = canvas.width / 2;
-      y = canvas.height - 30;
-      dx = 3 * (Math.random() > 0.5 ? 1 : -1);
-      dy = -3;
-      paddleX = (canvas.width - paddleWidth) / 2;
+    function allBricksCleared() {
+      for (let r = 0; r < bricks.length; r++) {
+        for (let c = 0; c < brickCols; c++) {
+          if (bricks[r][c] && bricks[r][c].status === 1) return false;
+        }
+      }
+      return true;
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      drawBricks();
-      drawBall();
-      drawPaddle();
-      collisionDetection();
-      drawScore();
-      drawLives();
-
-      // Xocs laterals
-      if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
-        dx = -dx;
+    /* ====== Afegir nova fila a dalt (infinite) ====== */
+    function addNewRowAtTop() {
+      // nova fila amb colors aleatoris
+      const colors = ['#3fa9f5','#ff4b4b','#ffd93b','#4caf50','#9c27b0','#00bcd4'];
+      const newRow = [];
+      for (let c = 0; c < brickCols; c++) {
+        newRow.push({status:1, color: colors[Math.floor(Math.random()*colors.length)]});
       }
-      // Xoc amb el sostre
-      if (y + dy < ballRadius) {
-        dy = -dy;
-      } else if (y + dy > canvas.height - ballRadius - paddleHeight - 5) {
-        // Comprovem si toca la plataforma
-        if (x > paddleX && x < paddleX + paddleWidth) {
-          // Rebot amb una mica d’efecte segons on toqui
-          const hitPos = (x - (paddleX + paddleWidth / 2)) / (paddleWidth / 2);
-          dx = 4 * hitPos;
-          dy = -Math.abs(dy);
-        } else if (y + dy > canvas.height - ballRadius) {
-          // Perdem vida
-          lives--;
-          if (!lives) {
-            alert("Has perdut 😢");
+      // insertem al principi
+      bricks.unshift(newRow);
+
+      // Comprovem si la fila més baixa arriba massa a prop de la plataforma
+      const lastRowIndex = bricks.length - 1;
+      const lastRowY = lastRowIndex * (brickH + brickPad) + brickOffsetTop;
+      const dangerY = canvas.height - paddle.height - 8 - brickH - 10;
+      if (lastRowY >= dangerY) {
+        // Si els blocs han baixat massa, perdem una vida i eliminem la fila inferior
+        lives--;
+        updateHUD();
+        // eliminem la fila inferior per continuar infinit
+        bricks.pop();
+        if (lives <= 0) {
+          setTimeout(()=> {
+            alert('Has perdut. Els blocs han arribat massa avall.');
             document.location.reload();
-          } else {
-            resetBallAndPaddle();
-          }
+          }, 50);
+        } else {
+          // reset bola i plataforma
+          resetBallAndPaddle();
         }
+      }
+    }
+
+    /* ====== HUD ====== */
+    function updateHUD() {
+      document.getElementById('score').textContent = 'Punts: ' + score;
+      const livesDiv = document.getElementById('lives');
+      livesDiv.innerHTML = '';
+      for (let i = 0; i < lives; i++) {
+        const s = document.createElement('span');
+        livesDiv.appendChild(s);
+      }
+    }
+
+    /* ====== Reset ====== */
+    function resetBallAndPaddle() {
+      paddle.x = (canvas.width - paddle.width) / 2;
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = canvas.height - paddle.height - 8 - ball.r;
+      ball.dx = 3 * (Math.random() > 0.5 ? 1 : -1);
+      ball.dy = -3;
+      ball.launched = false;
+    }
+
+    resetBallAndPaddle();
+
+    /* ====== Bucle principal ====== */
+    function update() {
+      // Si la bola no està llançada, segueix la plataforma
+      if (!ball.launched) {
+        ball.x = paddle.x + paddle.width / 2;
+        ball.y = canvas.height - paddle.height - 8 - ball.r;
       }
 
       // Mou la plataforma
-      if (rightPressed && paddleX < canvas.width - paddleWidth) {
-        paddleX += 6;
-      } else if (leftPressed && paddleX > 0) {
-        paddleX -= 6;
+      if (rightPressed && paddle.x < canvas.width - paddle.width) paddle.x += paddle.speed;
+      if (leftPressed && paddle.x > 0) paddle.x -= paddle.speed;
+
+      // Guardem posició prèvia per detectar cara d'impacte
+      const prevX = ball.x;
+      const prevY = ball.y;
+
+      // Mou la bola només si està llançada
+      if (ball.launched) {
+        ball.x += ball.dx;
+        ball.y += ball.dy;
       }
 
-      x += dx;
-      y += dy;
+      // Xocs amb parets
+      if (ball.x + ball.r > canvas.width) {
+        ball.x = canvas.width - ball.r;
+        ball.dx = -Math.abs(ball.dx);
+      } else if (ball.x - ball.r < 0) {
+        ball.x = ball.r;
+        ball.dx = Math.abs(ball.dx);
+      }
+      if (ball.y - ball.r < 0) {
+        ball.y = ball.r;
+        ball.dy = Math.abs(ball.dy);
+      }
 
-      requestAnimationFrame(draw);
+      // Xoc amb plataforma
+      const paddleY = canvas.height - paddle.height - 8;
+      if (circleRectCollision(ball.x, ball.y, ball.r, paddle.x, paddleY, paddle.width, paddle.height)) {
+        // efecte segons on toqui la plataforma
+        const hitPos = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
+        ball.dx = 5 * hitPos;
+        ball.dy = -Math.abs(ball.dy);
+        // assegurem que la bola no quedi enganxada dins la plataforma
+        ball.y = paddleY - ball.r - 0.5;
+      } else if (ball.y + ball.r > canvas.height) {
+        // caiguda sota la plataforma: perdre vida
+        lives--;
+        updateHUD();
+        if (lives <= 0) {
+          setTimeout(()=> {
+            alert('Has perdut 😢');
+            document.location.reload();
+          }, 50);
+        } else {
+          resetBallAndPaddle();
+        }
+      }
+
+      // Col·lisions amb blocs
+      checkBrickCollisions(prevX, prevY);
+
+      // Dibuix
+      render();
+
+      requestAnimationFrame(update);
     }
 
-    draw();
+    function render() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      drawBricks();
+      drawBall();
+      drawPaddle();
+    }
+
+    // Inici del bucle
+    update();
+
+    /* ====== Accessibilitat: reiniciar amb R ====== */
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'r') {
+        location.reload();
+      }
+    });
+
+    /* ====== Ajustos responsius: recalcula posicions si canvàs canvia ====== */
+    window.addEventListener('resize', () => {
+      // no fem res complex; el canvas té mida fixa per estil retro
+    });
   </script>
 </body>
 </html>
