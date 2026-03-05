@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Minijocs · Breakout</title>
 <style>
-  /* Estils copiats/ajustats per coincidir amb serp.html (barra superior més estreta) */
+  /* ====== Estils generals del projecte (iguals que serp.html) ====== */
   :root{--wrap-w:400px}
   *{box-sizing:border-box}
   body{
@@ -19,59 +19,79 @@
     min-height:100vh;
   }
 
-  /* Barra superior: padding vertical reduït per ser igual a serp.html */
-  nav{
+  /* ====== Barra superior copiada tal qual de serp.html ====== */
+  .topbar {
     width:100%;
-    background:rgba(0,0,0,0.65);
-    padding:6px 16px; /* més estreta verticalment */
+    background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.45));
     display:flex;
     align-items:center;
     justify-content:space-between;
+    padding:8px 14px; /* mida vertical i horitzontal igualada */
     gap:12px;
     border-bottom:1px solid rgba(255,255,255,0.03);
   }
-  .nav-left{display:flex;align-items:center;gap:10px}
-  .nav-left img{height:44px;display:block} /* mida logo igualada */
-  .nav-title{font-weight:800;font-size:16px;letter-spacing:0.2px}
-  .nav-links{display:flex;gap:12px;align-items:center}
-  .nav-links a{color:#fff;text-decoration:none;font-weight:700;font-size:13px}
-  .nav-links a:hover{color:#ffff66}
+  .topbar .left {
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .topbar .left img.logo {
+    height:44px; /* igual que serp.html */
+    display:block;
+  }
+  .topbar .left .brand {
+    font-weight:800;
+    font-size:15px;
+    letter-spacing:0.2px;
+  }
+  .topbar .right {
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .topbar .right a {
+    color:#fff;
+    text-decoration:none;
+    font-weight:700;
+    font-size:13px;
+  }
+  .topbar .right a:hover { color:#ffff66; }
 
+  /* ====== Contenidor principal i canvas ====== */
   main{width:var(--wrap-w);max-width:96%;margin-top:10px}
-
   h1{margin:6px 0 8px 0;font-size:18px}
-
   #gameWrap{position:relative}
   canvas{display:block;width:100%;height:auto;background:#111;border:2px solid #333;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
   #hudTop{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:0 4px}
   .lives{display:flex;gap:6px}
   .lives span{display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff}
   #score{font-weight:700}
-
   .canvas-button{position:absolute;left:50%;transform:translateX(-50%);top:50%;z-index:20;background:#FFDF20;color:#111;padding:8px 12px;border-radius:6px;border:0;cursor:pointer;font-weight:700}
   .hidden{display:none}
 </style>
 </head>
 <body>
-  <nav>
-    <div class="nav-left">
-      <!-- Si tens logo, posa la ruta correcta a l'img; si no, deixa aquest alt text -->
-      <img src="assets/logo.png" alt="Logo LAG" />
-      <div class="nav-title">LAG · Minijocs</div>
+
+  <!-- BARRA SUPERIOR COPIADA EXACTA -->
+  <header class="topbar" role="banner" aria-label="Barra superior">
+    <div class="left">
+      <img class="logo" src="assets/logo.png" alt="LAG logo">
+      <div class="brand">LAG · Minijocs</div>
     </div>
-    <div class="nav-links" aria-hidden="true">
+
+    <nav class="right" role="navigation" aria-label="Enllaços">
       <a href="#">Inici</a>
       <a href="#">Minijocs</a>
       <a href="#">Minecraft</a>
       <a href="#">Contacte</a>
-    </div>
-  </nav>
+    </nav>
+  </header>
+  <!-- FI BARRA SUPERIOR -->
 
   <main>
     <h1>🕹️ Breakout</h1>
 
     <div id="gameWrap">
-      <!-- Canvas amb amplada fixa igual que a serp.html -->
       <canvas id="gameCanvas" width="400" height="400" aria-label="Canvas del joc"></canvas>
 
       <div id="hudTop">
@@ -84,7 +104,7 @@
   </main>
 
 <script>
-/* ====== Config ====== */
+/* ====== Joc Breakout (mateixa lògica que et vaig enviar) ====== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width;
@@ -309,6 +329,7 @@ update();
 </script>
 </body>
 </html>
+
 
 
 
