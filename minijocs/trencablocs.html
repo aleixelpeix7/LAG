@@ -3,12 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Joc Breakout · LAG</title>
-<link rel="icon" href="assets/favicon.png" type="image/png" />
+<title>Breakout · LAG</title>
 <style>
-/* Copiat literalment de serp.html: estils globals i barra superior */
+/* ====== Barra superior (copiada del serp.html) ====== */
 body { margin: 0; padding: 0; background-color: #002244; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color: #FAFAF9; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { box-sizing: border-box; }
 nav { background-color: rgba(0, 0, 0, 0.7); position: sticky; top: 0; width: 100%; z-index: 100; padding: 1rem 2rem; }
 nav ul { list-style: none; display: flex; justify-content: space-between; align-items: center; }
 nav li.logo { display: flex; align-items: center; }
@@ -18,24 +17,77 @@ nav li.enllacos { display: flex; gap: 2rem; }
 nav a { color: white; text-decoration: none; font-weight: bold; transition: color 0.3s; }
 nav a:hover { color: #ffff66; }
 .enllac-inici { position: absolute; top: 20px; left: 20px; font-size: 20px; color: #FF2056; text-decoration: underline; font-weight: bold; z-index: 1000; }
-.enllac-inici:hover { color: #FF637E; }
-:root { --wrap-w:400px; }
-h1{ margin:0; font-size:20px; }
-#gameWrap { position:relative; width:var(--wrap-w); }
-canvas { width:100%; height:auto; display:block; background:#222; border:2px solid #555; }
-#score { color:"white"; font-size:14px; margin:6px 0 0 0; }
-.canvas-button { position:absolute; background:#FFDF20; color:#FB2C36; border:1px solid #888; padding:8px 12px; font-size:14px; cursor:pointer; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.25); user-select:none; z-index:20; transform:translateX(-50%); white-space:nowrap; }
-.hidden{ display:none; }
 
-/* Ajusts específics del joc */
-#hudTop{display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding:0 4px;width:var(--wrap-w)}
-.lives{display:flex;gap:6px}
-.lives span{display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff}
-#score{font-weight:700}
+/* ====== Contenidor i canvas ====== */
+:root { --wrap-w:400px; }
+main { width: var(--wrap-w); max-width: 96%; margin-top: 10px; }
+h1 { margin: 6px 0 8px 0; font-size: 18px; }
+#gameWrap { position: relative; width: var(--wrap-w); }
+canvas { display: block; width: 100%; height: auto; background: #111; border: 2px solid #333; box-shadow: 0 6px 20px rgba(0,0,0,0.6); }
+#hudTop { display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding:0 4px; width:var(--wrap-w); }
+.lives { display:flex; gap:6px; }
+.lives span { display:inline-block; width:10px; height:10px; border-radius:50%; background:#fff; }
+#score { font-weight:700; }
+
+/* ====== Menús (overlays) ====== */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.6);
+  z-index: 50;
+  gap: 12px;
+  flex-direction: column;
+  padding: 16px;
+}
+.menu {
+  background: linear-gradient(180deg,#0f1720,#071018);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 18px 22px;
+  border-radius: 10px;
+  text-align:center;
+  width: 92%;
+  max-width: 360px;
+  color: #fff;
+}
+.menu h2 { margin: 0 0 8px 0; font-size: 20px; }
+.menu p { margin: 6px 0 12px 0; color: #9aa7b2; }
+.btn {
+  display:inline-block;
+  background:#FFDF20;
+  color:#111;
+  border:0;
+  padding:10px 14px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  margin:6px;
+}
+.small-btn {
+  background:transparent;
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.08);
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+/* ocults per defecte */
+.hidden { display:none; }
+
+/* petits ajustos responsius */
+@media (max-width:420px){
+  nav { padding: 0.6rem 1rem; }
+  nav li.logo img { height: 44px; }
+  :root { --wrap-w: 360px; }
+}
 </style>
 </head>
 <body>
 
+<!-- Barra superior exacta -->
 <nav>
   <ul>
     <li class="logo">
@@ -52,61 +104,333 @@ canvas { width:100%; height:auto; display:block; background:#222; border:2px sol
   </ul>
 </nav>
 
-<h1>🕹️ Breakout</h1>
+<main>
+  <h1>🕹️ Breakout</h1>
 
-<div id="gameWrap">
-  <canvas id="gameCanvas" width="400" height="400" aria-label="Canvas del joc"></canvas>
+  <div id="gameWrap">
+    <canvas id="gameCanvas" width="400" height="400" aria-label="Canvas del joc"></canvas>
 
-  <div id="hudTop">
-    <div class="lives" id="lives"></div>
-    <div id="score">Puntuació: 0</div>
+    <div id="hudTop">
+      <div class="lives" id="lives"></div>
+      <div id="score">Puntuació: 0</div>
+    </div>
+
+    <!-- Menú d'inici -->
+    <div id="startMenu" class="overlay">
+      <div class="menu">
+        <h2>Breakout</h2>
+        <p>Prem <strong>Iniciar</strong> per començar. Mou la pala amb <strong>← →</strong> i llança la bola amb <strong>↑</strong>.</p>
+        <div>
+          <button id="startBtn" class="btn">Iniciar</button>
+          <button id="startToSite" class="small-btn">Tornar a la web</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menú de pausa -->
+    <div id="pauseMenu" class="overlay hidden" aria-hidden="true">
+      <div class="menu">
+        <h2>Pausa</h2>
+        <p id="pauseScoreText">Puntuació: 0</p>
+        <div>
+          <button id="resumeBtn" class="btn">Continuar</button>
+          <button id="toMainFromPause" class="small-btn">Tornar al menú</button>
+        </div>
+        <p style="margin-top:10px;color:#9aa7b2;font-size:13px">Prem <strong>Esc</strong> per tancar aquest menú.</p>
+      </div>
+    </div>
+
+    <!-- Menú Game Over -->
+    <div id="gameOverMenu" class="overlay hidden" aria-hidden="true">
+      <div class="menu">
+        <h2>Has perdut</h2>
+        <p id="gameOverScoreText">Puntuació final: 0</p>
+        <div>
+          <button id="goToMenuBtn" class="btn">Tornar al menú</button>
+        </div>
+      </div>
+    </div>
+
   </div>
-
-  <button id="startButton" class="canvas-button hidden" aria-label="Jugar">▶ Jugar</button>
-</div>
+</main>
 
 <script>
-/* Joc Breakout: lògica resumida (col·lisions robustes, reinici complet de blocs, bola sobre pala) */
+/* ====== Joc Breakout amb menús ====== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
+
+/* Pala i bola */
 const paddle = { width: 90, height: 12, x: (W-90)/2, speed: 7 };
 const ball = { r: 7, x: W/2, y: H-30, dx: 3, dy: -3, launched: false };
-const brickCols = 8, brickPad = 6, brickOffsetLeft = 12, brickOffsetRightMargin = 8, brickOffsetTop = 36, BRICK_ROWS_INIT = 5;
+
+/* Bricks */
+const brickCols = 8, brickPad = 6, brickOffsetLeft = 12, brickOffsetRightMargin = 8, brickOffsetTop = 36;
+const BRICK_ROWS_INIT = 5;
 const availableWidth = W - brickOffsetLeft - brickOffsetRightMargin;
 const brickW = Math.floor((availableWidth - (brickCols - 1) * brickPad) / brickCols);
 const brickH = 16;
 const totalBricksWidth = brickCols * brickW + (brickCols - 1) * brickPad;
 const extraSpace = (W - brickOffsetRightMargin - brickOffsetLeft) - totalBricksWidth;
 const adjustedOffsetLeft = brickOffsetLeft + Math.floor(extraSpace / 2);
-let bricks = [], score = 0, lives = 3, leftPressed = false, rightPressed = false;
+
+let bricks = [], score = 0, lives = 3;
+let leftPressed = false, rightPressed = false;
+let gamePaused = true; // comencem en menú d'inici (pausat)
+let inGame = false; // indica si estem jugant (per evitar reactivar sense iniciar)
+
+/* Elements UI */
+const startMenu = document.getElementById('startMenu');
+const pauseMenu = document.getElementById('pauseMenu');
+const gameOverMenu = document.getElementById('gameOverMenu');
+const startBtn = document.getElementById('startBtn');
+const resumeBtn = document.getElementById('resumeBtn');
+const toMainFromPause = document.getElementById('toMainFromPause');
+const goToMenuBtn = document.getElementById('goToMenuBtn');
+const pauseScoreText = document.getElementById('pauseScoreText');
+const gameOverScoreText = document.getElementById('gameOverScoreText');
 
 function initBricks(rows = BRICK_ROWS_INIT){
-  bricks = []; const colors = ['#3fa9f5','#ff4b4b','#ffd93b','#4caf50','#9c27b0','#00bcd4'];
-  for(let r=0;r<rows;r++){ const row=[]; for(let c=0;c<brickCols;c++) row.push({status:1,color:colors[r%colors.length]}); bricks.push(row); }
+  bricks = [];
+  const colors = ['#3fa9f5','#ff4b4b','#ffd93b','#4caf50','#9c27b0','#00bcd4'];
+  for(let r=0;r<rows;r++){
+    const row = [];
+    for(let c=0;c<brickCols;c++){
+      row.push({ status: 1, color: colors[r % colors.length] });
+    }
+    bricks.push(row);
+  }
 }
-initBricks();
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-function circleRectCollision(cx,cy,cr,rx,ry,rw,rh){ const closestX=clamp(cx,rx,rx+rw); const closestY=clamp(cy,ry,ry+rh); const dx=cx-closestX, dy=cy-closestY; return (dx*dx+dy*dy) <= (cr*cr); }
-function reflectBallFromRect(prevX,prevY,rx,ry,rw,rh){ const fromLeft=prevX<=rx; const fromRight=prevX>=rx+rw; const fromTop=prevY<=ry; const fromBottom=prevY>=ry+rh; if((fromLeft&&!fromTop&&!fromBottom)||(fromRight&&!fromTop&&!fromBottom)) ball.dx=-ball.dx; else if((fromTop&&!fromLeft&&!fromRight)||(fromBottom&&!fromLeft&&!fromRight)) ball.dy=-ball.dy; else { if(Math.abs(ball.dx)>Math.abs(ball.dy)) ball.dx=-ball.dx; else ball.dy=-ball.dy; } }
-function updateHUD(){ document.getElementById('score').textContent='Puntuació: '+score; const livesDiv=document.getElementById('lives'); livesDiv.innerHTML=''; for(let i=0;i<lives;i++){ const s=document.createElement('span'); livesDiv.appendChild(s); } }
+
+/* utilitats */
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function circleRectCollision(cx,cy,cr,rx,ry,rw,rh){
+  const closestX = clamp(cx, rx, rx+rw);
+  const closestY = clamp(cy, ry, ry+rh);
+  const dx = cx - closestX, dy = cy - closestY;
+  return (dx*dx + dy*dy) <= (cr*cr);
+}
+function reflectBallFromRect(prevX,prevY,rx,ry,rw,rh){
+  const fromLeft = prevX <= rx;
+  const fromRight = prevX >= rx + rw;
+  const fromTop = prevY <= ry;
+  const fromBottom = prevY >= ry + rh;
+  if((fromLeft && !fromTop && !fromBottom) || (fromRight && !fromTop && !fromBottom)) ball.dx = -ball.dx;
+  else if((fromTop && !fromLeft && !fromRight) || (fromBottom && !fromLeft && !fromRight)) ball.dy = -ball.dy;
+  else { if(Math.abs(ball.dx) > Math.abs(ball.dy)) ball.dx = -ball.dx; else ball.dy = -ball.dy; }
+}
+
+/* HUD */
+function updateHUD(){
+  document.getElementById('score').textContent = 'Puntuació: ' + score;
+  const livesDiv = document.getElementById('lives'); livesDiv.innerHTML = '';
+  for(let i=0;i<lives;i++){ const s = document.createElement('span'); livesDiv.appendChild(s); }
+}
+
+/* reset */
+function resetBallAndPaddle(){
+  paddle.x = (W - paddle.width) / 2;
+  ball.x = paddle.x + paddle.width / 2;
+  ball.y = H - paddle.height - 8 - ball.r;
+  ball.dx = 3 * (Math.random() > 0.5 ? 1 : -1);
+  ball.dy = -3;
+  ball.launched = false;
+}
+
+/* Menús: mostrar/ocultar */
+function showStartMenu(){
+  gamePaused = true;
+  inGame = false;
+  startMenu.classList.remove('hidden');
+  pauseMenu.classList.add('hidden');
+  gameOverMenu.classList.add('hidden');
+  initBricks(BRICK_ROWS_INIT);
+  score = 0; lives = 3;
+  updateHUD();
+  resetBallAndPaddle();
+}
+function startGame(){
+  startMenu.classList.add('hidden');
+  pauseMenu.classList.add('hidden');
+  gameOverMenu.classList.add('hidden');
+  gamePaused = false;
+  inGame = true;
+  // no llancem la bola automàticament; l'usuari ha de prémer ArrowUp
+}
+function showPauseMenu(){
+  if(!inGame) return;
+  gamePaused = true;
+  pauseScoreText.textContent = 'Puntuació: ' + score;
+  pauseMenu.classList.remove('hidden');
+}
+function hidePauseMenu(){
+  pauseMenu.classList.add('hidden');
+  gamePaused = false;
+}
+function showGameOver(){
+  gamePaused = true;
+  inGame = false;
+  gameOverScoreText.textContent = 'Puntuació final: ' + score;
+  gameOverMenu.classList.remove('hidden');
+}
+
+/* Controls */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') leftPressed = true;
+  if (e.key === 'ArrowRight') rightPressed = true;
+  if (e.key === 'ArrowUp') {
+    if (!ball.launched && inGame) {
+      ball.launched = true;
+      ball.dy = -Math.abs(ball.dy) || -3;
+      ball.dx = (Math.random() > 0.5 ? 1 : -1) * (Math.abs(ball.dx) || 3);
+    }
+  }
+  if (e.key === 'Escape') {
+    // toggle pausa si estem jugant
+    if (!inGame) return;
+    if (!gamePaused) showPauseMenu();
+    else hidePauseMenu();
+  }
+});
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'ArrowLeft') leftPressed = false;
+  if (e.key === 'ArrowRight') rightPressed = false;
+});
+
+/* Botons UI */
+startBtn.addEventListener('click', () => startGame());
+resumeBtn.addEventListener('click', () => hidePauseMenu());
+toMainFromPause.addEventListener('click', () => showStartMenu());
+goToMenuBtn.addEventListener('click', () => showStartMenu());
+
+/* Dibuix */
+function roundRect(ctx,x,y,w,h,r,fill,stroke){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+  if(fill) ctx.fill();
+  if(stroke) ctx.stroke();
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // blocs
+  for(let r=0;r<bricks.length;r++){
+    for(let c=0;c<brickCols;c++){
+      const b = bricks[r][c];
+      if(b && b.status === 1){
+        const bx = c * (brickW + brickPad) + adjustedOffsetLeft;
+        const by = r * (brickH + brickPad) + brickOffsetTop;
+        ctx.fillStyle = b.color;
+        roundRect(ctx, bx, by, brickW, brickH, 4, true, false);
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.strokeRect(bx, by, brickW, brickH);
+      }
+    }
+  }
+  // bola
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.closePath();
+  // pala
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(paddle.x, H - paddle.height - 8, paddle.width, paddle.height);
+}
+
+/* Col·lisions */
+function allBricksCleared(){
+  for(let r=0;r<bricks.length;r++) for(let c=0;c<brickCols;c++) if(bricks[r][c] && bricks[r][c].status === 1) return false;
+  return true;
+}
+function checkBrickCollisions(prevX, prevY){
+  for(let r=0;r<bricks.length;r++){
+    for(let c=0;c<brickCols;c++){
+      const b = bricks[r][c];
+      if(!b || b.status !== 1) continue;
+      const bx = c * (brickW + brickPad) + adjustedOffsetLeft;
+      const by = r * (brickH + brickPad) + brickOffsetTop;
+      if(circleRectCollision(ball.x, ball.y, ball.r, bx, by, brickW, brickH)){
+        reflectBallFromRect(prevX, prevY, bx, by, brickW, brickH);
+        b.status = 0;
+        score++;
+        updateHUD();
+        // limit de velocitat
+        const MAX_SPEED = 5.2;
+        ball.dx = clamp(ball.dx, -MAX_SPEED, MAX_SPEED);
+        ball.dy = clamp(ball.dy, -MAX_SPEED, MAX_SPEED);
+        if(allBricksCleared()){
+          initBricks(BRICK_ROWS_INIT); // reinici complet
+        }
+        return;
+      }
+    }
+  }
+}
+
+/* Bucle principal */
+function update(){
+  // Si estem en menú d'inici o pausa o gameover, no actualitzem la física
+  if (!gamePaused) {
+    // Mou la pala
+    if(rightPressed && paddle.x < W - paddle.width) paddle.x += paddle.speed;
+    if(leftPressed && paddle.x > 0) paddle.x -= paddle.speed;
+
+    const prevX = ball.x, prevY = ball.y;
+    if(ball.launched){
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+    } else {
+      // si no està llançada, segueix la pala
+      ball.x = paddle.x + paddle.width / 2;
+      ball.y = H - paddle.height - 8 - ball.r;
+    }
+
+    // parets
+    if(ball.x + ball.r > W){ ball.x = W - ball.r; ball.dx = -Math.abs(ball.dx); }
+    else if(ball.x - ball.r < 0){ ball.x = ball.r; ball.dx = Math.abs(ball.dx); }
+    if(ball.y - ball.r < 0){ ball.y = ball.r; ball.dy = Math.abs(ball.dy); }
+
+    // pala
+    const paddleY = H - paddle.height - 8;
+    if(circleRectCollision(ball.x, ball.y, ball.r, paddle.x, paddleY, paddle.width, paddle.height)){
+      const hitPos = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
+      ball.dx = 5 * hitPos;
+      ball.dy = -Math.abs(ball.dy);
+      ball.y = paddleY - ball.r - 0.5;
+    } else if(ball.y + ball.r > H){
+      lives--;
+      updateHUD();
+      if(lives <= 0){
+        showGameOver();
+      } else {
+        resetBallAndPaddle();
+      }
+    }
+
+    // col·lisions amb blocs
+    checkBrickCollisions(prevX, prevY);
+  }
+
+  // dibuix sempre (perquè el menú es veu sobre el canvas)
+  draw();
+  requestAnimationFrame(update);
+}
+
+/* Inici */
+initBricks(BRICK_ROWS_INIT);
 updateHUD();
-function resetBallAndPaddle(){ paddle.x=(W-paddle.width)/2; ball.x=paddle.x+paddle.width/2; ball.y=H-paddle.height-8-ball.r; ball.dx=3*(Math.random()>0.5?1:-1); ball.dy=-3; ball.launched=false; }
 resetBallAndPaddle();
-document.addEventListener('keydown', e=>{ if(e.key==='ArrowLeft') leftPressed=true; if(e.key==='ArrowRight') rightPressed=true; if(e.key==='ArrowUp' && !ball.launched){ ball.launched=true; ball.dy=-Math.abs(ball.dy)||-3; ball.dx=(Math.random()>0.5?1:-1)*(Math.abs(ball.dx)||3); } });
-document.addEventListener('keyup', e=>{ if(e.key==='ArrowLeft') leftPressed=false; if(e.key==='ArrowRight') rightPressed=false; });
-
-function roundRect(ctx,x,y,w,h,r,fill,stroke){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if(fill)ctx.fill(); if(stroke)ctx.stroke(); }
-function draw(){ ctx.clearRect(0,0,W,H); for(let r=0;r<bricks.length;r++){ for(let c=0;c<brickCols;c++){ const b=bricks[r][c]; if(b&&b.status===1){ const bx=c*(brickW+brickPad)+adjustedOffsetLeft; const by=r*(brickH+brickPad)+brickOffsetTop; ctx.fillStyle=b.color; roundRect(ctx,bx,by,brickW,brickH,4,true,false); ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.strokeRect(bx,by,brickW,brickH); } } } ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); ctx.closePath(); ctx.fillStyle='#fff'; ctx.fillRect(paddle.x,H-paddle.height-8,paddle.width,paddle.height); }
-
-function allBricksCleared(){ for(let r=0;r<bricks.length;r++) for(let c=0;c<brickCols;c++) if(bricks[r][c]&&bricks[r][c].status===1) return false; return true; }
-function checkBrickCollisions(prevX,prevY){ for(let r=0;r<bricks.length;r++){ for(let c=0;c<brickCols;c++){ const b=bricks[r][c]; if(!b||b.status!==1) continue; const bx=c*(brickW+brickPad)+adjustedOffsetLeft; const by=r*(brickH+brickPad)+brickOffsetTop; if(circleRectCollision(ball.x,ball.y,ball.r,bx,by,brickW,brickH)){ reflectBallFromRect(prevX,prevY,bx,by,brickW,brickH); b.status=0; score++; updateHUD(); const MAX_SPEED=5.2; ball.dx=clamp(ball.dx,-MAX_SPEED,MAX_SPEED); ball.dy=clamp(ball.dy,-MAX_SPEED,MAX_SPEED); if(allBricksCleared()){ initBricks(BRICK_ROWS_INIT); } return; } } } }
-
-function update(){ if(!ball.launched){ ball.x=paddle.x+paddle.width/2; ball.y=H-paddle.height-8-ball.r; } if(rightPressed&&paddle.x<W-paddle.width) paddle.x+=paddle.speed; if(leftPressed&&paddle.x>0) paddle.x-=paddle.speed; const prevX=ball.x, prevY=ball.y; if(ball.launched){ ball.x+=ball.dx; ball.y+=ball.dy; } if(ball.x+ball.r>W){ ball.x=W-ball.r; ball.dx=-Math.abs(ball.dx); } else if(ball.x-ball.r<0){ ball.x=ball.r; ball.dx=Math.abs(ball.dx); } if(ball.y-ball.r<0){ ball.y=ball.r; ball.dy=Math.abs(ball.dy); } const paddleY=H-paddle.height-8; if(circleRectCollision(ball.x,ball.y,ball.r,paddle.x,paddleY,paddle.width,paddle.height)){ const hitPos=(ball.x-(paddle.x+paddle.width/2))/(paddle.width/2); ball.dx=5*hitPos; ball.dy=-Math.abs(ball.dy); ball.y=paddleY-ball.r-0.5; } else if(ball.y+ball.r>H){ lives--; updateHUD(); if(lives<=0){ setTimeout(()=>{ alert('Has perdut 😢'); location.reload(); },50); } else resetBallAndPaddle(); } checkBrickCollisions(prevX,prevY); draw(); requestAnimationFrame(update); }
+showStartMenu(); // comencem al menú d'inici
 update();
 </script>
 </body>
 </html>
+
 
 
 
