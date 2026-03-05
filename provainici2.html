@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAG Intro</title>
+
+<style>
+    body {
+        margin: 0;
+        background: black;
+        overflow: hidden;
+        font-family: sans-serif;
+    }
+
+    #intro {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: black;
+    }
+
+    #logo {
+        width: 40vw;
+        max-width: 500px;
+        opacity: 1;
+        transition: opacity 0.3s ease-out;
+    }
+
+    /* --- GLITCH OVERLAY --- */
+    #glitch-overlay {
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,0.03) 0px,
+            rgba(255,255,255,0.03) 2px,
+            rgba(0,0,0,0.03) 2px,
+            rgba(0,0,0,0.03) 4px
+        );
+        mix-blend-mode: overlay;
+        opacity: 0;
+        pointer-events: none;
+        animation: glitch 0.4s steps(2) infinite;
+    }
+
+    @keyframes glitch {
+        0% { opacity: 0; transform: translate(0,0); }
+        20% { opacity: 1; transform: translate(-5px, 3px); }
+        40% { opacity: 0.4; transform: translate(5px, -3px); }
+        60% { opacity: 1; transform: translate(-3px, -2px); }
+        80% { opacity: 0.6; transform: translate(3px, 2px); }
+        100% { opacity: 0; transform: translate(0,0); }
+    }
+
+    /* --- CRT SHUTDOWN EFFECT --- */
+    #crt-shutdown {
+        position: absolute;
+        inset: 0;
+        background: black;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #crt-shutdown.active {
+        animation: crt-off 1.2s forwards;
+    }
+
+    @keyframes crt-off {
+        0% {
+            opacity: 0;
+        }
+        20% {
+            opacity: 1;
+            background: black;
+        }
+        40% {
+            background: linear-gradient(
+                to bottom,
+                black 0%,
+                white 50%,
+                black 100%
+            );
+        }
+        60% {
+            background: linear-gradient(
+                to bottom,
+                black 45%,
+                white 50%,
+                black 55%
+            );
+        }
+        80% {
+            background: linear-gradient(
+                to bottom,
+                black 49%,
+                white 50%,
+                black 51%
+            );
+        }
+        100% {
+            background: black;
+            opacity: 1;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div id="intro">
+    <img id="logo" src="assets/logo.png" alt="Logo">
+    <div id="glitch-overlay"></div>
+    <div id="crt-shutdown"></div>
+</div>
+
+<script>
+    // Temps en mil·lisegons
+    const LOGO_TIME = 2000;      // Temps que el logo està quiet
+    const GLITCH_TIME = 800;     // Duració del glitch
+    const CRT_TIME = 1200;       // Duració de l'efecte CRT
+
+    const logo = document.getElementById("logo");
+    const glitch = document.getElementById("glitch-overlay");
+    const crt = document.getElementById("crt-shutdown");
+
+    // 1. Espera amb el logo visible
+    setTimeout(() => {
+        glitch.style.opacity = "1";
+
+        // 2. Glitch
+        setTimeout(() => {
+            glitch.style.opacity = "0";
+            logo.style.opacity = "0";
+
+            // 3. CRT shutdown
+            crt.classList.add("active");
+
+            // 4. Redirecció final
+            setTimeout(() => {
+                window.location.href = "home.html"; // Canvia-ho al teu inici
+            }, CRT_TIME);
+
+        }, GLITCH_TIME);
+
+    }, LOGO_TIME);
+</script>
+
+</body>
+</html>
+
