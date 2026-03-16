@@ -5,8 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Temporitzador | LAG</title>
   <link rel="icon" href="assets/favicon.png" type="image/png" />
-
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       padding: 0;
@@ -18,8 +23,6 @@
       align-items: center;
       gap: 8px;
     }
-
-    * { box-sizing: border-box; }
 
     nav {
       background-color: rgba(0, 0, 0, 0.7);
@@ -37,9 +40,26 @@
       align-items: center;
     }
 
+    nav li.logo {
+      display: flex;
+      align-items: center;
+    }
+
+    nav li.logo a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
     nav li.logo img {
       height: 60px;
       margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    nav li.enllacos {
+      display: flex;
+      gap: 2rem;
     }
 
     nav a {
@@ -49,11 +69,20 @@
       transition: color 0.3s;
     }
 
-    nav a:hover { color: #ffff66; }
+    nav a:hover {
+      color: #ffff66;
+    }
+
+    :root { --wrap-w:400px; }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+    }
 
     /* Pantalla d'inici */
     #startScreen {
-      margin-top: 20px;
+      margin-top: 40px;
       background: #0f172a;
       padding: 20px;
       border-radius: 12px;
@@ -108,13 +137,55 @@
       transition: 0.2s;
     }
 
-    button:hover { background: #FACC15; }
+    button:hover {
+      background: #FACC15;
+    }
+
+    /* Botó de pujar fitxer personalitzat */
+    .fileRow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    #uploadSound {
+      display: none;
+    }
+
+    #uploadLabel {
+      background: #FFDF20;
+      color: #111827;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    #uploadLabel:hover {
+      background: #FACC15;
+      transform: translateY(-1px);
+    }
+
+    #fileName {
+      font-size: 12px;
+      color: #E5E7EB;
+      opacity: 0.9;
+      max-width: 180px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
 
     /* Pantalla del temporitzador */
     #timerScreen {
       display: none;
-      margin-top: 20px;
-      display: flex;
+      margin-top: 40px;
+      display: none;
       flex-direction: column;
       align-items: center;
       gap: 16px;
@@ -155,12 +226,9 @@
     #pauseBtn:hover, #stopBtn:hover, #stopAlarmBtn:hover {
       background: #FACC15;
     }
-
   </style>
 </head>
-
 <body>
-
 <nav>
   <ul>
     <li class="logo">
@@ -177,7 +245,6 @@
   </ul>
 </nav>
 
-<!-- PANTALLA D'INICI -->
 <div id="startScreen">
   <h2>⏱ Temporitzador</h2>
 
@@ -189,12 +256,15 @@
 
   <select id="soundSelect"></select>
 
-  <input type="file" id="uploadSound" accept="audio/mp3,audio/mpeg">
+  <div class="fileRow">
+    <label id="uploadLabel" for="uploadSound">Puja un so</label>
+    <input type="file" id="uploadSound" accept="audio/mp3,audio/mpeg">
+    <span id="fileName">Cap fitxer seleccionat</span>
+  </div>
 
   <button id="startBtn">Inicia</button>
 </div>
 
-<!-- PANTALLA DEL TEMPORITZADOR -->
 <div id="timerScreen">
   <div id="circleContainer">
     <svg width="260" height="260">
@@ -225,6 +295,7 @@
 
   const soundSelect = document.getElementById("soundSelect");
   const uploadSound = document.getElementById("uploadSound");
+  const fileNameSpan = document.getElementById("fileName");
   const alarmSound = document.getElementById("alarmSound");
 
   const startScreen = document.getElementById("startScreen");
@@ -247,6 +318,13 @@
   let interval = null;
   let paused = false;
 
+  let animInterval = null;
+  let lastTickTime = null;
+
+  const CIRCUMFERENCE = 2 * Math.PI * 120;
+  progressCircle.style.strokeDasharray = CIRCUMFERENCE;
+  progressCircle.style.strokeDashoffset = 0;
+
   function loadSounds() {
     soundSelect.innerHTML = "";
     predefinedSounds.forEach((s) => {
@@ -264,11 +342,16 @@
     if (!file) return;
 
     const url = URL.createObjectURL(file);
+    fileNameSpan.textContent = file.name;
 
-    const opt = document.createElement("option");
-    opt.value = url;
-    opt.textContent = "So personalitzat";
-    soundSelect.appendChild(opt);
+    let customOpt = Array.from(soundSelect.options).find(o => o.dataset && o.dataset.custom === "true");
+    if (!customOpt) {
+      customOpt = document.createElement("option");
+      customOpt.dataset.custom = "true";
+      soundSelect.appendChild(customOpt);
+    }
+    customOpt.value = url;
+    customOpt.textContent = "So personalitzat";
 
     soundSelect.value = url;
   });
@@ -280,16 +363,35 @@
     return `${h}:${m}:${s}`;
   }
 
-  function updateCircle() {
-    const circumference = 754;
-    const progress = (remaining / totalSeconds) * circumference;
-    progressCircle.style.strokeDashoffset = circumference - progress;
+  function updateCircleSmooth(now) {
+    if (!totalSeconds || totalSeconds <= 0) {
+      progressCircle.style.strokeDashoffset = 0;
+      return;
+    }
+    const elapsed = totalSeconds - remaining;
+    const ratio = Math.max(0, Math.min(1, elapsed / totalSeconds));
+    const offset = ratio * CIRCUMFERENCE;
+    progressCircle.style.strokeDashoffset = offset;
+  }
+
+  function startAnimationLoop() {
+    if (animInterval) clearInterval(animInterval);
+    animInterval = setInterval(() => {
+      updateCircleSmooth(performance.now());
+    }, 1000 / 60);
+  }
+
+  function stopAnimationLoop() {
+    if (animInterval) {
+      clearInterval(animInterval);
+      animInterval = null;
+    }
   }
 
   function startTimer() {
-    const h = Math.min(24, Math.max(0, parseInt(hours.value)));
-    const m = Math.min(59, Math.max(0, parseInt(minutes.value)));
-    const s = Math.min(59, Math.max(0, parseInt(seconds.value)));
+    const h = Math.min(24, Math.max(0, parseInt(hours.value) || 0));
+    const m = Math.min(59, Math.max(0, parseInt(minutes.value) || 0));
+    const s = Math.min(59, Math.max(0, parseInt(seconds.value) || 0));
 
     totalSeconds = h * 3600 + m * 60 + s;
     remaining = totalSeconds;
@@ -301,26 +403,35 @@
     startScreen.style.display = "none";
     timerScreen.style.display = "flex";
 
-    timeDisplay.textContent = format(remaining);
-    updateCircle();
+    paused = false;
+    pauseBtn.textContent = "Pausa";
+    pauseBtn.style.display = "inline-block";
+    stopBtn.style.display = "inline-block";
+    stopAlarmBtn.style.display = "none";
 
+    timeDisplay.textContent = format(remaining);
+    updateCircleSmooth(performance.now());
+    startAnimationLoop();
+
+    if (interval) clearInterval(interval);
     interval = setInterval(() => {
       if (!paused) {
         remaining--;
+        if (remaining < 0) remaining = 0;
         timeDisplay.textContent = format(remaining);
-        updateCircle();
 
         if (remaining <= 0) {
           clearInterval(interval);
+          interval = null;
 
-          // Amaga els botons normals
           pauseBtn.style.display = "none";
           stopBtn.style.display = "none";
-
-          // Mostra el botó d'aturar alarma
           stopAlarmBtn.style.display = "inline-block";
 
+          updateCircleSmooth(performance.now());
+          alarmSound.currentTime = 0;
           alarmSound.play();
+          stopAnimationLoop();
         }
       }
     }, 1000);
@@ -334,9 +445,13 @@
   });
 
   stopBtn.addEventListener("click", () => {
-    clearInterval(interval);
+    if (interval) {
+      clearInterval(interval);
+      interval = null;
+    }
     alarmSound.pause();
     alarmSound.currentTime = 0;
+    stopAnimationLoop();
 
     timerScreen.style.display = "none";
     startScreen.style.display = "flex";
@@ -344,6 +459,8 @@
     pauseBtn.style.display = "inline-block";
     stopBtn.style.display = "inline-block";
     stopAlarmBtn.style.display = "none";
+
+    progressCircle.style.strokeDashoffset = 0;
   });
 
   stopAlarmBtn.addEventListener("click", () => {
@@ -357,10 +474,12 @@
 
     pauseBtn.style.display = "inline-block";
     stopBtn.style.display = "inline-block";
+
+    progressCircle.style.strokeDashoffset = 0;
   });
 </script>
-
 </body>
 </html>
+
 
 
