@@ -85,6 +85,7 @@
       letter-spacing: 1px;
     }
 
+    /* ✔ Punt perfectament col·locat dins l’anell */
     #rotatingDot {
       width: 14px;
       height: 14px;
@@ -93,7 +94,7 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      transform-origin: 120px 0;
+      transform-origin: 0 -120px; /* radi exacte cap amunt */
       transform: translate(-50%, -50%) rotate(0deg);
     }
 
@@ -229,6 +230,7 @@
 
     startBtn.style.display = "none";
     pauseBtn.style.display = "inline-block";
+    pauseBtn.textContent = "Pausa"; /* ✔ arreglat */
     lapBtn.style.display = "inline-block";
     resetBtn.style.display = "inline-block";
 
@@ -294,5 +296,6 @@
 
 </body>
 </html>
+
 
 
