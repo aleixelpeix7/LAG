@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cronòmetre | LAG</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: #002244;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      color: #FAFAF9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    nav {
+      background-color: rgba(0, 0, 0, 0.7);
+      position: sticky;
+      top: 0;
+      width: 100%;
+      padding: 1rem 2rem;
+      z-index: 100;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav li.logo img {
+      height: 60px;
+      margin-right: 0.5rem;
+    }
+
+    nav li.enllacos {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    nav a:hover { color: #ffff66; }
+
+    #chronoScreen {
+      margin-top: 40px;
+      background: #0f172a;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #334155;
+      width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+    }
+
+    #circleContainer {
+      width: 260px;
+      height: 260px;
+      position: relative;
+    }
+
+    #circleContainer svg {
+      transform: rotate(-90deg);
+    }
+
+    #timeDisplay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 38px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    #chronoButtons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #FFDF20;
+      color: #111;
+      font-weight: bold;
+    }
+
+    button:hover { background: #FACC15; }
+
+    #laps {
+      width: 100%;
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
+    #laps div {
+      padding: 6px;
+      border-bottom: 1px solid #334155;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <ul>
+    <li class="logo">
+      <a href="https://lagg.netlify.app">
+        <img src="assets/logo.png" alt="Logo GLS" />
+      </a>
+    </li>
+    <li class="enllacos">
+      <a href="https://lagg.netlify.app">Inici</a>
+      <a href="https://lagg.netlify.app/minijocs/">Minijocs</a>
+      <a href="https://lagg.netlify.app/minecraft/">Minecraft</a>
+      <a href="https://lagg.netlify.app/contacte">Contactar</a>
+    </li>
+  </ul>
+</nav>
+
+<div id="chronoScreen">
+  <h2>⏱ Cronòmetre</h2>
+
+  <div id="circleContainer">
+    <svg width="260" height="260">
+      <circle cx="130" cy="130" r="120" stroke="#334155" stroke-width="18" fill="none"/>
+      <circle id="progressCircle" cx="130" cy="130" r="120" stroke="#FFDF20" stroke-width="18" fill="none"
+              stroke-linecap="round" stroke-dasharray="754" stroke-dashoffset="754"/>
+    </svg>
+
+    <div id="timeDisplay">00:00:00.0</div>
+  </div>
+
+  <div id="chronoButtons">
+    <button id="startBtn">Inicia</button>
+    <button id="pauseBtn" style="display:none;">Pausa</button>
+    <button id="lapBtn" style="display:none;">Marca</button>
+    <button id="resetBtn" style="display:none;">Reinicia</button>
+  </div>
+
+  <div id="laps"></div>
+</div>
+
+<script>
+  const timeDisplay = document.getElementById("timeDisplay");
+  const progressCircle = document.getElementById("progressCircle");
+
+  const startBtn = document.getElementById("startBtn");
+  const pauseBtn = document.getElementById("pauseBtn");
+  const lapBtn = document.getElementById("lapBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const lapsDiv = document.getElementById("laps");
+
+  let running = false;
+  let paused = false;
+  let startTime = 0;
+  let pauseStart = 0;
+  let totalPaused = 0;
+  let animInterval = null;
+  let lapCount = 0;
+
+  const CIRC = 2 * Math.PI * 120;
+  progressCircle.style.strokeDasharray = CIRC;
+  progressCircle.style.strokeDashoffset = CIRC;
+
+  function formatTime(ms) {
+    let total = ms / 1000;
+    const h = Math.floor(total / 3600);
+    total %= 3600;
+    const m = Math.floor(total / 60);
+    const s = Math.floor(total % 60);
+    const d = Math.floor((ms % 1000) / 100);
+
+    return (
+      String(h).padStart(2, "0") + ":" +
+      String(m).padStart(2, "0") + ":" +
+      String(s).padStart(2, "0") + "." +
+      d
+    );
+  }
+
+  function updateChrono() {
+    const now = Date.now();
+    const elapsed = now - startTime - totalPaused;
+
+    timeDisplay.textContent = formatTime(elapsed);
+
+    const ratio = (elapsed % 60000) / 60000;
+    progressCircle.style.strokeDashoffset = CIRC - ratio * CIRC;
+  }
+
+  function startChrono() {
+    running = true;
+    paused = false;
+    startTime = Date.now();
+    totalPaused = 0;
+
+    startBtn.style.display = "none";
+    pauseBtn.style.display = "inline-block";
+    lapBtn.style.display = "inline-block";
+    resetBtn.style.display = "inline-block";
+
+    animInterval = setInterval(updateChrono, 1000 / 60);
+  }
+  function pauseChrono() {
+    if (!paused) {
+      paused = true;
+      pauseBtn.textContent = "Reprèn";
+      pauseStart = Date.now();
+    } else {
+      paused = false;
+      pauseBtn.textContent = "Pausa";
+      totalPaused += Date.now() - pauseStart;
+    }
+  }
+
+  function addLap() {
+    const now = Date.now();
+    const elapsed = now - startTime - totalPaused;
+
+    lapCount++;
+    const lapDiv = document.createElement("div");
+    lapDiv.textContent = `${lapCount} — ${formatTime(elapsed)}`;
+    lapsDiv.prepend(lapDiv);
+  }
+
+  function resetChrono() {
+    running = false;
+    paused = false;
+
+    clearInterval(animInterval);
+    animInterval = null;
+
+    timeDisplay.textContent = "00:00:00.0";
+    progressCircle.style.strokeDashoffset = CIRC;
+
+    lapsDiv.innerHTML = "";
+    lapCount = 0;
+
+    startBtn.style.display = "inline-block";
+    pauseBtn.style.display = "none";
+    lapBtn.style.display = "none";
+    resetBtn.style.display = "none";
+  }
+
+  startBtn.addEventListener("click", startChrono);
+  pauseBtn.addEventListener("click", pauseChrono);
+  lapBtn.addEventListener("click", addLap);
+  resetBtn.addEventListener("click", resetChrono);
+</script>
+
+</body>
+</html>
