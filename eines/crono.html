@@ -85,6 +85,18 @@
       letter-spacing: 1px;
     }
 
+    #rotatingDot {
+      width: 14px;
+      height: 14px;
+      background: #FFDF20;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: -115px 0;
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+
     #chronoButtons {
       display: flex;
       gap: 10px;
@@ -144,11 +156,11 @@
   <div id="circleContainer">
     <svg width="260" height="260">
       <circle cx="130" cy="130" r="120" stroke="#334155" stroke-width="18" fill="none"/>
-      <circle id="progressCircle" cx="130" cy="130" r="120" stroke="#FFDF20" stroke-width="18" fill="none"
-              stroke-linecap="round" stroke-dasharray="754" stroke-dashoffset="754"/>
     </svg>
 
-    <div id="timeDisplay">00:00:00.0</div>
+    <div id="rotatingDot"></div>
+
+    <div id="timeDisplay">00:00:00.00</div>
   </div>
 
   <div id="chronoButtons">
@@ -163,7 +175,7 @@
 
 <script>
   const timeDisplay = document.getElementById("timeDisplay");
-  const progressCircle = document.getElementById("progressCircle");
+  const rotatingDot = document.getElementById("rotatingDot");
 
   const startBtn = document.getElementById("startBtn");
   const pauseBtn = document.getElementById("pauseBtn");
@@ -180,34 +192,33 @@
   let animInterval = null;
   let lapCount = 0;
 
-  const CIRC = 2 * Math.PI * 120;
-  progressCircle.style.strokeDasharray = CIRC;
-  progressCircle.style.strokeDashoffset = CIRC;
-
   function formatTime(ms) {
     let total = ms / 1000;
     const h = Math.floor(total / 3600);
     total %= 3600;
     const m = Math.floor(total / 60);
     const s = Math.floor(total % 60);
-    const d = Math.floor((ms % 1000) / 100);
+    const c = Math.floor((ms % 1000) / 10);
 
     return (
       String(h).padStart(2, "0") + ":" +
       String(m).padStart(2, "0") + ":" +
       String(s).padStart(2, "0") + "." +
-      d
+      String(c).padStart(2, "0")
     );
   }
 
   function updateChrono() {
+    if (paused) return;
+
     const now = Date.now();
     const elapsed = now - startTime - totalPaused;
 
     timeDisplay.textContent = formatTime(elapsed);
 
-    const ratio = (elapsed % 60000) / 60000;
-    progressCircle.style.strokeDashoffset = CIRC - ratio * CIRC;
+    const rotation = (elapsed % 10000) / 10000 * 360;
+    rotatingDot.style.transform =
+      `translate(-50%, -50%) rotate(${rotation}deg)`;
   }
 
   function startChrono() {
@@ -252,8 +263,12 @@
     clearInterval(animInterval);
     animInterval = null;
 
-    timeDisplay.textContent = "00:00:00.0";
-    progressCircle.style.strokeDashoffset = CIRC;
+    startTime = 0;
+    totalPaused = 0;
+    pauseStart = 0;
+
+    timeDisplay.textContent = "00:00:00.00";
+    rotatingDot.style.transform = "translate(-50%, -50%) rotate(0deg)";
 
     lapsDiv.innerHTML = "";
     lapCount = 0;
@@ -272,3 +287,4 @@
 
 </body>
 </html>
+
