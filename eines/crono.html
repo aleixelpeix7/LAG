@@ -169,7 +169,7 @@
     <button id="startBtn">Inicia</button>
     <button id="pauseBtn" style="display:none;">Pausa</button>
     <button id="lapBtn" style="display:none;">Marca</button>
-    <button id="resetBtn" style="display:none;">Reinicia</button>
+    <button id="resetBtn" style="display:none;">Atura</button>
   </div>
 
   <div id="laps"></div>
@@ -205,7 +205,7 @@
     return (
       String(h).padStart(2, "0") + ":" +
       String(m).padStart(2, "0") + ":" +
-      String(s).padStart(2, "0") + "." +
+      String(s).padStart(2, "0") + ":" +
       String(c).padStart(2, "0")
     );
   }
@@ -277,7 +277,7 @@
     totalPaused = 0;
     pauseStart = 0;
 
-    timeDisplay.textContent = "00:00:00.00";
+    timeDisplay.textContent = "00:00:00:00";
 
     /* ✔ Punt torna exactament al punt inicial del cercle */
     rotatingDot.style.transform =
