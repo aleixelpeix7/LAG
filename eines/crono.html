@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="ca">
 <head>
   <meta charset="utf-8" />
@@ -94,8 +94,8 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      transform-origin: 0 -120px; /* radi exacte cap amunt */
-      transform: translate(-50%, -50%) rotate(0deg);
+      transform-origin: 50% 50%;
+      transform: translate(-50%, -50%) rotate(0deg) translate(0, -120px);
     }
 
     #chronoButtons {
@@ -219,7 +219,7 @@
 
     const rotation = (elapsed % 10000) / 10000 * 360;
     rotatingDot.style.transform =
-      `translate(-50%, -50%) rotate(${rotation}deg)`;
+      `translate(-50%, -50%) rotate(${rotation}deg) translate(0, -120px)`;
   }
 
   function startChrono() {
@@ -230,7 +230,7 @@
 
     startBtn.style.display = "none";
     pauseBtn.style.display = "inline-block";
-    pauseBtn.textContent = "Pausa"; /* ✔ arreglat */
+    pauseBtn.textContent = "Pausa";
     lapBtn.style.display = "inline-block";
     resetBtn.style.display = "inline-block";
 
@@ -277,7 +277,10 @@
     pauseStart = 0;
 
     timeDisplay.textContent = "00:00:00.00";
-    rotatingDot.style.transform = "translate(-50%, -50%) rotate(0deg)";
+
+    /* ✔ Punt torna exactament al punt inicial del cercle */
+    rotatingDot.style.transform =
+      "translate(-50%, -50%) rotate(0deg) translate(0, -120px)";
 
     lapsDiv.innerHTML = "";
     lapCount = 0;
@@ -296,6 +299,3 @@
 
 </body>
 </html>
-
-
-
