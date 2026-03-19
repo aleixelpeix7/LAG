@@ -93,7 +93,7 @@
       position: absolute;
       top: 50%;
       left: 50%;
-      transform-origin: -115px 0;
+      transform-origin: 120px 0;
       transform: translate(-50%, -50%) rotate(0deg);
     }
 
@@ -247,8 +247,15 @@
   }
 
   function addLap() {
-    const now = Date.now();
-    const elapsed = now - startTime - totalPaused;
+    let elapsed;
+
+    if (paused) {
+      // Temps exacte en el moment de pausar
+      elapsed = pauseStart - startTime - totalPaused;
+    } else {
+      // Temps normal en marxa
+      elapsed = Date.now() - startTime - totalPaused;
+    }
 
     lapCount++;
     const lapDiv = document.createElement("div");
@@ -287,4 +294,5 @@
 
 </body>
 </html>
+
 
