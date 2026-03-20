@@ -10,23 +10,23 @@
       --bg:#002244;
       --accent:#7CCF35;
       --nav-bg: rgba(0,0,0,0.7);
-      --link-red:#E7180B;
-      --link-red-hover:#FB2C36;
     }
 
     html,body{height:100%; margin:0; padding:0;}
     *,*::before,*::after{box-sizing:border-box}
 
-    @font-face { font-family: 'Minecraftia';
-                src: url('assets/Minecraftia.woff') format('woff'); 
-                font-weight: normal; 
-                font-style: normal; }
+    @font-face { 
+      font-family: 'Minecraftia';
+      src: url('assets/Minecraftia.woff') format('woff'); 
+      font-weight: normal; 
+      font-style: normal; 
+    }
     
     body {
       background-image: url("assets/dirt_background.png");
-background-repeat: repeat;
-background-size: 128px 128px; /* Pots ajustar-ho a 64px, 256px, etc. */
-font-family: 'Minecraftia', sans-serif;
+      background-repeat: repeat;
+      background-size: 128px 128px;
+      font-family: 'Minecraftia', sans-serif;
       color: var(--accent);
     }
 
@@ -45,66 +45,30 @@ font-family: 'Minecraftia', sans-serif;
     nav a { color:white; text-decoration:none; font-weight:bold; transition:color 0.3s; }
     nav a:hover { color:#ffff66; }
 
-    h1 { font-size:28px; margin:30px 0 10px 0; }
-
-    .enllac { font-size:24px; color:var(--link-red); text-decoration:underline; font-weight:bold; }
-    .enllac:hover { color:var(--link-red-hover); }
-
     main { padding:2rem; min-height: calc(100vh - 120px); }
 
-    /* Modal primer cop: ara més alt (80vh) */
-    .fv-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.62);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 1rem;
-    }
-
-    .fv-modal {
-      background: linear-gradient(180deg,#001829 0%, #00283a 100%);
-      border-radius: 10px;
-      width: 780px;
-      max-width: 98%;
-      height: 80vh; /* <-- augmentat aquí */
-      max-height: 95vh;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      border: 1px solid rgba(124,207,53,0.08);
-    }
-
-    .fv-header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 0.6rem 0.9rem;
-      color: #cfeea6;
-      font-weight:700;
-      gap:0.75rem;
-      flex: 0 0 auto;
-    }
-
-    .fv-title { font-size: 16px; }
-    .fv-close {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #fff;
-      padding: 0.35rem 0.6rem;
+    /* Targetes translúcides estil Minecraft */
+    .lag-card {
+      display: block;
+      width: fit-content;
+      padding: 18px 28px;
+      margin: 20px 0;
+      background: rgba(0, 0, 0, 0.55); /* translúcid */
+      border: 3px solid #7CCF35;
       border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
+      color: #7CCF35;
+      font-size: 26px;
+      text-decoration: none;
+      transition: 0.25s;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
     }
 
-    .fv-iframe-wrap { background: transparent; flex: 1 1 auto; display: block; min-height: 0; }
-    .fv-iframe { width:100%; height:100%; border:0; display:block; background:transparent; }
-
-    @media (max-width:720px) {
-      .fv-modal { width: 100%; height: 95vh; border-radius: 8px; }
+    .lag-card:hover {
+      background: rgba(0, 0, 0, 0.75);
+      border-color: #A6FF5A;
+      color: #A6FF5A;
+      transform: translateX(6px);
+      box-shadow: 0 0 14px rgba(0,0,0,0.6);
     }
   </style>
 </head>
@@ -127,11 +91,11 @@ font-family: 'Minecraftia', sans-serif;
   </nav>
 
   <main>
-    <h1>Versió 1.8. Més antiga pero més estable:</h1>
-    <a class="enllac" href="https://lagg.netlify.app/minecraft/1.8">1.8</a>
 
-    <h1>Versió 1.12. Més moderna pero més inestable:</h1>
-    <a class="enllac" href="https://lagg.netlify.app/minecraft/1.12">1.12</a>
+    <a class="lag-card" href="https://lagg.netlify.app/minecraft/1.8">Versió 1.8 — Més antiga però estable</a>
+
+    <a class="lag-card" href="https://lagg.netlify.app/minecraft/1.12">Versió 1.12 — Més moderna però inestable</a>
+
   </main>
 
 </body>
