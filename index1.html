@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <title>Inici | LAG</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg:#002244;
+      --accent:#7CCF35;
+      --nav-bg: rgba(0,0,0,0.7);
+      --link-red:#E7180B;
+      --link-red-hover:#FB2C36;
+    }
+
+    #discord-widget {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      margin: 20px;
+      z-index: 9999;
+    }
+
+    html,body{height:100%; margin:0; padding:0;}
+    *,*::before,*::after{box-sizing:border-box}
+
+    body {
+      background-color: var(--bg);
+      font-family: Arial, sans-serif;
+      color: var(--accent);
+    }
+
+    nav {
+      background-color: var(--nav-bg);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    nav ul { list-style:none; display:flex; justify-content:space-between; align-items:center; margin:0; padding:0; }
+    nav li.logo { display:flex; align-items:center; }
+    nav li.logo a { display:flex; align-items:center; text-decoration:none; }
+    nav li.logo img { height:60px; margin-right:0.5rem; vertical-align:middle; }
+    nav a { color:white; text-decoration:none; font-weight:bold; transition:color 0.3s; }
+    nav a:hover { color:#ffff66; }
+
+    main { padding:2rem; min-height: calc(100vh - 120px); }
+
+    /* Targetes LAG */
+    .lag-card {
+      display: block;
+      width: fit-content;
+      padding: 16px 26px;
+      margin: 18px 0;
+      background: #001829;
+      border: 2px solid #7CCF35;
+      border-radius: 10px;
+      color: #7CCF35;
+      font-size: 24px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: 0.25s;
+    }
+
+    .lag-card:hover {
+      background: #00283a;
+      border-color: #A6FF5A;
+      color: #A6FF5A;
+      transform: translateX(6px);
+    }
+
+    /* Modal primer cop */
+    .fv-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.62);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 1rem;
+    }
+
+    .fv-modal {
+      background: linear-gradient(180deg,#001829 0%, #00283a 100%);
+      border-radius: 10px;
+      width: 780px;
+      max-width: 98%;
+      height: 80vh;
+      max-height: 95vh;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(124,207,53,0.08);
+    }
+
+    .fv-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0.6rem 0.9rem;
+      color: #cfeea6;
+      font-weight:700;
+      gap:0.75rem;
+      flex: 0 0 auto;
+    }
+
+    .fv-title { font-size: 16px; }
+    .fv-close {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #fff;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .fv-iframe-wrap { background: transparent; flex: 1 1 auto; display: block; min-height: 0; }
+    .fv-iframe { width:100%; height:100%; border:0; display:block; background:transparent; }
+
+    @media (max-width:720px) {
+      .fv-modal { width: 100%; height: 95vh; border-radius: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <ul>
+      <li class="logo">
+        <a href="index.html">
+          <img src="assets/logo.png" alt="Logo LAG" />
+        </a>
+      </li>
+      <li><a href="https://lagg.netlify.app/contacte">Contactar</a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <a class="lag-card" href="https://lagg.netlify.app/minijocs/">Minijocs</a>
+    <a class="lag-card" href="https://lagg.netlify.app/minecraft/">Minecraft</a>
+    <a class="lag-card" href="https://lagg.netlify.app/eines/">Eines</a>
+
+  </main>
+
+  <!-- Discord Widget -->
+  <div id="discord-widget">
+      <iframe 
+          src="https://discord.com/widget?id=1475453126248235079&theme=dark" 
+          width="350" 
+          height="500" 
+          allowtransparency="true" 
+          frameborder="0" 
+          sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
+      </iframe>
+  </div>
+
+<script>
+    (function () {
+      var STORAGE_KEY = 'lag_first_visit_form_seen_v1';
+      var FORM_SRC = 'https://docs.google.com/forms/d/e/1FAIpQLScto6OpX3isEOp8ARLkUAVU3Sf6m2midTiImK7COD3Zy0He_w/viewform?embedded=true';
+
+      try {
+        if (localStorage && localStorage.getItem(STORAGE_KEY)) return;
+      } catch (e) {}
+
+      function buildModal() {
+        var backdrop = document.createElement('div');
+        backdrop.className = 'fv-backdrop';
+        backdrop.setAttribute('role','dialog');
+        backdrop.setAttribute('aria-modal','true');
+
+        var modal = document.createElement('div');
+        modal.className = 'fv-modal';
+
+        var header = document.createElement('div');
+        header.className = 'fv-header';
+
+        var title = document.createElement('div');
+        title.className = 'fv-title';
+        title.textContent = 'Ens agradaria saber la teva opinió';
+
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'fv-close';
+        closeBtn.type = 'button';
+        closeBtn.textContent = 'Tancar';
+        closeBtn.setAttribute('aria-label','Tancar formulari');
+
+        header.appendChild(title);
+        header.appendChild(closeBtn);
+
+        var iframeWrap = document.createElement('div');
+        iframeWrap.className = 'fv-iframe-wrap';
+
+        var iframe = document.createElement('iframe');
+        iframe.className = 'fv-iframe';
+        iframe.src = FORM_SRC;
+        iframe.title = 'Formulari de LAG';
+        iframe.loading = 'lazy';
+        iframe.allow = 'clipboard-read; clipboard-write';
+
+        iframeWrap.appendChild(iframe);
+        modal.appendChild(header);
+        modal.appendChild(iframeWrap);
+        backdrop.appendChild(modal);
+
+        function close(saveFlag) {
+          try { if (saveFlag !== false && localStorage) localStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
+          if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+          document.removeEventListener('keydown', onKeyDown);
+        }
+
+        closeBtn.addEventListener('click', function () { close(true); });
+        backdrop.addEventListener('click', function (e) { if (e.target === backdrop) close(true); });
+
+        function onKeyDown(e) { if (e.key === 'Escape') { e.preventDefault(); close(true); } }
+        document.addEventListener('keydown', onKeyDown);
+
+        var loadCount = 0;
+        iframe.addEventListener('load', function () {
+          loadCount++;
+          if (loadCount > 1) { setTimeout(function () { close(true); }, 600); }
+        });
+
+        setTimeout(function () { closeBtn.focus(); }, 50);
+
+        return backdrop;
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var modal = buildModal();
+        document.body.appendChild(modal);
+        try { if (localStorage) localStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
+      }, { once: true });
+    })();
+  </script>
+</body>
+</html>
