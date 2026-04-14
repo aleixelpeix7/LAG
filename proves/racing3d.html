@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <title>Joc d'autopista 3D</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      overflow: hidden;
+      background: #000;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- Three.js -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <!-- OrbitControls només per debug (pots treure-ho després) -->
+  <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    // ----- Config bàsica -----
+    const canvas = document.getElementById('game');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x202020);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x202020, 10, 200);
+
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, 5, 15);
+    camera.lookAt(0, 0, 0);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement); // debug
+
+    // Llums
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 10, 5);
+    scene.add(dirLight);
+
+    // ----- Carretera -----
+    const roadWidth = 10;
+    const roadLength = 400;
+
+    const roadGeo = new THREE.PlaneGeometry(roadWidth, roadLength, 1, 1);
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    road.position.z = -roadLength / 2;
+    scene.add(road);
+
+    // Línies de carril
+    const laneCount = 3;
+    const laneWidth = roadWidth / laneCount;
+    const laneLines = new THREE.Group();
+
+    for (let i = 1; i < laneCount; i++) {
+      const lineGeo = new THREE.PlaneGeometry(0.1, roadLength, 1, 1);
+      const lineMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide
+      });
+      const line = new THREE.Mesh(lineGeo, lineMat);
+      line.rotation.x = -Math.PI / 2;
+      line.position.x = -roadWidth / 2 + i * laneWidth;
+      line.position.z = -roadLength / 2;
+      laneLines.add(line);
+    }
+    scene.add(laneLines);
+
+    // ----- Cotxe del jugador -----
+    const player = new THREE.Group();
+    const carBodyGeo = new THREE.BoxGeometry(1.5, 0.7, 3);
+    const carBodyMat = new THREE.MeshStandardMaterial({ color: 0x00aaff });
+    const carBody = new THREE.Mesh(carBodyGeo, carBodyMat);
+    carBody.position.y = 0.5;
+    player.add(carBody);
+    player.position.set(0, 0, 5);
+    scene.add(player);
+
+    let currentLane = 1; // 0,1,2
+    const lanePositions = [
+      -roadWidth / 2 + laneWidth / 2,
+      0,
+      roadWidth / 2 - laneWidth / 2
+    ];
+
+    // ----- Enemics -----
+    const enemies = [];
+    const enemySpeed = 0.4;
+
+    function spawnEnemy() {
+      const enemy = new THREE.Group();
+      const bodyGeo = new THREE.BoxGeometry(1.5, 0.7, 3);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff4444 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 0.5;
+      enemy.add(body);
+
+      const lane = Math.floor(Math.random() * laneCount);
+      enemy.userData.lane = lane;
+      enemy.position.x = lanePositions[lane];
+      enemy.position.z = -200;
+      scene.add(enemy);
+      enemies.push(enemy);
+    }
+
+    let enemySpawnTimer = 0;
+    const enemySpawnInterval = 80;
+
+    // ----- Input -----
+    const keys = { left: false, right: false };
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+    });
+
+    function updateLane() {
+      if (keys.left) {
+        if (currentLane > 0) currentLane--;
+        keys.left = false;
+      }
+      if (keys.right) {
+        if (currentLane < laneCount - 1) currentLane++;
+        keys.right = false;
+      }
+    }
+
+    // ----- Loop -----
+    let roadOffset = 0;
+
+    function update() {
+      roadOffset += 0.5;
+      road.position.z = -roadLength / 2 + (roadOffset % roadLength);
+      laneLines.position.z = road.position.z;
+
+      updateLane();
+      player.position.x = lanePositions[currentLane];
+
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+        enemy.position.z += enemySpeed;
+
+        if (enemy.position.z > 50) {
+          scene.remove(enemy);
+          enemies.splice(i, 1);
+          continue;
+        }
+
+        const dz = Math.abs(enemy.position.z - player.position.z);
+        const dx = Math.abs(enemy.position.x - player.position.x);
+        if (dz < 2 && dx < 1) {
+          console.log('COL·LISIÓ!');
+          // Aquí podries reiniciar el joc, restar vides, etc.
+        }
+      }
+
+      enemySpawnTimer++;
+      if (enemySpawnTimer > enemySpawnInterval) {
+        spawnEnemy();
+        enemySpawnTimer = 0;
+      }
+    }
+
+    function render() {
+      renderer.render(scene, camera);
+    }
+
+    function loop() {
+      requestAnimationFrame(loop);
+      update();
+      render();
+    }
+
+    loop();
+
+    window.addEventListener('resize', () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    });
+  </script>
+</body>
+</html>
