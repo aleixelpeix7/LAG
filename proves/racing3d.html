@@ -2,7 +2,7 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8" />
-  <title>Autopista 3D</title>
+  <title>Autopista 3D realista</title>
   <style>
     body { margin: 0; overflow: hidden; background: #000; }
   </style>
@@ -16,45 +16,130 @@
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.shadowMap.enabled = true;
   document.body.appendChild(renderer.domElement);
 
   // Scene
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x111111, 20, 200);
+  scene.fog = new THREE.Fog(0x87a0c0, 40, 250);
+  renderer.setClearColor(0x87a0c0);
 
   // Camera
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.set(0, 5, 12);
+  const camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
 
   // Lights
-  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-  const dir = new THREE.DirectionalLight(0xffffff, 1);
-  dir.position.set(5, 10, 5);
+  const hemi = new THREE.HemisphereLight(0xddeeff, 0x223322, 0.7);
+  scene.add(hemi);
+
+  const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+  dir.position.set(20, 40, 10);
   dir.castShadow = true;
+  dir.shadow.mapSize.set(2048, 2048);
   scene.add(dir);
 
-  // Road parameters
+  // Ground sides (gespa)
+  const groundGeo = new THREE.PlaneGeometry(200, 400);
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x2f6f2f });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.01;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Road params
   const ROAD_WIDTH = 12;
   const ROAD_LENGTH = 40;
-  const SEGMENTS = 6;
+  const SEGMENTS = 8;
 
   const roadTiles = [];
+  const laneGroups = [];
+
+  const roadMat = new THREE.MeshStandardMaterial({ color: 0x303030 });
 
   function createRoadTile(z) {
     const geo = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_LENGTH);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-    const mesh = new THREE.Mesh(geo, mat);
+    const mesh = new THREE.Mesh(geo, roadMat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.z = z;
+    mesh.receiveShadow = true;
     scene.add(mesh);
     return mesh;
   }
 
-  for (let i = 0; i < SEGMENTS; i++) {
-    roadTiles.push(createRoadTile(-i * ROAD_LENGTH));
+  function createLaneLines() {
+    const group = new THREE.Group();
+    const laneCount = 3;
+    const laneWidth = ROAD_WIDTH / laneCount;
+
+    // línies centrals discontínues
+    for (let i = 1; i < laneCount; i++) {
+      const lineGeo = new THREE.PlaneGeometry(0.15, 2);
+      const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      for (let j = -10; j < 10; j++) {
+        const seg = new THREE.Mesh(lineGeo, lineMat);
+        seg.rotation.x = -Math.PI / 2;
+        seg.position.x = -ROAD_WIDTH / 2 + i * laneWidth;
+        seg.position.z = j * 4;
+        group.add(seg);
+      }
+    }
+
+    // línies laterals contínues
+    const sideGeo = new THREE.PlaneGeometry(0.2, ROAD_LENGTH);
+    const sideMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
+    const left = new THREE.Mesh(sideGeo, sideMat);
+    left.rotation.x = -Math.PI / 2;
+    left.position.x = -ROAD_WIDTH / 2;
+    group.add(left);
+
+    const right = left.clone();
+    right.position.x = ROAD_WIDTH / 2;
+    group.add(right);
+
+    return group;
   }
 
-  // Lane lines
+  for (let i = 0; i < SEGMENTS; i++) {
+    const z = -i * ROAD_LENGTH;
+    roadTiles.push(createRoadTile(z));
+    const g = createLaneLines();
+    g.position.z = z;
+    scene.add(g);
+    laneGroups.push(g);
+  }
+
+  // Guard rails
+  function createGuardRail(x) {
+    const group = new THREE.Group();
+    const postGeo = new THREE.BoxGeometry(0.2, 1, 0.2);
+    const barGeo = new THREE.BoxGeometry(0.2, 0.2, 4);
+    const mat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+
+    for (let i = -20; i < 20; i++) {
+      const post = new THREE.Mesh(postGeo, mat);
+      post.position.set(x, 0.5, i * 4);
+      post.castShadow = true;
+      post.receiveShadow = true;
+      group.add(post);
+
+      const bar = new THREE.Mesh(barGeo, mat);
+      bar.position.set(x, 0.9, i * 4);
+      bar.castShadow = true;
+      group.add(bar);
+    }
+    return group;
+  }
+
+  const leftRail = createGuardRail(-ROAD_WIDTH / 2 - 1);
+  const rightRail = createGuardRail(ROAD_WIDTH / 2 + 1);
+  scene.add(leftRail, rightRail);
+
+  // Lane positions
   const laneCount = 3;
   const laneWidth = ROAD_WIDTH / laneCount;
   const lanePositions = [
@@ -63,53 +148,69 @@
     ROAD_WIDTH / 2 - laneWidth / 2
   ];
 
-  function createLaneLines() {
+  // Helper: crea un cotxe low-poly
+  function createCar(colorBody, colorCabin) {
     const group = new THREE.Group();
-    for (let i = 1; i < laneCount; i++) {
-      const geo = new THREE.PlaneGeometry(0.15, ROAD_LENGTH);
-      const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const line = new THREE.Mesh(geo, mat);
-      line.rotation.x = -Math.PI / 2;
-      line.position.x = -ROAD_WIDTH / 2 + i * laneWidth;
-      group.add(line);
+
+    const bodyGeo = new THREE.BoxGeometry(1.8, 0.6, 3.4);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: colorBody, metalness: 0.3, roughness: 0.4 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.5;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+
+    const cabinGeo = new THREE.BoxGeometry(1.2, 0.5, 1.8);
+    const cabinMat = new THREE.MeshStandardMaterial({ color: colorCabin, metalness: 0.1, roughness: 0.2 });
+    const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+    cabin.position.set(0, 0.9, -0.2);
+    cabin.castShadow = true;
+    group.add(cabin);
+
+    const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+
+    function addWheel(x, z) {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.rotation.z = Math.PI / 2;
+      w.position.set(x, 0.25, z);
+      w.castShadow = true;
+      group.add(w);
     }
+
+    addWheel(-0.8, 1.2);
+    addWheel(0.8, 1.2);
+    addWheel(-0.8, -1.2);
+    addWheel(0.8, -1.2);
+
     return group;
   }
 
-  const laneGroups = [];
-  for (let i = 0; i < SEGMENTS; i++) {
-    const g = createLaneLines();
-    g.position.z = -i * ROAD_LENGTH;
-    scene.add(g);
-    laneGroups.push(g);
-  }
-
   // Player car
-  const playerGeo = new THREE.BoxGeometry(1.5, 0.7, 3);
-  const playerMat = new THREE.MeshStandardMaterial({ color: 0x00aaff });
-  const player = new THREE.Mesh(playerGeo, playerMat);
-  player.position.set(0, 0.5, 8);
+  const player = createCar(0x0077ff, 0xeeeeff);
+  player.position.set(0, 0, 8);
   scene.add(player);
 
   let currentLane = 1;
   let targetX = lanePositions[currentLane];
 
+  // Camera follow
+  function updateCamera() {
+    const offset = new THREE.Vector3(0, 4, 10);
+    const desired = player.position.clone().add(offset);
+    camera.position.lerp(desired, 0.15);
+    camera.lookAt(player.position.x, player.position.y + 0.8, player.position.z - 5);
+  }
+
   // Enemies
   const enemies = [];
-  const enemySpeed = 0.6;
+  const enemySpeed = 0.8;
 
   function spawnEnemy() {
-    const geo = new THREE.BoxGeometry(1.5, 0.7, 3);
-    const mat = new THREE.MeshStandardMaterial({ color: 0xff3333 });
-    const enemy = new THREE.Mesh(geo, mat);
-
+    const enemy = createCar(0xff3333, 0xffeeee);
     const lane = Math.floor(Math.random() * laneCount);
-    enemy.position.x = lanePositions[lane];
-    enemy.position.y = 0.5;
-    enemy.position.z = -120;
-
+    enemy.position.set(lanePositions[lane], 0, -150 - Math.random() * 50);
     enemy.userData.box = new THREE.Box3().setFromObject(enemy);
-
     scene.add(enemy);
     enemies.push(enemy);
   }
@@ -147,12 +248,12 @@
     updateLane();
 
     // Smooth lane movement
-    player.position.x += (targetX - player.position.x) * 0.15;
+    player.position.x += (targetX - player.position.x) * 0.2;
 
-    // Move road
+    // Move road segments
     for (let i = 0; i < SEGMENTS; i++) {
-      roadTiles[i].position.z += 0.5;
-      laneGroups[i].position.z += 0.5;
+      roadTiles[i].position.z += 1.2;
+      laneGroups[i].position.z += 1.2;
 
       if (roadTiles[i].position.z > ROAD_LENGTH) {
         roadTiles[i].position.z -= ROAD_LENGTH * SEGMENTS;
@@ -160,9 +261,17 @@
       }
     }
 
+    // Move guard rails
+    leftRail.position.z += 1.2;
+    rightRail.position.z += 1.2;
+    if (leftRail.position.z > ROAD_LENGTH) {
+      leftRail.position.z -= ROAD_LENGTH * SEGMENTS;
+      rightRail.position.z -= ROAD_LENGTH * SEGMENTS;
+    }
+
     // Enemies
     spawnTimer++;
-    if (spawnTimer > 60) {
+    if (spawnTimer > 50) {
       spawnEnemy();
       spawnTimer = 0;
     }
@@ -174,16 +283,18 @@
       e.position.z += enemySpeed;
       e.userData.box.setFromObject(e);
 
-      if (e.position.z > 40) {
+      if (e.position.z > 60) {
         scene.remove(e);
         enemies.splice(i, 1);
         continue;
       }
 
       if (playerBox.intersectsBox(e.userData.box)) {
-        console.log("COL·LISIÓ REAL!");
+        console.log("COL·LISIÓ!");
       }
     }
+
+    updateCamera();
   }
 
   function loop() {
