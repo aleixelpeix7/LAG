@@ -317,11 +317,10 @@
 
   function spawnEnemy() {
     const bodyColor = enemyColors[Math.floor(Math.random() * enemyColors.length)];
-    const cabinColor = 0x3377ff; // cabina blava com el jugador
+    const cabinColor = 0xeeeeff; // mateixa cabina que el jugador
 
     const enemy = createCar(bodyColor, cabinColor);
 
-    // carrils fixos
     const laneWidth = ROAD_WIDTH / 3;
     const lanePositions = [
       -ROAD_WIDTH / 2 + laneWidth / 2,
@@ -411,7 +410,7 @@
     });
 
     // moviment lateral amb inèrcia i sensibilitat segons velocitat
-    const turnFactor = 1 + (speed / maxSpeed) * 2; // fins a 3x més sensible
+    const turnFactor = 0.6 + (speed / maxSpeed) * 1.2;
 
     if (keys.left) lateralVel -= lateralAccel * turnFactor * dt;
     if (keys.right) lateralVel += lateralAccel * turnFactor * dt;
@@ -426,8 +425,10 @@
     const limitX = ROAD_WIDTH / 2 - 1.2;
     player.position.x = Math.max(-limitX, Math.min(limitX, player.position.x));
 
-    // gir visual del cotxe
-    player.rotation.y = -lateralVel * 0.04;
+    // gir molt més suau i realista
+    player.rotation.y = -lateralVel * 0.02;
+    // inclinació lateral mínima
+    player.rotation.z = lateralVel * 0.005;
 
     // distància
     distanceKm += (speed * dt) / 1000;
@@ -534,4 +535,5 @@
 
 </body>
 </html>
+
 
