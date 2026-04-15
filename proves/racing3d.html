@@ -2,29 +2,146 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8" />
-  <title>Autopista 3D realista</title>
+  <title>Autopista 3D</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #000; }
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow: hidden; background: #000; font-family: system-ui, sans-serif; }
+
+    .ui {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .panel {
+      pointer-events: auto;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 24px 32px;
+      border-radius: 12px;
+      text-align: center;
+      min-width: 260px;
+    }
+    .panel h1 { margin: 0 0 12px; font-size: 24px; }
+    .panel p { margin: 4px 0; }
+    .panel .btn {
+      margin-top: 16px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid #fff;
+      display: inline-block;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #hud {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      color: #fff;
+      font-size: 14px;
+      text-shadow: 0 0 4px #000;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
 
+<div id="hud">Velocitat: 0 km/h<br>Distància: 0.0 km</div>
+
+<div class="ui" id="menu-start">
+  <div class="panel">
+    <h1>Autopista 3D</h1>
+    <p>Fletxes esquerra/dreta: moure el cotxe</p>
+    <p>Fletxes amunt/avall: accelerar/frenar</p>
+    <p>ESC: pausa</p>
+    <div class="btn" id="btn-start">Començar</div>
+  </div>
+</div>
+
+<div class="ui" id="menu-pause" style="display:none;">
+  <div class="panel">
+    <h1>Pausa</h1>
+    <p>Prem ESC per continuar</p>
+  </div>
+</div>
+
+<div class="ui" id="menu-dead" style="display:none;">
+  <div class="panel">
+    <h1>Has xocat!</h1>
+    <p id="death-distance">Has fet 0.0 km</p>
+    <div class="btn" id="btn-restart">Tornar a començar</div>
+  </div>
+</div>
+
 <script type="module">
   import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-  // Renderer
+  // ----- UI / estat -----
+  const hud = document.getElementById('hud');
+  const menuStart = document.getElementById('menu-start');
+  const menuPause = document.getElementById('menu-pause');
+  const menuDead = document.getElementById('menu-dead');
+  const btnStart = document.getElementById('btn-start');
+  const btnRestart = document.getElementById('btn-restart');
+  const deathDistanceEl = document.getElementById('death-distance');
+
+  let gameState = 'menu'; // 'menu' | 'playing' | 'paused' | 'dead'
+
+  function showMenu(id) {
+    menuStart.style.display = id === 'start' ? 'flex' : 'none';
+    menuPause.style.display = id === 'pause' ? 'flex' : 'none';
+    menuDead.style.display = id === 'dead' ? 'flex' : 'none';
+  }
+
+  function startGame() {
+    resetGame();
+    gameState = 'playing';
+    showMenu(null);
+  }
+
+  function pauseGame() {
+    if (gameState === 'playing') {
+      gameState = 'paused';
+      showMenu('pause');
+    } else if (gameState === 'paused') {
+      gameState = 'playing';
+      showMenu(null);
+    }
+  }
+
+  function gameOver() {
+    gameState = 'dead';
+    deathDistanceEl.textContent = `Has fet ${distanceKm.toFixed(2)} km`;
+    showMenu('dead');
+  }
+
+  btnStart.addEventListener('click', startGame);
+  btnRestart.addEventListener('click', () => {
+    startGame();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (gameState === 'menu' || gameState === 'dead') return;
+      pauseGame();
+    }
+    if (e.key === 'Enter' && gameState === 'menu') startGame();
+  });
+
+  // ----- Three.js bàsic -----
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.shadowMap.enabled = true;
   document.body.appendChild(renderer.domElement);
 
-  // Scene
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x87a0c0, 40, 250);
+  scene.fog = new THREE.Fog(0x87a0c0, 40, 260);
   renderer.setClearColor(0x87a0c0);
 
-  // Camera
   const camera = new THREE.PerspectiveCamera(
     60,
     window.innerWidth / window.innerHeight,
@@ -32,51 +149,48 @@
     1000
   );
 
-  // Lights
   const hemi = new THREE.HemisphereLight(0xddeeff, 0x223322, 0.7);
   scene.add(hemi);
 
   const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-  dir.position.set(20, 40, 10);
+  dir.position.set(40, 60, 20);
   dir.castShadow = true;
   dir.shadow.mapSize.set(2048, 2048);
   scene.add(dir);
 
-  // Ground sides (gespa)
-  const groundGeo = new THREE.PlaneGeometry(200, 400);
-  const groundMat = new THREE.MeshStandardMaterial({ color: 0x2f6f2f });
-  const ground = new THREE.Mesh(groundGeo, groundMat);
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.01;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  // Road params
+  // ----- Terra / carretera / segments -----
   const ROAD_WIDTH = 12;
-  const ROAD_LENGTH = 40;
+  const ROAD_LENGTH = 50;
   const SEGMENTS = 8;
 
-  const roadTiles = [];
-  const laneGroups = [];
+  const segmentGroups = [];
 
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x2f6f2f });
   const roadMat = new THREE.MeshStandardMaterial({ color: 0x303030 });
 
-  function createRoadTile(z) {
-    const geo = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_LENGTH);
-    const mesh = new THREE.Mesh(geo, roadMat);
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.position.z = z;
-    mesh.receiveShadow = true;
-    scene.add(mesh);
-    return mesh;
-  }
-
-  function createLaneLines() {
+  function createSegment(zIndex) {
     const group = new THREE.Group();
+
+    // terra
+    const groundGeo = new THREE.PlaneGeometry(200, ROAD_LENGTH);
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.02;
+    ground.receiveShadow = true;
+    group.add(ground);
+
+    // carretera
+    const roadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_LENGTH);
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    road.receiveShadow = true;
+    group.add(road);
+
+    // línies de carril
     const laneCount = 3;
     const laneWidth = ROAD_WIDTH / laneCount;
+    const laneGroup = new THREE.Group();
 
-    // línies centrals discontínues
     for (let i = 1; i < laneCount; i++) {
       const lineGeo = new THREE.PlaneGeometry(0.15, 2);
       const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -85,70 +199,84 @@
         seg.rotation.x = -Math.PI / 2;
         seg.position.x = -ROAD_WIDTH / 2 + i * laneWidth;
         seg.position.z = j * 4;
-        group.add(seg);
+        laneGroup.add(seg);
       }
     }
 
-    // línies laterals contínues
     const sideGeo = new THREE.PlaneGeometry(0.2, ROAD_LENGTH);
     const sideMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
-    const left = new THREE.Mesh(sideGeo, sideMat);
-    left.rotation.x = -Math.PI / 2;
-    left.position.x = -ROAD_WIDTH / 2;
-    group.add(left);
+    const leftSide = new THREE.Mesh(sideGeo, sideMat);
+    leftSide.rotation.x = -Math.PI / 2;
+    leftSide.position.x = -ROAD_WIDTH / 2;
+    laneGroup.add(leftSide);
+    const rightSide = leftSide.clone();
+    rightSide.position.x = ROAD_WIDTH / 2;
+    laneGroup.add(rightSide);
 
-    const right = left.clone();
-    right.position.x = ROAD_WIDTH / 2;
-    group.add(right);
+    group.add(laneGroup);
 
+    // barreres
+    const railMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.4, roughness: 0.4 });
+    const postGeo = new THREE.BoxGeometry(0.2, 1, 0.2);
+    const barGeo = new THREE.BoxGeometry(0.2, 0.2, 4);
+
+    function addRail(x) {
+      for (let i = -6; i <= 6; i++) {
+        const post = new THREE.Mesh(postGeo, railMat);
+        post.position.set(x, 0.5, i * 4);
+        post.castShadow = true;
+        post.receiveShadow = true;
+        group.add(post);
+
+        const bar = new THREE.Mesh(barGeo, railMat);
+        bar.position.set(x, 0.9, i * 4);
+        bar.castShadow = true;
+        group.add(bar);
+      }
+    }
+
+    addRail(-ROAD_WIDTH / 2 - 1);
+    addRail(ROAD_WIDTH / 2 + 1);
+
+    // arbres / vegetació
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5b3a1a });
+    const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2f8f3a });
+
+    const trunkGeo = new THREE.CylinderGeometry(0.25, 0.35, 2, 8);
+    const leavesGeo = new THREE.ConeGeometry(1.2, 3, 10);
+
+    function addTree(x, z) {
+      const tree = new THREE.Group();
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 1;
+      trunk.castShadow = true;
+      trunk.receiveShadow = true;
+      tree.add(trunk);
+
+      const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+      leaves.position.y = 3;
+      leaves.castShadow = true;
+      tree.add(leaves);
+
+      tree.position.set(x, 0, z);
+      group.add(tree);
+    }
+
+    for (let i = -6; i <= 6; i++) {
+      if (Math.random() < 0.7) addTree(-ROAD_WIDTH / 2 - 4 - Math.random() * 4, i * 4 + (Math.random() - 0.5) * 2);
+      if (Math.random() < 0.7) addTree( ROAD_WIDTH / 2 + 4 + Math.random() * 4, i * 4 + (Math.random() - 0.5) * 2);
+    }
+
+    group.position.z = -zIndex * ROAD_LENGTH;
+    scene.add(group);
     return group;
   }
 
   for (let i = 0; i < SEGMENTS; i++) {
-    const z = -i * ROAD_LENGTH;
-    roadTiles.push(createRoadTile(z));
-    const g = createLaneLines();
-    g.position.z = z;
-    scene.add(g);
-    laneGroups.push(g);
+    segmentGroups.push(createSegment(i));
   }
 
-  // Guard rails
-  function createGuardRail(x) {
-    const group = new THREE.Group();
-    const postGeo = new THREE.BoxGeometry(0.2, 1, 0.2);
-    const barGeo = new THREE.BoxGeometry(0.2, 0.2, 4);
-    const mat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-
-    for (let i = -20; i < 20; i++) {
-      const post = new THREE.Mesh(postGeo, mat);
-      post.position.set(x, 0.5, i * 4);
-      post.castShadow = true;
-      post.receiveShadow = true;
-      group.add(post);
-
-      const bar = new THREE.Mesh(barGeo, mat);
-      bar.position.set(x, 0.9, i * 4);
-      bar.castShadow = true;
-      group.add(bar);
-    }
-    return group;
-  }
-
-  const leftRail = createGuardRail(-ROAD_WIDTH / 2 - 1);
-  const rightRail = createGuardRail(ROAD_WIDTH / 2 + 1);
-  scene.add(leftRail, rightRail);
-
-  // Lane positions
-  const laneCount = 3;
-  const laneWidth = ROAD_WIDTH / laneCount;
-  const lanePositions = [
-    -ROAD_WIDTH / 2 + laneWidth / 2,
-    0,
-    ROAD_WIDTH / 2 - laneWidth / 2
-  ];
-
-  // Helper: crea un cotxe low-poly
+  // ----- Cotxe jugador -----
   function createCar(colorBody, colorCabin) {
     const group = new THREE.Group();
 
@@ -186,30 +314,21 @@
     return group;
   }
 
-  // Player car
   const player = createCar(0x0077ff, 0xeeeeff);
   player.position.set(0, 0, 8);
   scene.add(player);
 
-  let currentLane = 1;
-  let targetX = lanePositions[currentLane];
-
-  // Camera follow
-  function updateCamera() {
-    const offset = new THREE.Vector3(0, 4, 10);
-    const desired = player.position.clone().add(offset);
-    camera.position.lerp(desired, 0.15);
-    camera.lookAt(player.position.x, player.position.y + 0.8, player.position.z - 5);
-  }
-
-  // Enemies
+  // ----- Enemics -----
   const enemies = [];
-  const enemySpeed = 0.8;
+  const enemyColors = [0xff3333, 0xffaa00, 0x00cc66, 0x9933ff, 0xffffff, 0x00bcd4];
 
   function spawnEnemy() {
-    const enemy = createCar(0xff3333, 0xffeeee);
-    const lane = Math.floor(Math.random() * laneCount);
-    enemy.position.set(lanePositions[lane], 0, -150 - Math.random() * 50);
+    const bodyColor = enemyColors[Math.floor(Math.random() * enemyColors.length)];
+    const cabinColor = 0x111111;
+    const enemy = createCar(bodyColor, cabinColor);
+
+    const laneX = (Math.random() - 0.5) * (ROAD_WIDTH - 2);
+    enemy.position.set(laneX, 0, -150 - Math.random() * 80);
     enemy.userData.box = new THREE.Box3().setFromObject(enemy);
     scene.add(enemy);
     enemies.push(enemy);
@@ -217,61 +336,76 @@
 
   let spawnTimer = 0;
 
-  // Input
-  const keys = { left: false, right: false };
+  // ----- Controls -----
+  const keys = { left: false, right: false, up: false, down: false };
 
-  window.addEventListener("keydown", e => {
-    if (e.key === "ArrowLeft" || e.key === "a") keys.left = true;
-    if (e.key === "ArrowRight" || e.key === "d") keys.right = true;
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') keys.left = true;
+    if (e.key === 'ArrowRight') keys.right = true;
+    if (e.key === 'ArrowUp') keys.up = true;
+    if (e.key === 'ArrowDown') keys.down = true;
   });
 
-  window.addEventListener("keyup", e => {
-    if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
-    if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'ArrowLeft') keys.left = false;
+    if (e.key === 'ArrowRight') keys.right = false;
+    if (e.key === 'ArrowUp') keys.up = false;
+    if (e.key === 'ArrowDown') keys.down = false;
   });
 
-  function updateLane() {
-    if (keys.left && currentLane > 0) {
-      currentLane--;
-      targetX = lanePositions[currentLane];
-      keys.left = false;
-    }
-    if (keys.right && currentLane < laneCount - 1) {
-      currentLane++;
-      targetX = lanePositions[currentLane];
-      keys.right = false;
-    }
+  // ----- Física simple -----
+  let speed = 0;          // unitats/s
+  const maxSpeed = 60;    // unitats/s
+  const accel = 30;       // unitats/s^2
+  const brake = 40;
+  const friction = 20;
+  const lateralSpeed = 20;
+  let distanceKm = 0;
+
+  function resetGame() {
+    speed = 0;
+    distanceKm = 0;
+    player.position.set(0, 0, 8);
+    enemies.forEach(e => scene.remove(e));
+    enemies.length = 0;
+    segmentGroups.forEach((g, i) => {
+      g.position.z = -i * ROAD_LENGTH;
+    });
   }
 
-  // Game loop
-  function update() {
-    updateLane();
+  function updatePhysics(dt) {
+    if (keys.up) speed += accel * dt;
+    if (keys.down) speed -= brake * dt;
+    if (!keys.up && !keys.down) {
+      if (speed > 0) speed -= friction * dt;
+      if (speed < 0) speed += friction * dt;
+    }
+    speed = Math.max(0, Math.min(maxSpeed, speed));
 
-    // Smooth lane movement
-    player.position.x += (targetX - player.position.x) * 0.2;
+    const worldSpeed = speed * dt;
 
-    // Move road segments
-    for (let i = 0; i < SEGMENTS; i++) {
-      roadTiles[i].position.z += 1.2;
-      laneGroups[i].position.z += 1.2;
-
-      if (roadTiles[i].position.z > ROAD_LENGTH) {
-        roadTiles[i].position.z -= ROAD_LENGTH * SEGMENTS;
-        laneGroups[i].position.z -= ROAD_LENGTH * SEGMENTS;
+    // moure segments cap a nosaltres
+    segmentGroups.forEach(g => {
+      g.position.z += worldSpeed;
+      if (g.position.z > ROAD_LENGTH) {
+        g.position.z -= ROAD_LENGTH * SEGMENTS;
       }
-    }
+    });
 
-    // Move guard rails
-    leftRail.position.z += 1.2;
-    rightRail.position.z += 1.2;
-    if (leftRail.position.z > ROAD_LENGTH) {
-      leftRail.position.z -= ROAD_LENGTH * SEGMENTS;
-      rightRail.position.z -= ROAD_LENGTH * SEGMENTS;
-    }
+    // moviment lateral del jugador
+    let dx = 0;
+    if (keys.left) dx -= lateralSpeed * dt;
+    if (keys.right) dx += lateralSpeed * dt;
+    player.position.x += dx;
+    const limitX = ROAD_WIDTH / 2 - 1.2;
+    player.position.x = Math.max(-limitX, Math.min(limitX, player.position.x));
 
-    // Enemies
-    spawnTimer++;
-    if (spawnTimer > 50) {
+    // distància
+    distanceKm += (speed * dt) / 1000;
+
+    // enemics
+    spawnTimer += dt;
+    if (spawnTimer > 1.0) {
       spawnEnemy();
       spawnTimer = 0;
     }
@@ -280,36 +414,57 @@
 
     for (let i = enemies.length - 1; i >= 0; i--) {
       const e = enemies[i];
-      e.position.z += enemySpeed;
+      e.position.z += worldSpeed + 20 * dt; // venen cap a tu una mica més ràpid
       e.userData.box.setFromObject(e);
 
-      if (e.position.z > 60) {
+      if (e.position.z > 80) {
         scene.remove(e);
         enemies.splice(i, 1);
         continue;
       }
 
       if (playerBox.intersectsBox(e.userData.box)) {
-        console.log("COL·LISIÓ!");
+        gameOver();
       }
     }
 
-    updateCamera();
+    // càmera
+    const camOffset = new THREE.Vector3(0, 6, 14);
+    const desired = player.position.clone().add(camOffset);
+    camera.position.lerp(desired, 0.15);
+    camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 6);
+
+    // HUD
+    hud.innerHTML =
+      `Velocitat: ${(speed * 3.6).toFixed(0)} km/h<br>` +
+      `Distància: ${distanceKm.toFixed(2)} km`;
   }
 
-  function loop() {
+  // ----- Loop -----
+  let lastTime = performance.now();
+
+  function loop(now) {
     requestAnimationFrame(loop);
-    update();
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+
+    if (gameState === 'playing') {
+      updatePhysics(dt);
+    }
+
     renderer.render(scene, camera);
   }
 
-  loop();
+  loop(performance.now());
 
-  window.addEventListener("resize", () => {
+  window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
   });
+
+  // estat inicial
+  showMenu('start');
 </script>
 
 </body>
