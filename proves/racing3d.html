@@ -192,35 +192,20 @@
     road.receiveShadow = true;
     group.add(road);
 
-    // línies de carril (sense Z-fighting: lleuger offset en Y)
-    const laneCount = 3;
-    const laneWidth = ROAD_WIDTH / laneCount;
+    // línies discontínues contínues (sense Z-fighting)
     const laneGroup = new THREE.Group();
+    const dashGeo = new THREE.PlaneGeometry(0.15, 3);
+    const dashMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-    for (let i = 1; i < laneCount; i++) {
-      const lineGeo = new THREE.PlaneGeometry(0.15, 2);
-      const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      for (let j = -10; j < 10; j++) {
-        const seg = new THREE.Mesh(lineGeo, lineMat);
-        seg.rotation.x = -Math.PI / 2;
-        seg.position.x = -ROAD_WIDTH / 2 + i * laneWidth;
-        seg.position.z = j * 4;
-        seg.position.y = 0.001; // lleugerament per sobre de la carretera
-        laneGroup.add(seg);
+    for (let i = 1; i < 3; i++) {
+      const x = -ROAD_WIDTH / 2 + (ROAD_WIDTH / 3) * i;
+      for (let z = -25; z < 25; z++) {
+        const dash = new THREE.Mesh(dashGeo, dashMat);
+        dash.rotation.x = -Math.PI / 2;
+        dash.position.set(x, 0.002, z * 3);
+        laneGroup.add(dash);
       }
     }
-
-    const sideGeo = new THREE.PlaneGeometry(0.2, ROAD_LENGTH);
-    const sideMat = new THREE.MeshBasicMaterial({ color: 0xffffaa });
-    const leftSide = new THREE.Mesh(sideGeo, sideMat);
-    leftSide.rotation.x = -Math.PI / 2;
-    leftSide.position.x = -ROAD_WIDTH / 2;
-    leftSide.position.y = 0.001;
-    laneGroup.add(leftSide);
-    const rightSide = leftSide.clone();
-    rightSide.position.x = ROAD_WIDTH / 2;
-    laneGroup.add(rightSide);
-
     group.add(laneGroup);
 
     // barreres
@@ -332,11 +317,20 @@
 
   function spawnEnemy() {
     const bodyColor = enemyColors[Math.floor(Math.random() * enemyColors.length)];
-    const cabinColor = 0x111111;
+    const cabinColor = 0x3377ff; // cabina blava com el jugador
+
     const enemy = createCar(bodyColor, cabinColor);
 
-    const laneX = (Math.random() - 0.5) * (ROAD_WIDTH - 2);
-    enemy.position.set(laneX, 0, -150 - Math.random() * 80);
+    // carrils fixos
+    const laneWidth = ROAD_WIDTH / 3;
+    const lanePositions = [
+      -ROAD_WIDTH / 2 + laneWidth / 2,
+      0,
+      ROAD_WIDTH / 2 - laneWidth / 2
+    ];
+    const lane = Math.floor(Math.random() * 3);
+
+    enemy.position.set(lanePositions[lane], 0, -150 - Math.random() * 80);
     enemy.userData.box = new THREE.Box3().setFromObject(enemy);
     enemy.userData.exploding = false;
     enemy.userData.explodeTime = 0;
@@ -365,10 +359,10 @@
 
   // ----- Física -----
   let speed = 0;          // unitats/s
-  const maxSpeed = 80;    // unitats/s (~288 km/h màxim)
-  const accel = 40;       // unitats/s^2
-  const brake = 60;
-  const friction = 25;
+  const maxSpeed = 65;    // ~234 km/h
+  const accel = 18;       // acceleració més lenta
+  const brake = 40;
+  const friction = 12;
   let lateralVel = 0;
   const lateralAccel = 40;
   const lateralFriction = 30;
@@ -389,7 +383,6 @@
     });
 
     if (!keepCamera) {
-      // càmera col·locada darrere del cotxe, també per al menú
       const camOffset = new THREE.Vector3(0, 7, 16);
       const desired = player.position.clone().add(camOffset);
       camera.position.copy(desired);
@@ -417,21 +410,24 @@
       }
     });
 
-    // moviment lateral amb inèrcia
-    if (keys.left) lateralVel -= lateralAccel * dt;
-    if (keys.right) lateralVel += lateralAccel * dt;
-    if (!keys.left && !keys.right) {
-      if (lateralVel > 0) lateralVel -= lateralFriction * dt;
-      if (lateralVel < 0) lateralVel += lateralFriction * dt;
-    }
-    lateralVel = Math.max(-20, Math.min(20, lateralVel));
+    // moviment lateral amb inèrcia i sensibilitat segons velocitat
+    const turnFactor = 1 + (speed / maxSpeed) * 2; // fins a 3x més sensible
 
+    if (keys.left) lateralVel -= lateralAccel * turnFactor * dt;
+    if (keys.right) lateralVel += lateralAccel * turnFactor * dt;
+
+    if (!keys.left && !keys.right) {
+      lateralVel *= 0.92;
+    }
+
+    lateralVel = Math.max(-30, Math.min(30, lateralVel));
     player.position.x += lateralVel * dt;
+
     const limitX = ROAD_WIDTH / 2 - 1.2;
     player.position.x = Math.max(-limitX, Math.min(limitX, player.position.x));
 
-    // lleuger gir del cotxe segons lateralVel
-    player.rotation.y = -lateralVel * 0.03;
+    // gir visual del cotxe
+    player.rotation.y = -lateralVel * 0.04;
 
     // distància
     distanceKm += (speed * dt) / 1000;
@@ -459,13 +455,11 @@
         }
 
         if (playerBox.intersectsBox(e.userData.box)) {
-          // marca per explotar
           e.userData.exploding = true;
           e.userData.explodeTime = 0;
           gameOver();
         }
       } else {
-        // animació d'explosió simple
         e.userData.explodeTime += dt;
         const t = e.userData.explodeTime;
         e.scale.setScalar(1 + t * 4);
@@ -491,7 +485,6 @@
   }
 
   function triggerExplosion() {
-    // petita sacsejada de càmera quan mors
     const originalPos = camera.position.clone();
     let t = 0;
     const shake = () => {
@@ -518,11 +511,10 @@
     if (gameState === 'playing') {
       updatePhysics(dt);
     } else if (gameState === 'menu') {
-      // càmera de menú: vista lleugerament elevada darrere del cotxe
-      const camOffset = new THREE.Vector3(0, 7, 18);
+      const camOffset = new THREE.Vector3(0, 10, 22);
       const desired = player.position.clone().add(camOffset);
-      camera.position.lerp(desired, 0.08);
-      camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 6);
+      camera.position.lerp(desired, 0.1);
+      camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 4);
     }
 
     renderer.render(scene, camera);
@@ -536,10 +528,10 @@
     camera.updateProjectionMatrix();
   });
 
-  // estat inicial
   resetGame(false);
   showMenu('start');
 </script>
 
 </body>
 </html>
+
