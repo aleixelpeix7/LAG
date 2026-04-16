@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minijocs | LAG</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg:#002244;
+      --accent:#7CCF35;
+      --nav-bg: rgba(0,0,0,0.7);
+    }
+
+    html,body{height:100%; margin:0; padding:0;}
+    *,*::before,*::after{box-sizing:border-box}
+
+    body {
+      background-color: var(--bg);
+      font-family: Arial, sans-serif;
+      color: var(--accent);
+    }
+
+    nav {
+      background-color: var(--nav-bg);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    nav ul { list-style:none; display:flex; justify-content:space-between; align-items:center; margin:0; padding:0; }
+    nav li.logo { display:flex; align-items:center; }
+    nav li.logo a { display:flex; align-items:center; text-decoration:none; }
+    nav li.logo img { height:60px; margin-right:0.5rem; vertical-align:middle; }
+    nav a { color:white; text-decoration:none; font-weight:bold; transition:color 0.3s; }
+    nav a:hover { color:#ffff66; }
+
+    main { padding:2rem; min-height: calc(100vh - 120px); }
+
+    /* Targetes LAG */
+    .lag-card {
+      display: block;
+      width: fit-content;
+      padding: 16px 26px;
+      margin: 18px 0;
+      background: #001829;
+      border: 2px solid #7CCF35;
+      border-radius: 10px;
+      color: #7CCF35;
+      font-size: 24px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: 0.25s;
+    }
+
+    .lag-card:hover {
+      background: #00283a;
+      border-color: #A6FF5A;
+      color: #A6FF5A;
+      transform: translateX(6px);
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <ul>
+      <li class="logo">
+        <a href="https://lagg.netlify.app">
+          <img src="assets/logo.png" alt="Logo LAG" />
+        </a>
+      </li>
+      <li class="enllacos">
+        <a href="https://lagg.netlify.app">Inici</a>
+        <a href="https://lagg.netlify.app/minecraft/">Minecraft</a>
+        <a href="https://lagg.netlify.app/eines/">Eines</a>
+        <a href="https://lagg.netlify.app/contacte">Contactar</a>
+      </li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <a class="lag-card" href="https://lagg.netlify.app/minijocs/serp">Joc de la serp</a>
+
+    <a class="lag-card" href="https://lagg.netlify.app/minijocs/memovisual">Joc de memòria visual</a>
+
+    <a class="lag-card" href="https://lagg.netlify.app/minijocs/tic-tac-toe">Tres en ratlla</a>
+
+    <a class="lag-card" href="https://lagg.netlify.app/minijocs/trencablocs">Joc de trencar blocs</a>
+
+  </main>
+
+</body>
+</html>
 
