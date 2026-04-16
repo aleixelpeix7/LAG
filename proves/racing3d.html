@@ -79,7 +79,9 @@
 <script type="module">
   import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-  // ----- UI / estat -----
+  /* -------------------------------------------------------
+     UI I ESTAT
+  ------------------------------------------------------- */
   const hud = document.getElementById('hud');
   const menuStart = document.getElementById('menu-start');
   const menuPause = document.getElementById('menu-pause');
@@ -88,7 +90,7 @@
   const btnDeadMenu = document.getElementById('btn-dead-menu');
   const deathDistanceEl = document.getElementById('death-distance');
 
-  let gameState = 'menu'; // 'menu' | 'playing' | 'paused' | 'dead'
+  let gameState = 'menu';
 
   function showMenu(id) {
     menuStart.style.display = id === 'start' ? 'flex' : 'none';
@@ -137,7 +139,9 @@
     if (e.key === 'Enter' && gameState === 'menu') startGame();
   });
 
-  // ----- Three.js bàsic -----
+  /* -------------------------------------------------------
+     THREE.JS BÀSIC
+  ------------------------------------------------------- */
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -164,7 +168,9 @@
   dir.shadow.mapSize.set(2048, 2048);
   scene.add(dir);
 
-  // ----- Terra / carretera / segments -----
+  /* -------------------------------------------------------
+     CARRETERA
+  ------------------------------------------------------- */
   const ROAD_WIDTH = 12;
   const ROAD_LENGTH = 50;
   const SEGMENTS = 8;
@@ -192,7 +198,7 @@
     road.receiveShadow = true;
     group.add(road);
 
-    // línies discontínues contínues (sense Z-fighting)
+    // línies discontínues
     const laneGroup = new THREE.Group();
     const dashGeo = new THREE.PlaneGeometry(0.15, 3);
     const dashMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -209,7 +215,7 @@
     group.add(laneGroup);
 
     // barreres
-    const railMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.4, roughness: 0.4 });
+    const railMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
     const postGeo = new THREE.BoxGeometry(0.2, 1, 0.2);
     const barGeo = new THREE.BoxGeometry(0.2, 0.2, 4);
 
@@ -218,7 +224,6 @@
         const post = new THREE.Mesh(postGeo, railMat);
         post.position.set(x, 0.5, i * 4);
         post.castShadow = true;
-        post.receiveShadow = true;
         group.add(post);
 
         const bar = new THREE.Mesh(barGeo, railMat);
@@ -231,7 +236,7 @@
     addRail(-ROAD_WIDTH / 2 - 1);
     addRail(ROAD_WIDTH / 2 + 1);
 
-    // arbres / vegetació
+    // arbres
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5b3a1a });
     const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2f8f3a });
 
@@ -242,13 +247,10 @@
       const tree = new THREE.Group();
       const trunk = new THREE.Mesh(trunkGeo, trunkMat);
       trunk.position.y = 1;
-      trunk.castShadow = true;
-      trunk.receiveShadow = true;
       tree.add(trunk);
 
       const leaves = new THREE.Mesh(leavesGeo, leavesMat);
       leaves.position.y = 3;
-      leaves.castShadow = true;
       tree.add(leaves);
 
       tree.position.set(x, 0, z);
@@ -256,8 +258,8 @@
     }
 
     for (let i = -6; i <= 6; i++) {
-      if (Math.random() < 0.7) addTree(-ROAD_WIDTH / 2 - 4 - Math.random() * 4, i * 4 + (Math.random() - 0.5) * 2);
-      if (Math.random() < 0.7) addTree( ROAD_WIDTH / 2 + 4 + Math.random() * 4, i * 4 + (Math.random() - 0.5) * 2);
+      if (Math.random() < 0.7) addTree(-ROAD_WIDTH / 2 - 4 - Math.random() * 4, i * 4);
+      if (Math.random() < 0.7) addTree( ROAD_WIDTH / 2 + 4 + Math.random() * 4, i * 4);
     }
 
     group.position.z = -zIndex * ROAD_LENGTH;
@@ -269,25 +271,27 @@
     segmentGroups.push(createSegment(i));
   }
 
-  // ----- Cotxes -----
+  /* -------------------------------------------------------
+     COTXES (AMB LLUMS DAVANT I DARRERE)
+  ------------------------------------------------------- */
   function createCar(colorBody, colorCabin) {
     const group = new THREE.Group();
 
+    // cos
     const bodyGeo = new THREE.BoxGeometry(1.8, 0.6, 3.4);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: colorBody, metalness: 0.3, roughness: 0.4 });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: colorBody });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.5;
-    body.castShadow = true;
-    body.receiveShadow = true;
     group.add(body);
 
+    // cabina
     const cabinGeo = new THREE.BoxGeometry(1.2, 0.5, 1.8);
-    const cabinMat = new THREE.MeshStandardMaterial({ color: colorCabin, metalness: 0.1, roughness: 0.2 });
+    const cabinMat = new THREE.MeshStandardMaterial({ color: colorCabin });
     const cabin = new THREE.Mesh(cabinGeo, cabinMat);
     cabin.position.set(0, 0.9, -0.2);
-    cabin.castShadow = true;
     group.add(cabin);
 
+    // rodes
     const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
 
@@ -295,7 +299,6 @@
       const w = new THREE.Mesh(wheelGeo, wheelMat);
       w.rotation.z = Math.PI / 2;
       w.position.set(x, 0.25, z);
-      w.castShadow = true;
       group.add(w);
     }
 
@@ -304,6 +307,29 @@
     addWheel(-0.8, -1.2);
     addWheel(0.8, -1.2);
 
+    // llums davanters (groc)
+    const lightGeo = new THREE.BoxGeometry(0.2, 0.1, 0.1);
+    const frontLightMat = new THREE.MeshBasicMaterial({ color: 0xffdd55 });
+
+    const fl1 = new THREE.Mesh(lightGeo, frontLightMat);
+    fl1.position.set(-0.6, 0.4, 1.7);
+    group.add(fl1);
+
+    const fl2 = fl1.clone();
+    fl2.position.x = 0.6;
+    group.add(fl2);
+
+    // llums darrere (vermell)
+    const rearLightMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+
+    const rl1 = new THREE.Mesh(lightGeo, rearLightMat);
+    rl1.position.set(-0.6, 0.4, -1.7);
+    group.add(rl1);
+
+    const rl2 = rl1.clone();
+    rl2.position.x = 0.6;
+    group.add(rl2);
+
     return group;
   }
 
@@ -311,13 +337,15 @@
   player.position.set(0, 0, 8);
   scene.add(player);
 
-  // Enemics
+  /* -------------------------------------------------------
+     ENEMICS
+  ------------------------------------------------------- */
   const enemies = [];
   const enemyColors = [0xff3333, 0xffaa00, 0x00cc66, 0x9933ff, 0xffffff, 0x00bcd4];
 
   function spawnEnemy() {
     const bodyColor = enemyColors[Math.floor(Math.random() * enemyColors.length)];
-    const cabinColor = 0xeeeeff; // mateixa cabina que el jugador
+    const cabinColor = 0xeeeeff;
 
     const enemy = createCar(bodyColor, cabinColor);
 
@@ -339,7 +367,9 @@
 
   let spawnTimer = 0;
 
-  // ----- Controls -----
+  /* -------------------------------------------------------
+     CONTROLS
+  ------------------------------------------------------- */
   const keys = { left: false, right: false, up: false, down: false };
 
   window.addEventListener('keydown', (e) => {
@@ -356,15 +386,16 @@
     if (e.key === 'ArrowDown') keys.down = false;
   });
 
-  // ----- Física -----
-  let speed = 0;          // unitats/s
-  const maxSpeed = 65;    // ~234 km/h
-  const accel = 18;       // acceleració més lenta
+  /* -------------------------------------------------------
+     FÍSICA
+  ------------------------------------------------------- */
+  let speed = 0;
+  const maxSpeed = 65;
+  const accel = 18;
   const brake = 40;
   const friction = 12;
   let lateralVel = 0;
   const lateralAccel = 40;
-  const lateralFriction = 30;
   let distanceKm = 0;
 
   function resetGame(keepCamera) {
@@ -388,54 +419,21 @@
       camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 6);
     }
   }
-
-  function updatePhysics(dt) {
-    // acceleració longitudinal
-    if (keys.up) speed += accel * dt;
-    if (keys.down) speed -= brake * dt;
-    if (!keys.up && !keys.down) {
-      if (speed > 0) speed -= friction * dt;
-      if (speed < 0) speed += friction * dt;
+    // NO girar si està parat
+    if (speed > 1) {
+      player.rotation.y = -lateralVel * 0.01;
+      player.rotation.z = lateralVel * 0.002;
+    } else {
+      player.rotation.y = 0;
+      player.rotation.z = 0;
     }
-    speed = Math.max(0, Math.min(maxSpeed, speed));
-
-    const worldSpeed = speed * dt;
-
-    // moviment segments
-    segmentGroups.forEach(g => {
-      g.position.z += worldSpeed;
-      if (g.position.z > ROAD_LENGTH) {
-        g.position.z -= ROAD_LENGTH * SEGMENTS;
-      }
-    });
-
-    // moviment lateral amb inèrcia i sensibilitat segons velocitat
-    const turnFactor = 0.6 + (speed / maxSpeed) * 1.2;
-
-    if (keys.left) lateralVel -= lateralAccel * turnFactor * dt;
-    if (keys.right) lateralVel += lateralAccel * turnFactor * dt;
-
-    if (!keys.left && !keys.right) {
-      lateralVel *= 0.92;
-    }
-
-    lateralVel = Math.max(-30, Math.min(30, lateralVel));
-    player.position.x += lateralVel * dt;
-
-    const limitX = ROAD_WIDTH / 2 - 1.2;
-    player.position.x = Math.max(-limitX, Math.min(limitX, player.position.x));
-
-    // gir molt més suau i realista
-    player.rotation.y = -lateralVel * 0.02;
-    // inclinació lateral mínima
-    player.rotation.z = lateralVel * 0.005;
 
     // distància
     distanceKm += (speed * dt) / 1000;
 
     // enemics
     spawnTimer += dt;
-    if (spawnTimer > 1.0) {
+    if (spawnTimer > 0.6) {   // MÉS COTXES
       spawnEnemy();
       spawnTimer = 0;
     }
@@ -461,6 +459,7 @@
           gameOver();
         }
       } else {
+        // animació explosió
         e.userData.explodeTime += dt;
         const t = e.userData.explodeTime;
         e.scale.setScalar(1 + t * 4);
@@ -485,6 +484,9 @@
       `Distància: ${distanceKm.toFixed(2)} km`;
   }
 
+  /* -------------------------------------------------------
+     EXPLOSIÓ DE CÀMERA
+  ------------------------------------------------------- */
   function triggerExplosion() {
     const originalPos = camera.position.clone();
     let t = 0;
@@ -501,7 +503,9 @@
     shake();
   }
 
-  // ----- Loop -----
+  /* -------------------------------------------------------
+     LOOP PRINCIPAL
+  ------------------------------------------------------- */
   let lastTime = performance.now();
 
   function loop(now) {
@@ -523,6 +527,9 @@
 
   loop(performance.now());
 
+  /* -------------------------------------------------------
+     RESIZE
+  ------------------------------------------------------- */
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -535,5 +542,4 @@
 
 </body>
 </html>
-
 
