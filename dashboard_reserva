@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Visites | LAG</title>
+  <link rel="icon" href="assets/favicon_hacker.png" type="image/png" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    h1 { color: #4fc3f7; }
+    .card {
+      background: #1a1a1a;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table td, table th {
+      border: 1px solid #333;
+      padding: 8px;
+    }
+    table th {
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📊 Dashboard de Visites</h1>
+
+<div class="card">
+  <h2>Resum General</h2>
+  <p><b>Total visites reals:</b> <span id="total"></span></p>
+  <p><b>Persones diferents (per IP):</b> <span id="unique"></span></p>
+</div>
+
+<div class="card">
+  <h2>Última setmana</h2>
+  <p><b>Visites reals:</b> <span id="weekVisits"></span></p>
+  <p><b>Persones diferents:</b> <span id="weekUnique"></span></p>
+</div>
+
+<div class="card">
+  <h2>Últim mes</h2>
+  <p><b>Visites reals:</b> <span id="monthVisits"></span></p>
+  <p><b>Persones diferents:</b> <span id="monthUnique"></span></p>
+</div>
+
+<div class="card">
+  <h2>Llista de visites reals</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Referer</th>
+        <th>IP</th>
+        <th>User Agent</th>
+      </tr>
+    </thead>
+    <tbody id="table"></tbody>
+  </table>
+</div>
+
+<script>
+const BIN_ID = "69e0a46a856a6821893d4e93"; 
+const API_KEY = "$2a$10$vSL5AAttVx4kzowkgdmWfuxS0hbwUDgiLn1KFLyqH7ySIPwYmvF6.";
+
+// IPs d'AWS/Netlify (prefixos comuns)
+const AWS_IP_PREFIXES = [
+  "54.", "18.", "3.", "35.", "100.54."
+];
+
+function isBot(v) {
+  const ua = v.ua.toLowerCase();
+  const ref = v.referer || "";
+
+  // 1. HeadlessChrome = Netlify preview
+  if (ua.includes("headlesschrome")) return true;
+
+  // 2. Referers de deploy preview
+  if (ref.includes("--lagg.netlify.app")) return true;
+
+  // 3. IPs d'AWS
+  for (const prefix of AWS_IP_PREFIXES) {
+    if (v.ip.startsWith(prefix)) return true;
+  }
+
+  return false;
+}
+
+async function loadData() {
+  const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Access-Key": API_KEY }
+  });
+  const data = await res.json();
+  const visits = data.record.visits;
+
+  // --- FILTRAR VISITES REALS ---
+  const realVisits = visits.filter(v => !isBot(v));
+
+  // --- TOTALS ---
+  document.getElementById("total").textContent = realVisits.length;
+
+  const uniqueIPs = new Set(realVisits.map(v => v.ip));
+  document.getElementById("unique").textContent = uniqueIPs.size;
+
+  // --- TEMPS ---
+  const now = Date.now();
+  const oneWeek = now - 7 * 24 * 60 * 60 * 1000;
+  const oneMonth = now - 30 * 24 * 60 * 60 * 1000;
+
+  const weekVisits = realVisits.filter(v => v.timestamp >= oneWeek);
+  const monthVisits = realVisits.filter(v => v.timestamp >= oneMonth);
+
+  document.getElementById("weekVisits").textContent = weekVisits.length;
+  document.getElementById("monthVisits").textContent = monthVisits.length;
+
+  const weekUnique = new Set(weekVisits.map(v => v.ip));
+  const monthUnique = new Set(monthVisits.map(v => v.ip));
+
+  document.getElementById("weekUnique").textContent = weekUnique.size;
+  document.getElementById("monthUnique").textContent = monthUnique.size;
+
+  // --- TAULA ---
+  const tbody = document.getElementById("table");
+  realVisits.forEach(v => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${new Date(v.timestamp).toLocaleString()}</td>
+      <td>${v.referer}</td>
+      <td>${v.ip}</td>
+      <td>${v.ua}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+loadData();
+</script>
+
+</body>
+</html>
