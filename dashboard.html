@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Visites</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    h1 { color: #4fc3f7; }
+    .card {
+      background: #1a1a1a;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table td, table th {
+      border: 1px solid #333;
+      padding: 8px;
+    }
+    table th {
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📊 Dashboard de Visites</h1>
+
+<div class="card">
+  <h2>Resum</h2>
+  <p><b>Total visites:</b> <span id="total"></span></p>
+  <p><b>Visites úniques (per IP):</b> <span id="uniques"></span></p>
+</div>
+
+<div class="card">
+  <h2>Gràfica de visites per dia</h2>
+  <canvas id="visitsPerDay"></canvas>
+</div>
+
+<div class="card">
+  <h2>Llista de visites</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Referer</th>
+        <th>IP</th>
+        <th>User Agent</th>
+      </tr>
+    </thead>
+    <tbody id="table"></tbody>
+  </table>
+</div>
+
+<script>
+const BIN_ID = "EL_TEUBINID"; // <-- posa el teu Bin ID
+const API_KEY = "LA_TEVA_READ_KEY"; // <-- clau read-only
+
+async function loadData() {
+  const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: { "X-Access-Key": API_KEY }
+  });
+  const data = await res.json();
+  const visits = data.record.visits;
+
+  // Mostrar totals
+  document.getElementById("total").textContent = visits.length;
+
+  const uniqueIPs = new Set(visits.map(v => v.ip));
+  document.getElementById("uniques").textContent = uniqueIPs.size;
+
+  // Omplir taula
+  const tbody = document.getElementById("table");
+  visits.forEach(v => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${new Date(v.timestamp).toLocaleString()}</td>
+      <td>${v.referer}</td>
+      <td>${v.ip}</td>
+      <td>${v.ua}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Gràfica visites per dia
+  const perDay = {};
+  visits.forEach(v => {
+    const day = new Date(v.timestamp).toISOString().split("T")[0];
+    perDay[day] = (perDay[day] || 0) + 1;
+  });
+
+  new Chart(document.getElementById("visitsPerDay"), {
+    type: "line",
+    data: {
+      labels: Object.keys(perDay),
+      datasets: [{
+        label: "Visites",
+        data: Object.values(perDay),
+        borderColor: "#4fc3f7",
+        backgroundColor: "rgba(79,195,247,0.3)"
+      }]
+    }
+  });
+}
+
+loadData();
+</script>
+
+</body>
+</html>
