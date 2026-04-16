@@ -57,7 +57,10 @@
     <p>Fletxes esquerra/dreta: girar i desplaçar</p>
     <p>Fletxes amunt/avall: accelerar/frenar</p>
     <p>ESC: pausa</p>
-    <div class="btn" id="btn-start">Començar</div>
+
+    <div class="btn" id="btn-easy">Fàcil</div>
+    <div class="btn" id="btn-medium">Mitjà</div>
+    <div class="btn" id="btn-hard">Difícil</div>
   </div>
 </div>
 
@@ -84,22 +87,20 @@
   const menuStart = document.getElementById('menu-start');
   const menuPause = document.getElementById('menu-pause');
   const menuDead = document.getElementById('menu-dead');
-  const btnStart = document.getElementById('btn-start');
+  const btnEasy = document.getElementById('btn-easy');
+  const btnMedium = document.getElementById('btn-medium');
+  const btnHard = document.getElementById('btn-hard');
   const btnDeadMenu = document.getElementById('btn-dead-menu');
   const deathDistanceEl = document.getElementById('death-distance');
 
   let gameState = 'menu';
+  let difficulty = "easy";
+  let spawnInterval = 1.2;
 
   function showMenu(id) {
     menuStart.style.display = id === 'start' ? 'flex' : 'none';
     menuPause.style.display = id === 'pause' ? 'flex' : 'none';
     menuDead.style.display = id === 'dead' ? 'flex' : 'none';
-  }
-
-  function goToStartMenu() {
-    gameState = 'menu';
-    showMenu('start');
-    resetGame(true);
   }
 
   function startGame() {
@@ -108,33 +109,26 @@
     showMenu(null);
   }
 
-  function pauseGame() {
-    if (gameState === 'playing') {
-      gameState = 'paused';
-      showMenu('pause');
-    } else if (gameState === 'paused') {
-      gameState = 'playing';
-      showMenu(null);
-    }
-  }
+  btnEasy.addEventListener('click', () => { difficulty = "easy"; spawnInterval = 1.2; startGame(); });
+  btnMedium.addEventListener('click', () => { difficulty = "medium"; spawnInterval = 0.8; startGame(); });
+  btnHard.addEventListener('click', () => { difficulty = "hard"; spawnInterval = 0.45; startGame(); });
 
-  function gameOver() {
-    if (gameState !== 'playing') return;
-    gameState = 'dead';
-    deathDistanceEl.textContent = `Has fet ${distanceKm.toFixed(2)} km`;
-    showMenu('dead');
-    triggerExplosion();
-  }
-
-  btnStart.addEventListener('click', startGame);
-  btnDeadMenu.addEventListener('click', goToStartMenu);
+  btnDeadMenu.addEventListener('click', () => {
+    gameState = 'menu';
+    showMenu('start');
+    resetGame(true);
+  });
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if (gameState === 'menu' || gameState === 'dead') return;
-      pauseGame();
+      if (gameState === 'playing') {
+        gameState = 'paused';
+        showMenu('pause');
+      } else if (gameState === 'paused') {
+        gameState = 'playing';
+        showMenu(null);
+      }
     }
-    if (e.key === 'Enter' && gameState === 'menu') startGame();
   });
 
   // Three.js bàsic
@@ -148,12 +142,7 @@
   scene.fog = new THREE.Fog(0x87a0c0, 40, 260);
   renderer.setClearColor(0x87a0c0);
 
-  const camera = new THREE.PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
   const hemi = new THREE.HemisphereLight(0xddeeff, 0x223322, 0.7);
   scene.add(hemi);
@@ -181,13 +170,11 @@
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.02;
-    ground.receiveShadow = true;
     group.add(ground);
 
     const roadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_LENGTH);
     const road = new THREE.Mesh(roadGeo, roadMat);
     road.rotation.x = -Math.PI / 2;
-    road.receiveShadow = true;
     group.add(road);
 
     const laneGroup = new THREE.Group();
@@ -205,52 +192,6 @@
     }
     group.add(laneGroup);
 
-    const railMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-    const postGeo = new THREE.BoxGeometry(0.2, 1, 0.2);
-    const barGeo = new THREE.BoxGeometry(0.2, 0.2, 4);
-
-    function addRail(x) {
-      for (let i = -6; i <= 6; i++) {
-        const post = new THREE.Mesh(postGeo, railMat);
-        post.position.set(x, 0.5, i * 4);
-        post.castShadow = true;
-        group.add(post);
-
-        const bar = new THREE.Mesh(barGeo, railMat);
-        bar.position.set(x, 0.9, i * 4);
-        bar.castShadow = true;
-        group.add(bar);
-      }
-    }
-
-    addRail(-ROAD_WIDTH / 2 - 1);
-    addRail(ROAD_WIDTH / 2 + 1);
-
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5b3a1a });
-    const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2f8f3a });
-
-    const trunkGeo = new THREE.CylinderGeometry(0.25, 0.35, 2, 8);
-    const leavesGeo = new THREE.ConeGeometry(1.2, 3, 10);
-
-    function addTree(x, z) {
-      const tree = new THREE.Group();
-      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-      trunk.position.y = 1;
-      tree.add(trunk);
-
-      const leaves = new THREE.Mesh(leavesGeo, leavesMat);
-      leaves.position.y = 3;
-      tree.add(leaves);
-
-      tree.position.set(x, 0, z);
-      group.add(tree);
-    }
-
-    for (let i = -6; i <= 6; i++) {
-      if (Math.random() < 0.7) addTree(-ROAD_WIDTH / 2 - 4 - Math.random() * 4, i * 4);
-      if (Math.random() < 0.7) addTree( ROAD_WIDTH / 2 + 4 + Math.random() * 4, i * 4);
-    }
-
     group.position.z = -zIndex * ROAD_LENGTH;
     scene.add(group);
     return group;
@@ -261,7 +202,7 @@
   }
 
   // Cotxes
-  function createCar(colorBody, colorCabin) {
+  function createCar(colorBody, colorCabin, isPlayer = false) {
     const group = new THREE.Group();
 
     const bodyGeo = new THREE.BoxGeometry(1.8, 0.6, 3.4);
@@ -292,7 +233,11 @@
     addWheel(0.8, -1.2);
 
     const lightGeo = new THREE.BoxGeometry(0.2, 0.1, 0.1);
-    const frontLightMat = new THREE.MeshBasicMaterial({ color: 0xffdd55 });
+
+    // FARS DAVANT
+    const frontLightMat = new THREE.MeshBasicMaterial({
+      color: isPlayer ? 0xff3333 : 0xffdd55
+    });
 
     const fl1 = new THREE.Mesh(lightGeo, frontLightMat);
     fl1.position.set(-0.6, 0.4, 1.7);
@@ -302,6 +247,7 @@
     fl2.position.x = 0.6;
     group.add(fl2);
 
+    // FARS DARRERE (vermells per tots)
     const rearLightMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
 
     const rl1 = new THREE.Mesh(lightGeo, rearLightMat);
@@ -315,19 +261,16 @@
     return group;
   }
 
-  const player = createCar(0x0077ff, 0xeeeeff);
+  const player = createCar(0x0077ff, 0xeeeeff, true);
   player.position.set(0, 0, 8);
   scene.add(player);
 
-  // Enemics
   const enemies = [];
   const enemyColors = [0xff3333, 0xffaa00, 0x00cc66, 0x9933ff, 0xffffff, 0x00bcd4];
 
   function spawnEnemy() {
     const bodyColor = enemyColors[Math.floor(Math.random() * enemyColors.length)];
-    const cabinColor = 0xeeeeff;
-
-    const enemy = createCar(bodyColor, cabinColor);
+    const enemy = createCar(bodyColor, 0xeeeeff, false);
 
     const laneWidth = ROAD_WIDTH / 3;
     const lanePositions = [
@@ -344,8 +287,6 @@
     scene.add(enemy);
     enemies.push(enemy);
   }
-
-  let spawnTimer = 0;
 
   // Controls
   const keys = { left: false, right: false, up: false, down: false };
@@ -364,6 +305,7 @@
     if (e.key === 'ArrowDown') keys.down = false;
   });
 
+  // --- LA FÍSICA COMENÇA AQUÍ ---
   // Física
   let speed = 0;
   const maxSpeed = 65;
@@ -373,6 +315,7 @@
   let lateralVel = 0;
   const lateralAccel = 40;
   let distanceKm = 0;
+  let spawnTimer = 0;
 
   function resetGame(keepCamera) {
     speed = 0;
@@ -397,6 +340,7 @@
   }
 
   function updatePhysics(dt) {
+    // Acceleració longitudinal
     if (keys.up) speed += accel * dt;
     if (keys.down) speed -= brake * dt;
     if (!keys.up && !keys.down) {
@@ -407,6 +351,7 @@
 
     const worldSpeed = speed * dt;
 
+    // Moviment carretera
     segmentGroups.forEach(g => {
       g.position.z += worldSpeed;
       if (g.position.z > ROAD_LENGTH) {
@@ -414,21 +359,25 @@
       }
     });
 
+    // Moviment lateral
     const turnFactor = 0.4 + (speed / maxSpeed) * 0.8;
 
     if (keys.left) lateralVel -= lateralAccel * turnFactor * dt;
     if (keys.right) lateralVel += lateralAccel * turnFactor * dt;
 
-    if (!keys.left && !keys.right) {
-      lateralVel *= 0.92;
-    }
+    if (!keys.left && !keys.right) lateralVel *= 0.92;
 
     lateralVel = Math.max(-15, Math.min(15, lateralVel));
-    player.position.x += lateralVel * dt;
+
+    // ❗ NO es pot moure lateralment si està parat
+    if (speed > 1) {
+      player.position.x += lateralVel * dt;
+    }
 
     const limitX = ROAD_WIDTH / 2 - 1.2;
     player.position.x = Math.max(-limitX, Math.min(limitX, player.position.x));
 
+    // ❗ NO gira si està parat
     if (speed > 1) {
       player.rotation.y = -lateralVel * 0.01;
       player.rotation.z = lateralVel * 0.002;
@@ -437,16 +386,19 @@
       player.rotation.z = 0;
     }
 
+    // Distància
     distanceKm += (speed * dt) / 1000;
 
+    // Enemics segons dificultat
     spawnTimer += dt;
-    if (spawnTimer > 0.6) {
+    if (spawnTimer > spawnInterval) {
       spawnEnemy();
       spawnTimer = 0;
     }
 
     const playerBox = new THREE.Box3().setFromObject(player);
 
+    // Moviment enemics + col·lisions
     for (let i = enemies.length - 1; i >= 0; i--) {
       const e = enemies[i];
 
@@ -466,6 +418,7 @@
           gameOver();
         }
       } else {
+        // Explosió
         e.userData.explodeTime += dt;
         const t = e.userData.explodeTime;
         e.scale.setScalar(1 + t * 4);
@@ -478,16 +431,19 @@
       }
     }
 
+    // Càmera
     const camOffset = new THREE.Vector3(0, 7, 16);
     const desired = player.position.clone().add(camOffset);
     camera.position.lerp(desired, 0.12);
     camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 6);
 
+    // HUD
     hud.innerHTML =
       `Velocitat: ${(speed * 3.6).toFixed(0)} km/h<br>` +
       `Distància: ${distanceKm.toFixed(2)} km`;
   }
 
+  // Explosió de càmera
   function triggerExplosion() {
     const originalPos = camera.position.clone();
     let t = 0;
@@ -504,6 +460,7 @@
     shake();
   }
 
+  // Loop principal
   let lastTime = performance.now();
 
   function loop(now) {
@@ -525,6 +482,7 @@
 
   loop(performance.now());
 
+  // Resize
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -537,4 +495,5 @@
 
 </body>
 </html>
+
 
