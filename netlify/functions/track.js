@@ -1,5 +1,5 @@
 exports.handler = async (event, context) => {
-  const BIN_ID = "EL_TEUBINID"; // <-- posa aquí el teu Bin ID
+  const BIN_ID = "69e0a46a856a6821893d4e93"; // <-- posa aquí el teu Bin ID
 
   const referer = event.headers.referer || "unknown";
   const ua = event.headers["user-agent"] || "unknown";
