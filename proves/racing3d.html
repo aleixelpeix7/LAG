@@ -79,9 +79,7 @@
 <script type="module">
   import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-  /* -------------------------------------------------------
-     UI I ESTAT
-  ------------------------------------------------------- */
+  // UI / estat
   const hud = document.getElementById('hud');
   const menuStart = document.getElementById('menu-start');
   const menuPause = document.getElementById('menu-pause');
@@ -139,9 +137,7 @@
     if (e.key === 'Enter' && gameState === 'menu') startGame();
   });
 
-  /* -------------------------------------------------------
-     THREE.JS BÀSIC
-  ------------------------------------------------------- */
+  // Three.js bàsic
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -168,9 +164,7 @@
   dir.shadow.mapSize.set(2048, 2048);
   scene.add(dir);
 
-  /* -------------------------------------------------------
-     CARRETERA
-  ------------------------------------------------------- */
+  // Carretera
   const ROAD_WIDTH = 12;
   const ROAD_LENGTH = 50;
   const SEGMENTS = 8;
@@ -183,7 +177,6 @@
   function createSegment(zIndex) {
     const group = new THREE.Group();
 
-    // terra
     const groundGeo = new THREE.PlaneGeometry(200, ROAD_LENGTH);
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
@@ -191,14 +184,12 @@
     ground.receiveShadow = true;
     group.add(ground);
 
-    // carretera
     const roadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_LENGTH);
     const road = new THREE.Mesh(roadGeo, roadMat);
     road.rotation.x = -Math.PI / 2;
     road.receiveShadow = true;
     group.add(road);
 
-    // línies discontínues
     const laneGroup = new THREE.Group();
     const dashGeo = new THREE.PlaneGeometry(0.15, 3);
     const dashMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -214,7 +205,6 @@
     }
     group.add(laneGroup);
 
-    // barreres
     const railMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
     const postGeo = new THREE.BoxGeometry(0.2, 1, 0.2);
     const barGeo = new THREE.BoxGeometry(0.2, 0.2, 4);
@@ -236,7 +226,6 @@
     addRail(-ROAD_WIDTH / 2 - 1);
     addRail(ROAD_WIDTH / 2 + 1);
 
-    // arbres
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5b3a1a });
     const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2f8f3a });
 
@@ -271,27 +260,22 @@
     segmentGroups.push(createSegment(i));
   }
 
-  /* -------------------------------------------------------
-     COTXES (AMB LLUMS DAVANT I DARRERE)
-  ------------------------------------------------------- */
+  // Cotxes
   function createCar(colorBody, colorCabin) {
     const group = new THREE.Group();
 
-    // cos
     const bodyGeo = new THREE.BoxGeometry(1.8, 0.6, 3.4);
     const bodyMat = new THREE.MeshStandardMaterial({ color: colorBody });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.5;
     group.add(body);
 
-    // cabina
     const cabinGeo = new THREE.BoxGeometry(1.2, 0.5, 1.8);
     const cabinMat = new THREE.MeshStandardMaterial({ color: colorCabin });
     const cabin = new THREE.Mesh(cabinGeo, cabinMat);
     cabin.position.set(0, 0.9, -0.2);
     group.add(cabin);
 
-    // rodes
     const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
 
@@ -307,7 +291,6 @@
     addWheel(-0.8, -1.2);
     addWheel(0.8, -1.2);
 
-    // llums davanters (groc)
     const lightGeo = new THREE.BoxGeometry(0.2, 0.1, 0.1);
     const frontLightMat = new THREE.MeshBasicMaterial({ color: 0xffdd55 });
 
@@ -319,7 +302,6 @@
     fl2.position.x = 0.6;
     group.add(fl2);
 
-    // llums darrere (vermell)
     const rearLightMat = new THREE.MeshBasicMaterial({ color: 0xff3333 });
 
     const rl1 = new THREE.Mesh(lightGeo, rearLightMat);
@@ -337,9 +319,7 @@
   player.position.set(0, 0, 8);
   scene.add(player);
 
-  /* -------------------------------------------------------
-     ENEMICS
-  ------------------------------------------------------- */
+  // Enemics
   const enemies = [];
   const enemyColors = [0xff3333, 0xffaa00, 0x00cc66, 0x9933ff, 0xffffff, 0x00bcd4];
 
@@ -367,9 +347,7 @@
 
   let spawnTimer = 0;
 
-  /* -------------------------------------------------------
-     CONTROLS
-  ------------------------------------------------------- */
+  // Controls
   const keys = { left: false, right: false, up: false, down: false };
 
   window.addEventListener('keydown', (e) => {
@@ -386,145 +364,130 @@
     if (e.key === 'ArrowDown') keys.down = false;
   });
 
-  /* -------------------------------------------------------
-   FÍSICA
-------------------------------------------------------- */
-let speed = 0;
-const maxSpeed = 65;
-const accel = 18;
-const brake = 40;
-const friction = 12;
-let lateralVel = 0;
-const lateralAccel = 40;
-let distanceKm = 0;
-let spawnTimer = 0;
+  // Física
+  let speed = 0;
+  const maxSpeed = 65;
+  const accel = 18;
+  const brake = 40;
+  const friction = 12;
+  let lateralVel = 0;
+  const lateralAccel = 40;
+  let distanceKm = 0;
 
-function resetGame(keepCamera) {
-  speed = 0;
-  distanceKm = 0;
-  lateralVel = 0;
-  player.position.set(0, 0, 8);
-  player.rotation.set(0, 0, 0);
+  function resetGame(keepCamera) {
+    speed = 0;
+    distanceKm = 0;
+    lateralVel = 0;
+    player.position.set(0, 0, 8);
+    player.rotation.set(0, 0, 0);
 
-  enemies.forEach(e => scene.remove(e));
-  enemies.length = 0;
+    enemies.forEach(e => scene.remove(e));
+    enemies.length = 0;
 
-  segmentGroups.forEach((g, i) => {
-    g.position.z = -i * ROAD_LENGTH;
-  });
+    segmentGroups.forEach((g, i) => {
+      g.position.z = -i * ROAD_LENGTH;
+    });
 
-  if (!keepCamera) {
+    if (!keepCamera) {
+      const camOffset = new THREE.Vector3(0, 7, 16);
+      const desired = player.position.clone().add(camOffset);
+      camera.position.copy(desired);
+      camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 6);
+    }
+  }
+
+  function updatePhysics(dt) {
+    if (keys.up) speed += accel * dt;
+    if (keys.down) speed -= brake * dt;
+    if (!keys.up && !keys.down) {
+      if (speed > 0) speed -= friction * dt;
+      if (speed < 0) speed += friction * dt;
+    }
+    speed = Math.max(0, Math.min(maxSpeed, speed));
+
+    const worldSpeed = speed * dt;
+
+    segmentGroups.forEach(g => {
+      g.position.z += worldSpeed;
+      if (g.position.z > ROAD_LENGTH) {
+        g.position.z -= ROAD_LENGTH * SEGMENTS;
+      }
+    });
+
+    const turnFactor = 0.4 + (speed / maxSpeed) * 0.8;
+
+    if (keys.left) lateralVel -= lateralAccel * turnFactor * dt;
+    if (keys.right) lateralVel += lateralAccel * turnFactor * dt;
+
+    if (!keys.left && !keys.right) {
+      lateralVel *= 0.92;
+    }
+
+    lateralVel = Math.max(-15, Math.min(15, lateralVel));
+    player.position.x += lateralVel * dt;
+
+    const limitX = ROAD_WIDTH / 2 - 1.2;
+    player.position.x = Math.max(-limitX, Math.min(limitX, player.position.x));
+
+    if (speed > 1) {
+      player.rotation.y = -lateralVel * 0.01;
+      player.rotation.z = lateralVel * 0.002;
+    } else {
+      player.rotation.y = 0;
+      player.rotation.z = 0;
+    }
+
+    distanceKm += (speed * dt) / 1000;
+
+    spawnTimer += dt;
+    if (spawnTimer > 0.6) {
+      spawnEnemy();
+      spawnTimer = 0;
+    }
+
+    const playerBox = new THREE.Box3().setFromObject(player);
+
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      const e = enemies[i];
+
+      if (!e.userData.exploding) {
+        e.position.z += worldSpeed + 25 * dt;
+        e.userData.box.setFromObject(e);
+
+        if (e.position.z > 80) {
+          scene.remove(e);
+          enemies.splice(i, 1);
+          continue;
+        }
+
+        if (playerBox.intersectsBox(e.userData.box)) {
+          e.userData.exploding = true;
+          e.userData.explodeTime = 0;
+          gameOver();
+        }
+      } else {
+        e.userData.explodeTime += dt;
+        const t = e.userData.explodeTime;
+        e.scale.setScalar(1 + t * 4);
+        e.position.y += dt * 6;
+        e.rotation.y += dt * 8;
+        if (t > 0.4) {
+          scene.remove(e);
+          enemies.splice(i, 1);
+        }
+      }
+    }
+
     const camOffset = new THREE.Vector3(0, 7, 16);
     const desired = player.position.clone().add(camOffset);
-    camera.position.copy(desired);
+    camera.position.lerp(desired, 0.12);
     camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 6);
-  }
-}
 
-function updatePhysics(dt) {
-  // acceleració longitudinal
-  if (keys.up) speed += accel * dt;
-  if (keys.down) speed -= brake * dt;
-  if (!keys.up && !keys.down) {
-    if (speed > 0) speed -= friction * dt;
-    if (speed < 0) speed += friction * dt;
-  }
-  speed = Math.max(0, Math.min(maxSpeed, speed));
-
-  const worldSpeed = speed * dt;
-
-  // moviment segments
-  segmentGroups.forEach(g => {
-    g.position.z += worldSpeed;
-    if (g.position.z > ROAD_LENGTH) {
-      g.position.z -= ROAD_LENGTH * SEGMENTS;
-    }
-  });
-
-  // moviment lateral amb inèrcia i sensibilitat segons velocitat
-  const turnFactor = 0.4 + (speed / maxSpeed) * 0.8;
-
-  if (keys.left) lateralVel -= lateralAccel * turnFactor * dt;
-  if (keys.right) lateralVel += lateralAccel * turnFactor * dt;
-
-  if (!keys.left && !keys.right) {
-    lateralVel *= 0.92;
+    hud.innerHTML =
+      `Velocitat: ${(speed * 3.6).toFixed(0)} km/h<br>` +
+      `Distància: ${distanceKm.toFixed(2)} km`;
   }
 
-  lateralVel = Math.max(-15, Math.min(15, lateralVel));
-  player.position.x += lateralVel * dt;
-
-  const limitX = ROAD_WIDTH / 2 - 1.2;
-  player.position.x = Math.max(-limitX, Math.min(limitX, player.position.x));
-
-  // NO girar si està parat
-  if (speed > 1) {
-    player.rotation.y = -lateralVel * 0.01;
-    player.rotation.z = lateralVel * 0.002;
-  } else {
-    player.rotation.y = 0;
-    player.rotation.z = 0;
-  }
-
-  // distància
-  distanceKm += (speed * dt) / 1000;
-
-  // enemics (més densitat)
-  spawnTimer += dt;
-  if (spawnTimer > 0.6) {
-    spawnEnemy();
-    spawnTimer = 0;
-  }
-
-  const playerBox = new THREE.Box3().setFromObject(player);
-
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    const e = enemies[i];
-
-    if (!e.userData.exploding) {
-      e.position.z += worldSpeed + 25 * dt;
-      e.userData.box.setFromObject(e);
-
-      if (e.position.z > 80) {
-        scene.remove(e);
-        enemies.splice(i, 1);
-        continue;
-      }
-
-      if (playerBox.intersectsBox(e.userData.box)) {
-        e.userData.exploding = true;
-        e.userData.explodeTime = 0;
-        gameOver();
-      }
-    } else {
-      // animació explosió
-      e.userData.explodeTime += dt;
-      const t = e.userData.explodeTime;
-      e.scale.setScalar(1 + t * 4);
-      e.position.y += dt * 6;
-      e.rotation.y += dt * 8;
-      if (t > 0.4) {
-        scene.remove(e);
-        enemies.splice(i, 1);
-      }
-    }
-  }
-
-  // càmera
-  const camOffset = new THREE.Vector3(0, 7, 16);
-  const desired = player.position.clone().add(camOffset);
-  camera.position.lerp(desired, 0.12);
-  camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 6);
-
-  // HUD
-  hud.innerHTML =
-    `Velocitat: ${(speed * 3.6).toFixed(0)} km/h<br>` +
-    `Distància: ${distanceKm.toFixed(2)} km`;
-}
-
-  /* -------------------------------------------------------
-     EXPLOSIÓ DE CÀMERA
-  ------------------------------------------------------- */
   function triggerExplosion() {
     const originalPos = camera.position.clone();
     let t = 0;
@@ -541,9 +504,6 @@ function updatePhysics(dt) {
     shake();
   }
 
-  /* -------------------------------------------------------
-     LOOP PRINCIPAL
-  ------------------------------------------------------- */
   let lastTime = performance.now();
 
   function loop(now) {
@@ -565,9 +525,6 @@ function updatePhysics(dt) {
 
   loop(performance.now());
 
-  /* -------------------------------------------------------
-     RESIZE
-  ------------------------------------------------------- */
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
