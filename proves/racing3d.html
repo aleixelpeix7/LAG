@@ -36,6 +36,21 @@
       font-size: 14px;
     }
 
+    .level-btn {
+      display: inline-block;
+      margin: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 2px solid #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+    .level-selected {
+      background: #fff;
+      color: #000;
+      font-weight: bold;
+    }
+
     #hud {
       position: fixed;
       top: 12px;
@@ -51,26 +66,30 @@
 
 <div id="hud">Velocitat: 0 km/h<br>Distància: 0.0 km</div>
 
+<!-- MENÚ INICI -->
 <div class="ui" id="menu-start">
   <div class="panel">
     <h1>Autopista 3D</h1>
-    <p>Fletxes esquerra/dreta: girar i desplaçar</p>
-    <p>Fletxes amunt/avall: accelerar/frenar</p>
-    <p>ESC: pausa</p>
+    <p>Selecciona el nivell:</p>
 
-    <div class="btn" id="btn-easy">Fàcil</div>
-    <div class="btn" id="btn-medium">Mitjà</div>
-    <div class="btn" id="btn-hard">Difícil</div>
+    <div id="level-easy" class="level-btn level-selected">Fàcil</div>
+    <div id="level-medium" class="level-btn">Mitjà</div>
+    <div id="level-hard" class="level-btn">Difícil</div>
+
+    <div class="btn" id="btn-start">Començar</div>
   </div>
 </div>
 
+<!-- MENÚ PAUSA -->
 <div class="ui" id="menu-pause" style="display:none;">
   <div class="panel">
     <h1>Pausa</h1>
     <p>Prem ESC per continuar</p>
+    <div class="btn" id="btn-pause-menu">Tornar a l'inici</div>
   </div>
 </div>
 
+<!-- MENÚ MORT -->
 <div class="ui" id="menu-dead" style="display:none;">
   <div class="panel">
     <h1>Has xocat!</h1>
@@ -82,15 +101,20 @@
 <script type="module">
   import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 
-  // UI / estat
+  // UI
   const hud = document.getElementById('hud');
   const menuStart = document.getElementById('menu-start');
   const menuPause = document.getElementById('menu-pause');
   const menuDead = document.getElementById('menu-dead');
-  const btnEasy = document.getElementById('btn-easy');
-  const btnMedium = document.getElementById('btn-medium');
-  const btnHard = document.getElementById('btn-hard');
+
+  const btnStart = document.getElementById('btn-start');
+  const btnPauseMenu = document.getElementById('btn-pause-menu');
   const btnDeadMenu = document.getElementById('btn-dead-menu');
+
+  const levelEasy = document.getElementById('level-easy');
+  const levelMedium = document.getElementById('level-medium');
+  const levelHard = document.getElementById('level-hard');
+
   const deathDistanceEl = document.getElementById('death-distance');
 
   let gameState = 'menu';
@@ -103,21 +127,44 @@
     menuDead.style.display = id === 'dead' ? 'flex' : 'none';
   }
 
-  function startGame() {
+  // Selecció de nivell
+  function selectLevel(level) {
+    difficulty = level;
+
+    levelEasy.classList.remove("level-selected");
+    levelMedium.classList.remove("level-selected");
+    levelHard.classList.remove("level-selected");
+
+    if (level === "easy") levelEasy.classList.add("level-selected");
+    if (level === "medium") levelMedium.classList.add("level-selected");
+    if (level === "hard") levelHard.classList.add("level-selected");
+
+    if (level === "easy") spawnInterval = 1.2;
+    if (level === "medium") spawnInterval = 0.8;
+    if (level === "hard") spawnInterval = 0.45;
+  }
+
+  levelEasy.onclick = () => selectLevel("easy");
+  levelMedium.onclick = () => selectLevel("medium");
+  levelHard.onclick = () => selectLevel("hard");
+
+  btnStart.onclick = () => {
     resetGame(false);
     gameState = 'playing';
     showMenu(null);
-  }
+  };
 
-  btnEasy.addEventListener('click', () => { difficulty = "easy"; spawnInterval = 1.2; startGame(); });
-  btnMedium.addEventListener('click', () => { difficulty = "medium"; spawnInterval = 0.8; startGame(); });
-  btnHard.addEventListener('click', () => { difficulty = "hard"; spawnInterval = 0.45; startGame(); });
-
-  btnDeadMenu.addEventListener('click', () => {
+  btnPauseMenu.onclick = () => {
     gameState = 'menu';
     showMenu('start');
     resetGame(true);
-  });
+  };
+
+  btnDeadMenu.onclick = () => {
+    gameState = 'menu';
+    showMenu('start');
+    resetGame(true);
+  };
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
@@ -166,17 +213,22 @@
   function createSegment(zIndex) {
     const group = new THREE.Group();
 
+    // Terra
     const groundGeo = new THREE.PlaneGeometry(200, ROAD_LENGTH);
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.02;
+    ground.receiveShadow = true;
     group.add(ground);
 
+    // Carretera
     const roadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_LENGTH);
     const road = new THREE.Mesh(roadGeo, roadMat);
     road.rotation.x = -Math.PI / 2;
+    road.receiveShadow = true;
     group.add(road);
 
+    // Línies discontínues
     const laneGroup = new THREE.Group();
     const dashGeo = new THREE.PlaneGeometry(0.15, 3);
     const dashMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -191,6 +243,54 @@
       }
     }
     group.add(laneGroup);
+
+    // Barreres
+    const railMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+    const postGeo = new THREE.BoxGeometry(0.2, 1, 0.2);
+    const barGeo = new THREE.BoxGeometry(0.2, 0.2, 4);
+
+    function addRail(x) {
+      for (let i = -6; i <= 6; i++) {
+        const post = new THREE.Mesh(postGeo, railMat);
+        post.position.set(x, 0.5, i * 4);
+        post.castShadow = true;
+        group.add(post);
+
+        const bar = new THREE.Mesh(barGeo, railMat);
+        bar.position.set(x, 0.9, i * 4);
+        bar.castShadow = true;
+        group.add(bar);
+      }
+    }
+
+    addRail(-ROAD_WIDTH / 2 - 1);
+    addRail(ROAD_WIDTH / 2 + 1);
+
+    // Arbres
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5b3a1a });
+    const leavesMat = new THREE.MeshStandardMaterial({ color: 0x2f8f3a });
+
+    const trunkGeo = new THREE.CylinderGeometry(0.25, 0.35, 2, 8);
+    const leavesGeo = new THREE.ConeGeometry(1.2, 3, 10);
+
+    function addTree(x, z) {
+      const tree = new THREE.Group();
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 1;
+      tree.add(trunk);
+
+      const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+      leaves.position.y = 3;
+      tree.add(leaves);
+
+      tree.position.set(x, 0, z);
+      group.add(tree);
+    }
+
+    for (let i = -6; i <= 6; i++) {
+      if (Math.random() < 0.7) addTree(-ROAD_WIDTH / 2 - 4 - Math.random() * 4, i * 4);
+      if (Math.random() < 0.7) addTree( ROAD_WIDTH / 2 + 4 + Math.random() * 4, i * 4);
+    }
 
     group.position.z = -zIndex * ROAD_LENGTH;
     scene.add(group);
@@ -359,7 +459,7 @@
       }
     });
 
-    // Moviment lateral
+    // Moviment lateral amb inèrcia
     const turnFactor = 0.4 + (speed / maxSpeed) * 0.8;
 
     if (keys.left) lateralVel -= lateralAccel * turnFactor * dt;
@@ -495,5 +595,6 @@
 
 </body>
 </html>
+
 
 
