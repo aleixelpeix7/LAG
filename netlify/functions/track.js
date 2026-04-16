@@ -1,24 +1,38 @@
 exports.handler = async (event, context) => {
+  const BIN_ID = "EL_TEUBINID"; // <-- posa aquí el teu Bin ID
+
   const referer = event.headers.referer || "unknown";
   const ua = event.headers["user-agent"] || "unknown";
   const ip = event.headers["client-ip"] || event.headers["x-forwarded-for"] || "unknown";
 
-  // Guarda-ho en un servei gratuït com JSONBin
-  await fetch("https://api.jsonbin.io/v3/b", {
-    method: "POST",
+  // 1. Llegir el contingut actual del Bin
+  const current = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+    headers: {
+      "X-Master-Key": process.env.JSONBIN_KEY
+    }
+  }).then(r => r.json());
+
+  // 2. Afegir la nova visita
+  const newVisit = {
+    timestamp: Date.now(),
+    referer,
+    ua,
+    ip
+  };
+
+  current.record.visits.push(newVisit);
+
+  // 3. Guardar el Bin actualitzat
+  await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
       "X-Master-Key": process.env.JSONBIN_KEY
     },
-    body: JSON.stringify({
-      timestamp: Date.now(),
-      referer,
-      ua,
-      ip
-    })
+    body: JSON.stringify(current.record)
   });
 
-  // Retorna un pixel transparent
+  // 4. Retornar el pixel transparent
   return {
     statusCode: 200,
     headers: { "Content-Type": "image/png" },
