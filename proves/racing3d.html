@@ -400,7 +400,7 @@
   // --- LA FÍSICA COMENÇA AQUÍ ---
   // Física
   let speed = 0;            // km/h reals
-  const maxSpeed = 160;     // velocitat màxima realista
+  const maxSpeed = 270;     // velocitat màxima realista
   const accel = 55;         // acceleració km/h per segon
   const brake = 90;         // frenada km/h per segon
   const friction = 25;      // desacceleració natural
@@ -429,6 +429,14 @@
       camera.position.copy(desired);
       camera.lookAt(player.position.x, player.position.y + 1, player.position.z - 6);
     }
+  }
+
+  function gameOver() {
+    if (gameState === 'dead') return;
+
+    gameState = 'dead';
+    deathDistanceEl.textContent = `Has fet ${distanceKm.toFixed(2)} km`;
+    showMenu('dead');
   }
 
   function updatePhysics(dt) {
@@ -579,6 +587,7 @@
 
 </body>
 </html>
+
 
 
 
