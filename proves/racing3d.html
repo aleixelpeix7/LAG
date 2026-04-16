@@ -135,13 +135,9 @@
     levelMedium.classList.remove("level-selected");
     levelHard.classList.remove("level-selected");
 
-    if (level === "easy") levelEasy.classList.add("level-selected");
-    if (level === "medium") levelMedium.classList.add("level-selected");
-    if (level === "hard") levelHard.classList.add("level-selected");
-
-    if (level === "easy") spawnInterval = 1.2;
-    if (level === "medium") spawnInterval = 0.8;
-    if (level === "hard") spawnInterval = 0.45;
+    if (level === "easy") { levelEasy.classList.add("level-selected"); spawnInterval = 1.2; }
+    if (level === "medium") { levelMedium.classList.add("level-selected"); spawnInterval = 0.8; }
+    if (level === "hard") { levelHard.classList.add("level-selected"); spawnInterval = 0.45; }
   }
 
   levelEasy.onclick = () => selectLevel("easy");
@@ -218,14 +214,12 @@
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.02;
-    ground.receiveShadow = true;
     group.add(ground);
 
     // Carretera
     const roadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, ROAD_LENGTH);
     const road = new THREE.Mesh(roadGeo, roadMat);
     road.rotation.x = -Math.PI / 2;
-    road.receiveShadow = true;
     group.add(road);
 
     // Línies discontínues
@@ -253,12 +247,10 @@
       for (let i = -6; i <= 6; i++) {
         const post = new THREE.Mesh(postGeo, railMat);
         post.position.set(x, 0.5, i * 4);
-        post.castShadow = true;
         group.add(post);
 
         const bar = new THREE.Mesh(barGeo, railMat);
         bar.position.set(x, 0.9, i * 4);
-        bar.castShadow = true;
         group.add(bar);
       }
     }
@@ -407,11 +399,11 @@
 
   // --- LA FÍSICA COMENÇA AQUÍ ---
   // Física
-  let speed = 0;
-  const maxSpeed = 65;
-  const accel = 18;
-  const brake = 40;
-  const friction = 12;
+  let speed = 0;            // km/h reals
+  const maxSpeed = 160;     // velocitat màxima realista
+  const accel = 55;         // acceleració km/h per segon
+  const brake = 90;         // frenada km/h per segon
+  const friction = 25;      // desacceleració natural
   let lateralVel = 0;
   const lateralAccel = 40;
   let distanceKm = 0;
@@ -440,7 +432,7 @@
   }
 
   function updatePhysics(dt) {
-    // Acceleració longitudinal
+    // Acceleració longitudinal (km/h → km/h)
     if (keys.up) speed += accel * dt;
     if (keys.down) speed -= brake * dt;
     if (!keys.up && !keys.down) {
@@ -449,9 +441,11 @@
     }
     speed = Math.max(0, Math.min(maxSpeed, speed));
 
-    const worldSpeed = speed * dt;
+    // Convertir a m/s per calcular distància real
+    const speedMS = speed / 3.6;
+    const worldSpeed = speedMS * dt;
 
-    // Moviment carretera
+    // Carretera infinita
     segmentGroups.forEach(g => {
       g.position.z += worldSpeed;
       if (g.position.z > ROAD_LENGTH) {
@@ -459,7 +453,7 @@
       }
     });
 
-    // Moviment lateral amb inèrcia
+    // Moviment lateral
     const turnFactor = 0.4 + (speed / maxSpeed) * 0.8;
 
     if (keys.left) lateralVel -= lateralAccel * turnFactor * dt;
@@ -486,8 +480,8 @@
       player.rotation.z = 0;
     }
 
-    // Distància
-    distanceKm += (speed * dt) / 1000;
+    // Distància realista
+    distanceKm += (speedMS * dt) / 1000;
 
     // Enemics segons dificultat
     spawnTimer += dt;
@@ -502,32 +496,22 @@
     for (let i = enemies.length - 1; i >= 0; i--) {
       const e = enemies[i];
 
-      if (!e.userData.exploding) {
-        e.position.z += worldSpeed + 25 * dt;
-        e.userData.box.setFromObject(e);
+      // Moure enemic cap a tu
+      e.position.z += worldSpeed + 12 * dt;
+      e.userData.box.setFromObject(e);
 
-        if (e.position.z > 80) {
-          scene.remove(e);
-          enemies.splice(i, 1);
-          continue;
-        }
+      // Eliminar si passa
+      if (e.position.z > 80) {
+        scene.remove(e);
+        enemies.splice(i, 1);
+        continue;
+      }
 
-        if (playerBox.intersectsBox(e.userData.box)) {
-          e.userData.exploding = true;
-          e.userData.explodeTime = 0;
-          gameOver();
-        }
-      } else {
-        // Explosió
-        e.userData.explodeTime += dt;
-        const t = e.userData.explodeTime;
-        e.scale.setScalar(1 + t * 4);
-        e.position.y += dt * 6;
-        e.rotation.y += dt * 8;
-        if (t > 0.4) {
-          scene.remove(e);
-          enemies.splice(i, 1);
-        }
+      // ❗ COL·LISIÓ REALISTA
+      if (playerBox.intersectsBox(e.userData.box)) {
+        triggerExplosion();   // tremolor
+        gameOver();           // menú de mort
+        return;               // atura la física immediatament
       }
     }
 
@@ -539,11 +523,11 @@
 
     // HUD
     hud.innerHTML =
-      `Velocitat: ${(speed * 3.6).toFixed(0)} km/h<br>` +
+      `Velocitat: ${speed.toFixed(0)} km/h<br>` +
       `Distància: ${distanceKm.toFixed(2)} km`;
   }
 
-  // Explosió de càmera
+  // Tremolor de càmera
   function triggerExplosion() {
     const originalPos = camera.position.clone();
     let t = 0;
@@ -595,6 +579,7 @@
 
 </body>
 </html>
+
 
 
 
