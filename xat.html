@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cronòmetre | LAG</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: #002244;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      color: #FAFAF9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    nav {
+      background-color: rgba(0, 0, 0, 0.7);
+      position: sticky;
+      top: 0;
+      width: 100%;
+      padding: 1rem 2rem;
+      z-index: 100;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav li.logo img {
+      height: 60px;
+      margin-right: 0.5rem;
+    }
+
+    nav li.enllacos {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    nav a:hover { color: #ffff66; }
+
+    /* Contenidor del xat */
+    #chronoScreen {
+      margin-top: 40px;
+      background: #0f172a;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #334155;
+      width: 95%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <ul>
+    <li class="logo">
+      <a href="https://lagg.netlify.app">
+        <img src="assets/logo.png" alt="Logo GLS" />
+      </a>
+    </li>
+    <li class="enllacos">
+      <a href="https://lagg.netlify.app">Inici</a>
+      <a href="https://lagg.netlify.app/minijocs/">Minijocs</a>
+      <a href="https://lagg.netlify.app/minecraft/">Minecraft</a>
+      <a href="https://lagg.netlify.app/jocs3d/">Jocs 3D</a>
+      <a href="https://lagg.netlify.app/eines/">Eines</a>
+      <a href="https://lagg.netlify.app/contacte">Contactar</a>
+    </li>
+  </ul>
+</nav>
+
+<!-- 🔥 XAT INCRUSTAT -->
+<div id="chronoScreen">
+  <h2>💬 Xat en directe</h2>
+
+  <iframe
+    src="https://xat-lag.base44.app/embed"
+    style="width:100%; height:80vh; border:2px solid #7CCF35; border-radius:10px;"
+    allowfullscreen
+  ></iframe>
+</div>
+
+</body>
+</html>
