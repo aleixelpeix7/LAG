@@ -77,6 +77,22 @@
   <p><b>Persones diferents:</b> <span id="monthUnique"></span></p>
 </div>
 
+<!-- 🆕 NOVA SECCIÓ: PERSONES ÚNIQUES -->
+<div class="card">
+  <h2>Persones úniques</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Primera visita</th>
+        <th>IP</th>
+        <th>Referer</th>
+        <th>User Agent</th>
+      </tr>
+    </thead>
+    <tbody id="uniquePeople"></tbody>
+  </table>
+</div>
+
 <div class="card">
   <h2>Llista de visites reals</h2>
   <table>
@@ -91,6 +107,7 @@
     <tbody id="table"></tbody>
   </table>
 </div>
+
 <script>
 const BIN_ID = "69e0a46a856a6821893d4e93"; 
 const API_KEY = "$2a$10$vSL5AAttVx4kzowkgdmWfuxS0hbwUDgiLn1KFLyqH7ySIPwYmvF6.";
@@ -144,6 +161,29 @@ async function loadData() {
   document.getElementById("weekUnique").textContent = weekUnique.size;
   document.getElementById("monthUnique").textContent = monthUnique.size;
 
+  // 🆕 GENERAR PERSONES ÚNIQUES
+  const uniqueMap = new Map();
+  realVisits.forEach(v => {
+    if (!uniqueMap.has(v.ip)) {
+      uniqueMap.set(v.ip, v); // Guardem la primera visita d'aquesta IP
+    }
+  });
+
+  const uniqueList = Array.from(uniqueMap.values());
+  const uniqueTbody = document.getElementById("uniquePeople");
+
+  uniqueList.forEach(v => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${new Date(v.timestamp).toLocaleString()}</td>
+      <td>${v.ip}</td>
+      <td>${v.referer}</td>
+      <td>${v.ua}</td>
+    `;
+    uniqueTbody.appendChild(tr);
+  });
+
+  // TAULA COMPLETA DE VISITES
   const tbody = document.getElementById("table");
   realVisits.forEach(v => {
     const tr = document.createElement("tr");
@@ -174,5 +214,6 @@ function checkPassword() {
 
 </body>
 </html>
+
 
 
