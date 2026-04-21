@@ -2,107 +2,241 @@
 <html lang="ca">
 <head>
 <meta charset="UTF-8">
-<title>UFO Catcher 3D</title>
+<title>Laser Maze 3D</title>
 <style>
-    body { margin:0; overflow:hidden; background:#111; }
-    #score {
+    body { margin:0; overflow:hidden; background:#050509; }
+    #ui {
         position:fixed; top:20px; left:20px;
-        color:white; font-family:Arial; font-size:22px;
+        color:white; font-family:Arial, sans-serif; font-size:16px;
+        background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:6px;
+    }
+    #win {
+        position:fixed; top:50%; left:50%;
+        transform:translate(-50%,-50%);
+        color:#0f0; font-family:Arial, sans-serif; font-size:28px;
+        background:rgba(0,0,0,0.8); padding:18px 26px; border-radius:8px;
+        display:none;
     }
 </style>
 </head>
 <body>
-<div id="score">Punts: 0</div>
+<div id="ui">
+    <div><b>Laser Maze 3D</b></div>
+    <div>Click: seleccionar mirall</div>
+    <div>Q / E: rotar mirall seleccionat</div>
+</div>
+<div id="win">Nivell completat!</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 // --------------------------------------------------
-// ESCENA
+// ESCENA BÀSICA
 // --------------------------------------------------
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x222222);
+scene.background = new THREE.Color(0x050509);
 
 const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
-camera.position.set(0, 12, 22);
+camera.position.set(0, 15, 25);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 // --------------------------------------------------
 // LLUMS
 // --------------------------------------------------
-const light = new THREE.DirectionalLight(0xffffff, 1.2);
-light.position.set(5, 10, 5);
-scene.add(light);
-scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+dirLight.position.set(10, 20, 10);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+scene.add(new THREE.AmbientLight(0x404040));
 
 // --------------------------------------------------
-// SÒL
+// SÒL I ENTORN
 // --------------------------------------------------
 const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(20, 1, 20),
-    new THREE.MeshStandardMaterial({color:0x333333})
+    new THREE.PlaneGeometry(40, 40),
+    new THREE.MeshStandardMaterial({color:0x111111, roughness:0.8, metalness:0.1})
 );
-floor.position.y = -0.5;
+floor.rotation.x = -Math.PI/2;
+floor.receiveShadow = true;
 scene.add(floor);
 
+const borderMat = new THREE.MeshStandardMaterial({color:0x222244, metalness:0.4, roughness:0.4});
+const borderGeo = new THREE.BoxGeometry(40, 2, 1);
+const border1 = new THREE.Mesh(borderGeo, borderMat);
+border1.position.set(0, 1, -20);
+const border2 = border1.clone(); border2.position.z = 20;
+const border3 = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 40), borderMat);
+border3.position.set(-20, 1, 0);
+const border4 = border3.clone(); border4.position.x = 20;
+scene.add(border1, border2, border3, border4);
+
 // --------------------------------------------------
-// OBJECTES
+// EMISSOR DE LÀSER
 // --------------------------------------------------
-const prizes = [];
-for (let i = 0; i < 10; i++) {
-    const s = new THREE.Mesh(
-        new THREE.SphereGeometry(0.8, 16, 16),
-        new THREE.MeshStandardMaterial({color: Math.random()*0xffffff})
+const emitter = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshStandardMaterial({color:0xff0000, emissive:0x550000})
+);
+emitter.position.set(-12, 0.5, 0);
+emitter.castShadow = true;
+scene.add(emitter);
+
+// Direcció inicial del làser
+let laserOrigin = new THREE.Vector3().copy(emitter.position).add(new THREE.Vector3(0, 0.2, 0));
+let laserDir = new THREE.Vector3(1, 0, 0).normalize();
+
+// --------------------------------------------------
+// OBJECTIU
+// --------------------------------------------------
+const target = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 1.2, 1.2),
+    new THREE.MeshStandardMaterial({color:0x00ff88, emissive:0x003311})
+);
+target.position.set(12, 0.6, 6);
+target.castShadow = true;
+scene.add(target);
+
+// --------------------------------------------------
+// MIRALLS
+// --------------------------------------------------
+const mirrors = [];
+const mirrorMat = new THREE.MeshStandardMaterial({
+    color:0x88ccff,
+    metalness:1.0,
+    roughness:0.05
+});
+
+function createMirror(x, z, rotY) {
+    const mirror = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 3, 4),
+        mirrorMat.clone()
     );
-    s.position.set((Math.random()*14)-7, 0.8, (Math.random()*14)-7);
-    scene.add(s);
-    prizes.push(s);
+    mirror.position.set(x, 1.5, z);
+    mirror.rotation.y = rotY;
+    mirror.castShadow = true;
+    mirror.userData.isMirror = true;
+    scene.add(mirror);
+    mirrors.push(mirror);
+    return mirror;
 }
 
-// --------------------------------------------------
-// GRUA
-// --------------------------------------------------
-const clawGroup = new THREE.Group();
-clawGroup.position.set(0, 8, 0);
-scene.add(clawGroup);
-
-const clawBody = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.5, 0.5, 1.5, 16),
-    new THREE.MeshStandardMaterial({color:0xdddddd})
-);
-clawGroup.add(clawBody);
-
-const leftClaw = new THREE.Mesh(
-    new THREE.BoxGeometry(0.2, 1, 0.2),
-    new THREE.MeshStandardMaterial({color:0xff4444})
-);
-leftClaw.position.set(-0.4, -1, 0);
-clawGroup.add(leftClaw);
-
-const rightClaw = new THREE.Mesh(
-    new THREE.BoxGeometry(0.2, 1, 0.2),
-    new THREE.MeshStandardMaterial({color:0x44ff44})
-);
-rightClaw.position.set(0.4, -1, 0);
-clawGroup.add(rightClaw);
-
-// Estat
-let clawY = 8;
-let lowering = false;
-let rising = false;
-let holding = null;
-let score = 0;
+// Nivell simple però interessant
+createMirror(-4, 0, Math.PI/4);
+createMirror(2, 2, -Math.PI/4);
+createMirror(6, 4, Math.PI/6);
 
 // --------------------------------------------------
-// CONTROLS
+// LÀSER (GEOMETRIA PER VISUALITZAR EL FEIX)
+// --------------------------------------------------
+const laserMat = new THREE.LineBasicMaterial({color:0xff0000});
+let laserLine = null;
+
+// --------------------------------------------------
+// RAYCASTING
+// --------------------------------------------------
+const raycaster = new THREE.Raycaster();
+
+// --------------------------------------------------
+// SELECCIÓ DE MIRALLS
+// --------------------------------------------------
+const mouse = new THREE.Vector2();
+let selectedMirror = null;
+
+function onMouseDown(e) {
+    mouse.x = (e.clientX / innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(mirrors);
+
+    if (intersects.length > 0) {
+        selectedMirror = intersects[0].object;
+        mirrors.forEach(m => m.material.color.set(0x88ccff));
+        selectedMirror.material.color.set(0xffff00);
+    }
+}
+window.addEventListener('mousedown', onMouseDown);
+
+// --------------------------------------------------
+// CONTROLS DE ROTACIÓ (Q / E)
 // --------------------------------------------------
 const keys = {};
-onkeydown = e => keys[e.key.toLowerCase()] = true;
-onkeyup   = e => keys[e.key.toLowerCase()] = false;
+window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+window.addEventListener('keyup',   e => { keys[e.key.toLowerCase()] = false; });
+
+// --------------------------------------------------
+// CÀLCUL DEL LÀSER AMB REFLEXIONS
+// --------------------------------------------------
+const MAX_BOUNCES = 5;
+const laserPoints = [];
+
+let levelCompleted = false;
+
+function computeLaser() {
+    laserPoints.length = 0;
+    let origin = laserOrigin.clone();
+    let dir = laserDir.clone();
+
+    laserPoints.push(origin.clone());
+
+    let hitTarget = false;
+
+    for (let i = 0; i < MAX_BOUNCES; i++) {
+        raycaster.set(origin, dir);
+        const objectsToTest = [...mirrors, target, border1, border2, border3, border4];
+        const intersects = raycaster.intersectObjects(objectsToTest, false);
+
+        if (intersects.length === 0) {
+            // No col·lideix amb res: allargar el feix
+            laserPoints.push(origin.clone().add(dir.clone().multiplyScalar(50)));
+            break;
+        }
+
+        const hit = intersects[0];
+        const hitPoint = hit.point.clone();
+        laserPoints.push(hitPoint);
+
+        if (hit.object === target) {
+            hitTarget = true;
+            break;
+        }
+
+        if (hit.object.userData.isMirror) {
+            // Reflexió
+            const normal = new THREE.Vector3(0, 0, 1);
+            hit.object.getWorldDirection(normal);
+            normal.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/2);
+            normal.normalize();
+
+            dir = dir.clone().sub(normal.clone().multiplyScalar(2 * dir.dot(normal))).normalize();
+            origin = hitPoint.clone().add(dir.clone().multiplyScalar(0.001));
+        } else {
+            // Paret o altre: parar
+            break;
+        }
+    }
+
+    if (laserLine) scene.remove(laserLine);
+    const laserGeo = new THREE.BufferGeometry().setFromPoints(laserPoints);
+    laserLine = new THREE.Line(laserGeo, laserMat);
+    scene.add(laserLine);
+
+    if (hitTarget && !levelCompleted) {
+        levelCompleted = true;
+        document.getElementById('win').style.display = 'block';
+        target.material.emissive.set(0x00ff00);
+    } else if (!hitTarget && levelCompleted) {
+        levelCompleted = false;
+        document.getElementById('win').style.display = 'none';
+        target.material.emissive.set(0x003311);
+    }
+}
 
 // --------------------------------------------------
 // LOOP
@@ -110,85 +244,27 @@ onkeyup   = e => keys[e.key.toLowerCase()] = false;
 function animate() {
     requestAnimationFrame(animate);
 
-    // Moviment horitzontal
-    if (!lowering && !rising) {
-        if (keys["a"]) clawGroup.position.x -= 0.15;
-        if (keys["d"]) clawGroup.position.x += 0.15;
-        if (keys["w"]) clawGroup.position.z -= 0.15;
-        if (keys["s"]) clawGroup.position.z += 0.15;
-
-        clawGroup.position.x = THREE.MathUtils.clamp(clawGroup.position.x, -8, 8);
-        clawGroup.position.z = THREE.MathUtils.clamp(clawGroup.position.z, -8, 8);
+    if (selectedMirror) {
+        const rotSpeed = 0.02;
+        if (keys['q']) selectedMirror.rotation.y += rotSpeed;
+        if (keys['e']) selectedMirror.rotation.y -= rotSpeed;
     }
 
-    // Baixar
-    if (keys[" "] && !lowering && !rising) {
-        lowering = true;
-    }
-
-    if (lowering) {
-        clawY -= 0.25;
-        if (clawY <= 1.5) {
-            lowering = false;
-            rising = true;
-
-            // Tancar pinces
-            leftClaw.position.x = -0.2;
-            rightClaw.position.x = 0.2;
-
-            // Comprovar objecte
-            for (const p of prizes) {
-                if (p.position.distanceTo(clawGroup.position) < 1.2) {
-                    holding = p;
-                    break;
-                }
-            }
-        }
-    }
-
-    // Pujar
-    if (rising) {
-        clawY += 0.25;
-
-        if (holding) {
-            holding.position.set(
-                clawGroup.position.x,
-                clawY - 1.5,
-                clawGroup.position.z
-            );
-        }
-
-        if (clawY >= 8) {
-            rising = false;
-
-            // Obrir pinces
-            leftClaw.position.x = -0.4;
-            rightClaw.position.x = 0.4;
-
-            if (holding) {
-                score++;
-                document.getElementById("score").textContent = "Punts: " + score;
-                scene.remove(holding);
-                prizes.splice(prizes.indexOf(holding), 1);
-                holding = null;
-            }
-        }
-    }
-
-    clawGroup.position.y = clawY;
-
+    computeLaser();
     renderer.render(scene, camera);
 }
-
 animate();
 
-// Resize
-onresize = () => {
+// --------------------------------------------------
+// RESIZE
+// --------------------------------------------------
+window.addEventListener('resize', () => {
     camera.aspect = innerWidth/innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
-};
+});
 </script>
 </body>
 </html>
+
 
