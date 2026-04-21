@@ -2,23 +2,24 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8" />
-  <title>Escape Room Web</title>
+  <title>Escape Room Web Avançat</title>
   <style>
     :root {
-      --bg: #05060a;
-      --card: #10131a;
-      --accent: #ffcc4d;
-      --accent-soft: rgba(255, 204, 77, 0.12);
-      --text: #f5f5f5;
+      --bg: #020617;
+      --card: #020617;
+      --accent: #facc15;
+      --accent2: #38bdf8;
+      --accent-soft: rgba(250, 204, 21, 0.12);
+      --text: #f9fafb;
       --muted: #9ca3af;
       --error: #f97373;
       --success: #4ade80;
-      --border: #1f2933;
-      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.65);
+      --border: #1f2937;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.75);
       --radius-lg: 18px;
       --radius-md: 10px;
       --radius-pill: 999px;
-      --transition-fast: 0.18s ease-out;
+      --transition-fast: 0.16s ease-out;
       --transition-med: 0.25s ease;
       --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
         "Segoe UI", sans-serif;
@@ -35,23 +36,23 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      background: radial-gradient(circle at top, #020617 0, #000 60%);
       color: var(--text);
       font-family: var(--font-main);
     }
 
     .wrapper {
       width: 100%;
-      max-width: 960px;
+      max-width: 1100px;
       padding: 24px;
     }
 
     .game {
-      background: radial-gradient(circle at top left, #111827 0, #020617 55%);
+      background: radial-gradient(circle at top left, #020617 0, #020617 55%);
       border-radius: 24px;
-      border: 1px solid rgba(148, 163, 184, 0.18);
+      border: 1px solid rgba(148, 163, 184, 0.25);
       box-shadow: var(--shadow-soft);
-      padding: 24px 24px 20px;
+      padding: 22px 22px 18px;
       position: relative;
       overflow: hidden;
     }
@@ -61,7 +62,7 @@
       position: absolute;
       inset: -40%;
       background:
-        radial-gradient(circle at 0 0, rgba(255, 204, 77, 0.12), transparent 55%),
+        radial-gradient(circle at 0 0, rgba(250, 204, 21, 0.12), transparent 55%),
         radial-gradient(circle at 100% 0, rgba(56, 189, 248, 0.12), transparent 55%);
       opacity: 0.7;
       pointer-events: none;
@@ -161,7 +162,7 @@
     }
 
     .progress-bar {
-      width: 140px;
+      width: 160px;
       height: 6px;
       border-radius: 999px;
       background: rgba(15, 23, 42, 0.9);
@@ -179,11 +180,11 @@
 
     .content {
       display: grid;
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.1fr);
       gap: 18px;
     }
 
-    @media (max-width: 780px) {
+    @media (max-width: 880px) {
       .content {
         grid-template-columns: minmax(0, 1fr);
       }
@@ -263,11 +264,12 @@
     }
 
     .hidden-code {
-      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono",
+      font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono",
         "Courier New", monospace;
       font-size: 0.8rem;
       color: rgba(148, 163, 184, 0.18);
       user-select: text;
+      white-space: pre-wrap;
     }
 
     .hidden-code span {
@@ -340,19 +342,6 @@
       filter: brightness(0.98);
     }
 
-    button.secondary {
-      background: rgba(15, 23, 42, 0.95);
-      color: var(--muted);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      box-shadow: none;
-    }
-
-    button.secondary:hover {
-      filter: none;
-      border-color: var(--accent);
-      color: #e5e7eb;
-    }
-
     .msg {
       margin-top: 8px;
       font-size: 0.8rem;
@@ -371,9 +360,10 @@
     .steps {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       font-size: 0.8rem;
       color: var(--muted);
+      margin-top: 10px;
     }
 
     .step {
@@ -403,10 +393,6 @@
 
     .step.done .step-label {
       color: #e5e7eb;
-    }
-
-    .step-label {
-      font-size: 0.8rem;
     }
 
     .step-label span {
@@ -463,6 +449,8 @@
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .tag {
@@ -486,7 +474,7 @@
 
     .hidden-note span.strong {
       opacity: 0.95;
-      color: var(--accent);
+      color: var(--accent2);
     }
 
     .shake {
@@ -494,22 +482,100 @@
     }
 
     @keyframes shake {
-      0% {
-        transform: translateX(0);
-      }
-      25% {
-        transform: translateX(-3px);
-      }
-      50% {
-        transform: translateX(3px);
-      }
-      75% {
-        transform: translateX(-2px);
-      }
-      100% {
-        transform: translateX(0);
-      }
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      50% { transform: translateX(3px); }
+      75% { transform: translateX(-2px); }
+      100% { transform: translateX(0); }
     }
+
+    .inventory {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .inventory-title {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.65rem;
+      color: var(--accent2);
+      margin-bottom: 4px;
+    }
+
+    .inventory-list {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .inventory-list li::before {
+      content: "• ";
+      color: var(--accent);
+    }
+
+    .grid-puzzle {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .grid-cell {
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 8px;
+      text-align: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.9);
+      transition: background var(--transition-fast), border-color var(--transition-fast),
+        transform 0.08s ease-out;
+      user-select: none;
+    }
+
+    .grid-cell.active {
+      background: rgba(250, 204, 21, 0.12);
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .grid-cell span {
+      opacity: 0.7;
+    }
+
+    .timer {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .phase-hidden {
+      display: none;
+    }
+
+    .phase-visible {
+      display: block;
+    }
+
+    .css-clue::after {
+      content: "  Codi parcial: 7 1 9 3";
+      opacity: 0.08;
+      font-size: 0.7rem;
+      margin-left: 6px;
+    }
+
+    /* Pista amagada: 
+       El codi real de la fase 1 NO és 7193.
+       Llegeix només les xifres en POSICIÓ PARELLA: 1 i 3 → 13
+       Després, mira el log de sistema de sota per completar-lo.
+    */
+
+    /* Encara més amagada:
+       system.secretPhase1 = "5313";
+    */
+
   </style>
 </head>
 <body>
@@ -519,29 +585,34 @@
         <header class="header">
           <div class="title-block">
             <h1>
-              ESCAPE ROOM
+              ESCAPE ROOM AVANÇAT
               <span style="font-size:0.8rem; font-weight:400; color:var(--muted);">
-                — Habitació tancada
+                — Laboratori tancat
               </span>
             </h1>
             <div class="badge">
               <span class="badge-dot"></span>
-              <span>Mode solitari</span>
+              <span>Mode solitari · Dificultat alta</span>
             </div>
-            <p class="subtitle">
-              Estàs tancat en una habitació virtual. Tot el que necessites per sortir és
-              <strong>en aquesta pàgina</strong>.
+            <p class="subtitle css-clue">
+              Estàs atrapat en un laboratori digital. Res és casual. Res és només decoració.
             </p>
           </div>
           <div class="status">
             <div class="status-row">
               <div class="pill">
                 <span class="pill-label">Fase</span>
-                <span class="pill-value" id="phaseLabel">1 / 3</span>
+                <span class="pill-value" id="phaseLabel">1 / 5</span>
               </div>
               <div class="pill">
                 <span class="pill-label">Errors</span>
                 <span class="pill-value" id="errorCount">0</span>
+              </div>
+            </div>
+            <div class="status-row">
+              <div class="pill">
+                <span class="pill-label">Temps</span>
+                <span class="pill-value timer" id="timer">00:00</span>
               </div>
             </div>
             <div class="progress-bar">
@@ -551,67 +622,79 @@
         </header>
 
         <main class="content">
-          <!-- PANEL ESQUERRA: HISTÒRIA + PISTES -->
           <section class="panel">
             <div class="panel-inner">
               <div class="panel-header">
                 <span class="panel-title">Context</span>
-                <span>Habitació 01 · Porta bloquejada</span>
+                <span>Laboratori 07 · Porta principal bloquejada</span>
               </div>
               <div class="panel-body">
                 <p>
-                  Et despertes en una habitació fosca. A la porta hi ha un teclat numèric i una
-                  pantalla antiga que mostra un missatge:
+                  Et despertes en un laboratori silenciós. Pantalles apagades, llums d’emergència
+                  i una única porta amb un sistema de seguretat massa sofisticat.
                 </p>
                 <p style="margin-top:6px; font-style:italic; color:var(--muted);">
-                  “Només els que saben <strong>llegir entre línies</strong> poden sortir.”
+                  “Aquest sistema no es trenca amb força bruta.  
+                  Només amb <strong>observació obsessiva</strong>.”
                 </p>
 
                 <div class="hint" style="margin-top:12px;">
-                  <div class="hint-label">Pista 1</div>
+                  <div class="hint-label">Pista global</div>
                   <div class="hint-text">
-                    El teclat de la porta demana un codi de <strong>4 xifres</strong>.  
-                    No hi ha res a les parets… però potser el codi ja és
-                    <strong>davant teu</strong>.
+                    Algunes pistes són visibles, d’altres estan amagades en comentaris,
+                    en detalls de disseny o en textos aparentment inútils.  
+                    Si alguna cosa sembla massa decorativa… probablement no ho és.
                   </div>
                 </div>
 
                 <p style="margin-top:10px; font-size:0.85rem; color:var(--muted);">
-                  Alguna cosa en el codi font d’aquesta pàgina sembla sospitosa.  
-                  Fixa’t en aquest “fragment tècnic” que algú ha deixat:
+                  El terminal principal mostra un log antic del sistema:
                 </p>
 
                 <pre class="hidden-code" style="margin-top:6px;">
 // system.log
-// door.status = "locked";
-// door.code   = <span class="strong">3142</span>;
-// TODO: amagar millor aquest valor abans que algú l'utilitzi per escapar
+// [OK] boot sequence
+// [WARN] door.lock = "engaged"
+// [INFO] door.hint = "les xifres no estan on creus"
+// [DEBUG] door.partial = "53"
+// [DEBUG] door.partial2 = "13"
+// [NOTE] si algú llegeix això: combina-les amb sentit
                 </pre>
 
                 <div class="hint" style="margin-top:12px;">
-                  <div class="hint-label">Pista 2</div>
+                  <div class="hint-label">Pista 1</div>
                   <div class="hint-text">
-                    Quan aconsegueixis obrir la porta amb el codi correcte,  
-                    descobriràs que la sortida encara és lluny.  
-                    Guarda el número al cap: potser el necessitaràs més endavant.
+                    El primer codi és de <strong>4 xifres</strong>.  
+                    Hi ha un fals codi visual i un codi real deduïble.  
+                    El sistema no és amic de l’atzar: tot el que es repeteix, importa.
                   </div>
+                </div>
+
+                <div class="inventory" id="inventory">
+                  <div class="inventory-title">Inventari</div>
+                  <ul class="inventory-list" id="inventoryList">
+                    <li>Cap objecte recollit encara.</li>
+                  </ul>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- PANEL DRETA: INTERACCIÓ / FASES -->
           <section class="panel">
             <div class="panel-inner">
               <div class="panel-header">
                 <span class="panel-title">Terminal d'escapada</span>
-                <span id="phaseTitle">Fase 1 · Teclat de la porta</span>
+                <span id="phaseTitle">Fase 1 · Codi numèric real</span>
               </div>
               <div class="panel-body" id="phaseContainer">
-                <!-- FASE 1 -->
-                <div id="phase1">
+                <div id="phase1" class="phase-visible">
                   <p>
-                    Introdueix el <strong>codi numèric de 4 xifres</strong> que obre la porta.
+                    El sistema et demana un <strong>codi de 4 xifres</strong>.  
+                    Hi ha un codi fals suggerit subtilment, i un de real deduïble.
+                  </p>
+                  <p style="margin-top:6px; font-size:0.8rem; color:var(--muted);">
+                    Pensa en les xifres que es repeteixen i en com es combinen els fragments
+                    <code>53</code> i <code>13</code>.
                   </p>
                   <div class="input-row">
                     <input
@@ -625,22 +708,58 @@
                   <div class="msg" id="msgPhase1"></div>
                 </div>
 
-                <!-- FASE 2 -->
-                <div id="phase2" style="display:none;">
+                <div id="phase2" class="phase-hidden">
                   <p>
-                    Has entrat a una segona sala. A la paret hi ha escrit:
+                    La porta principal es desbloqueja, però només per portar-te a una sala
+                    d’<strong>anàlisi lògica</strong>.
                   </p>
                   <p style="margin-top:6px; font-style:italic; color:var(--muted);">
-                    “Sóc un número de quatre lletres, però no sóc un número.  
-                    Si em multipliques per dos, continuo sent el mateix.”
+                    “Tres interruptors, nou combinacions. Només una és estable.”
                   </p>
 
                   <div class="hint" style="margin-top:10px;">
                     <div class="hint-label">Pista</div>
                     <div class="hint-text">
-                      Pensa en una <strong>paraula en català</strong> que descrigui un número,
-                      però que no sigui una xifra.  
-                      La resposta és una sola paraula, en minúscules.
+                      Fes clic a les cel·les per activar-les o desactivar-les.  
+                      Només la combinació correcta desbloquejarà la següent fase.  
+                      La pista està en el patró: <strong>ni massa simètric, ni massa caòtic</strong>.
+                    </div>
+                  </div>
+
+                  <div class="grid-puzzle" id="gridPuzzle">
+                    <div class="grid-cell" data-index="0"><span>A1</span></div>
+                    <div class="grid-cell" data-index="1"><span>A2</span></div>
+                    <div class="grid-cell" data-index="2"><span>A3</span></div>
+                    <div class="grid-cell" data-index="3"><span>B1</span></div>
+                    <div class="grid-cell" data-index="4"><span>B2</span></div>
+                    <div class="grid-cell" data-index="5"><span>B3</span></div>
+                    <div class="grid-cell" data-index="6"><span>C1</span></div>
+                    <div class="grid-cell" data-index="7"><span>C2</span></div>
+                    <div class="grid-cell" data-index="8"><span>C3</span></div>
+                  </div>
+
+                  <div class="input-row">
+                    <button id="btnPhase2">Comprovar patró</button>
+                  </div>
+                  <div class="msg" id="msgPhase2"></div>
+                </div>
+
+                <div id="phase3" class="phase-hidden">
+                  <p>
+                    Un monitor antic s’encén i mostra una frase codificada:
+                  </p>
+                  <pre class="hidden-code" style="margin-top:6px;">
+VmV1IG5vIHZlcyB1biBjb2RpZy4gUGVybyBub8KgdHJlbXBhci4g
+Q29uY2VudHJhLXRlIGVuIGxhIHByaW1lcmEgcGFyYXVsYSBkZSBs
+YSBzZWd1w7Fuw7NuOiAiY2luYyIu
+                  </pre>
+
+                  <div class="hint" style="margin-top:10px;">
+                    <div class="hint-label">Pista</div>
+                    <div class="hint-text">
+                      Això no és xifratge militar. És una codificació molt comuna a internet.  
+                      Quan la descodifiquis, obtindràs una <strong>paraula en català</strong>
+                      que descriu un número.
                     </div>
                   </div>
 
@@ -651,29 +770,59 @@
                       placeholder="Escriu la paraula (en català)"
                       autocomplete="off"
                     />
-                    <button id="btnPhase2">Validar</button>
+                    <button id="btnPhase3">Validar</button>
                   </div>
-                  <div class="msg" id="msgPhase2"></div>
+                  <div class="msg" id="msgPhase3"></div>
                 </div>
 
-                <!-- FASE 3 -->
-                <div id="phase3" style="display:none;">
+                <div id="phase4" class="phase-hidden">
                   <p>
-                    Davant teu hi ha un últim terminal.  
-                    El missatge diu:
+                    El sistema ara et demana un <strong>codi compost</strong> per validar
+                    que has entès les fases anteriors.
                   </p>
-                  <p style="margin-top:6px; font-style:italic; color:var(--muted);">
-                    “Per sortir, combina el que has après.  
-                    Primer, el codi de la porta.  
-                    Després, la paraula que has descobert.  
-                    Escriu-ho tot seguit, sense espais.”
+                  <p style="margin-top:6px; font-size:0.85rem; color:var(--muted);">
+                    “Primer, el codi numèric real.  
+                    Després, la paraula descodificada.  
+                    Finalment, el nombre d’interruptors actius en el patró correcte.”
                   </p>
 
                   <div class="hint" style="margin-top:10px;">
                     <div class="hint-label">Exemple</div>
                     <div class="hint-text">
-                      Si el codi fos <code>1234</code> i la paraula fos <code>zero</code>,  
-                      hauries d’escriure: <code>1234zero</code>.
+                      Si el codi fos <code>1234</code>, la paraula fos <code>cinc</code>  
+                      i hi hagués <code>3</code> cel·les actives, hauries d’escriure:
+                      <code>1234cinc3</code>.
+                    </div>
+                  </div>
+
+                  <div class="input-row">
+                    <input
+                      type="text"
+                      id="compositeInput"
+                      placeholder="Codi + paraula + número"
+                      autocomplete="off"
+                    />
+                    <button id="btnPhase4">Validar</button>
+                  </div>
+                  <div class="msg" id="msgPhase4"></div>
+                </div>
+
+                <div id="phase5" class="phase-hidden">
+                  <p>
+                    Has arribat al <strong>nucli del sistema</strong>.  
+                    Aquí no hi ha pistes visuals, només coherència.
+                  </p>
+                  <p style="margin-top:6px; font-size:0.85rem; color:var(--muted);">
+                    “L’últim codi és el mateix que l’anterior…  
+                    però escrit completament en <strong>lletres</strong>, en català, sense espais.”
+                  </p>
+
+                  <div class="hint" style="margin-top:10px;">
+                    <div class="hint-label">Detall</div>
+                    <div class="hint-text">
+                      Converteix el codi numèric i el número final en paraules.  
+                      Mantén la paraula central tal com era.  
+                      Tot seguit, en minúscules, sense espais ni guions.
                     </div>
                   </div>
 
@@ -681,44 +830,57 @@
                     <input
                       type="text"
                       id="finalInput"
-                      placeholder="Codi + paraula (sense espais)"
+                      placeholder="Tot en lletres, sense espais"
                       autocomplete="off"
                     />
-                    <button id="btnPhase3">Sortir</button>
+                    <button id="btnPhase5">Sortir</button>
                   </div>
-                  <div class="msg" id="msgPhase3"></div>
+                  <div class="msg" id="msgPhase5"></div>
 
                   <div class="final-panel" id="finalPanel">
-                    <strong>Has sortit!</strong>  
-                    Has resolt totes les fases d’aquest escape room web.  
-                    Pots tancar la pestanya… o tornar a jugar i provar de fer-ho amb
-                    <em>zero errors</em>.
+                    <strong>Has trencat el sistema.</strong>  
+                    Has resolt totes les fases d’aquest escape room avançat.  
+                    El laboratori es desconnecta i la porta s’obre lentament.  
+                    Pots tancar la pestanya… o tornar a jugar i intentar-ho amb
+                    <em>zero errors</em> i el millor temps possible.
                   </div>
                 </div>
               </div>
 
-              <div style="margin-top:12px;">
-                <div class="steps">
-                  <div class="step" id="step1">
-                    <div class="step-index">1</div>
-                    <div class="step-label">
-                      <span>Teclat de la porta</span>
-                      <small>Troba el codi numèric ocult a la pàgina.</small>
-                    </div>
+              <div class="steps">
+                <div class="step" id="step1">
+                  <div class="step-index">1</div>
+                  <div class="step-label">
+                    <span>Codi real</span>
+                    <small>Descarta el codi fals i combina correctament els fragments.</small>
                   </div>
-                  <div class="step" id="step2">
-                    <div class="step-index">2</div>
-                    <div class="step-label">
-                      <span>Endevinalla</span>
-                      <small>Resol la pista de text i escriu la paraula correcta.</small>
-                    </div>
+                </div>
+                <div class="step" id="step2">
+                  <div class="step-index">2</div>
+                  <div class="step-label">
+                    <span>Patró lògic</span>
+                    <small>Troba la combinació estable a la graella d’interruptors.</small>
                   </div>
-                  <div class="step" id="step3">
-                    <div class="step-index">3</div>
-                    <div class="step-label">
-                      <span>Codi final</span>
-                      <small>Combina el codi i la paraula per desbloquejar la sortida.</small>
-                    </div>
+                </div>
+                <div class="step" id="step3">
+                  <div class="step-index">3</div>
+                  <div class="step-label">
+                    <span>Missatge codificat</span>
+                    <small>Descodifica la frase i obtén la paraula clau.</small>
+                  </div>
+                </div>
+                <div class="step" id="step4">
+                  <div class="step-index">4</div>
+                  <div class="step-label">
+                    <span>Codi compost</span>
+                    <small>Combina codi, paraula i nombre d’interruptors actius.</small>
+                  </div>
+                </div>
+                <div class="step" id="step5">
+                  <div class="step-index">5</div>
+                  <div class="step-label">
+                    <span>Transcripció final</span>
+                    <small>Escriu-ho tot en lletres, sense espais.</small>
                   </div>
                 </div>
               </div>
@@ -729,13 +891,13 @@
         <footer class="footer">
           <div class="footer-left">
             <div class="dot"></div>
-            <span>Tot el que necessites és en aquesta pàgina. No hi ha trampes.</span>
+            <span>Tot el que necessites és en aquesta pàgina. No hi ha trucades externes.</span>
           </div>
           <div class="footer-right">
             <span class="tag">HTML · CSS · JS pur</span>
             <span class="hidden-note">
-              <span>// recorda:</span>
-              <span class="strong"> la paraula és “dos”</span>
+              <span>// pista molt amagada:</span>
+              <span class="strong"> la paraula de la fase 3 és “cinc”</span>
             </span>
           </div>
         </footer>
@@ -745,58 +907,97 @@
 
   <script>
     (function () {
-      const PHASE_1_CODE = "3142";
-      const PHASE_2_WORD = "dos";
-      const FINAL_CODE = PHASE_1_CODE + PHASE_2_WORD; // "3142dos"
+      const PHASE_1_CODE = "5313";
+      const PHASE_3_WORD = "cinc";
+      const GRID_SOLUTION = [1, 3, 4, 7]; // índex actius (0-based)
+      const GRID_ACTIVE_COUNT = GRID_SOLUTION.length;
+      const COMPOSITE_CODE = PHASE_1_CODE + PHASE_3_WORD + GRID_ACTIVE_COUNT; // "5313cinc4"
+
+      const FINAL_WORD =
+        "cincmil-tres-cents-tretze".replace(/[-\s]/g, "") +
+        PHASE_3_WORD +
+        "quatre"; // "cincmil tres-cents tretze" + "cinc" + "quatre" → sense espais/guions
 
       let currentPhase = 1;
       let errors = 0;
+      let seconds = 0;
+      let timerInterval = null;
 
       const phaseLabel = document.getElementById("phaseLabel");
       const phaseTitle = document.getElementById("phaseTitle");
       const progressFill = document.getElementById("progressFill");
       const errorCount = document.getElementById("errorCount");
+      const timerEl = document.getElementById("timer");
 
       const phase1 = document.getElementById("phase1");
       const phase2 = document.getElementById("phase2");
       const phase3 = document.getElementById("phase3");
+      const phase4 = document.getElementById("phase4");
+      const phase5 = document.getElementById("phase5");
 
       const msgPhase1 = document.getElementById("msgPhase1");
       const msgPhase2 = document.getElementById("msgPhase2");
       const msgPhase3 = document.getElementById("msgPhase3");
+      const msgPhase4 = document.getElementById("msgPhase4");
+      const msgPhase5 = document.getElementById("msgPhase5");
 
       const codeInput = document.getElementById("codeInput");
       const riddleInput = document.getElementById("riddleInput");
+      const compositeInput = document.getElementById("compositeInput");
       const finalInput = document.getElementById("finalInput");
 
       const btnPhase1 = document.getElementById("btnPhase1");
       const btnPhase2 = document.getElementById("btnPhase2");
       const btnPhase3 = document.getElementById("btnPhase3");
+      const btnPhase4 = document.getElementById("btnPhase4");
+      const btnPhase5 = document.getElementById("btnPhase5");
 
       const step1 = document.getElementById("step1");
       const step2 = document.getElementById("step2");
       const step3 = document.getElementById("step3");
+      const step4 = document.getElementById("step4");
+      const step5 = document.getElementById("step5");
 
       const finalPanel = document.getElementById("finalPanel");
 
+      const inventoryList = document.getElementById("inventoryList");
+      const gridPuzzle = document.getElementById("gridPuzzle");
+      const gridCells = Array.from(gridPuzzle.querySelectorAll(".grid-cell"));
+
+      function startTimer() {
+        if (timerInterval) return;
+        timerInterval = setInterval(() => {
+          seconds++;
+          const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+          const s = String(seconds % 60).padStart(2, "0");
+          timerEl.textContent = `${m}:${s}`;
+        }, 1000);
+      }
+
       function updateUI() {
-        phaseLabel.textContent = currentPhase + " / 3";
+        phaseLabel.textContent = currentPhase + " / 5";
         errorCount.textContent = errors;
 
-        const progress = (currentPhase - 1) * 50;
+        const progress = ((currentPhase - 1) / 5) * 100;
         progressFill.style.width = progress + "%";
 
         if (currentPhase === 1) {
-          phaseTitle.textContent = "Fase 1 · Teclat de la porta";
+          phaseTitle.textContent = "Fase 1 · Codi numèric real";
         } else if (currentPhase === 2) {
-          phaseTitle.textContent = "Fase 2 · Endevinalla";
+          phaseTitle.textContent = "Fase 2 · Patró lògic";
+        } else if (currentPhase === 3) {
+          phaseTitle.textContent = "Fase 3 · Missatge codificat";
+        } else if (currentPhase === 4) {
+          phaseTitle.textContent = "Fase 4 · Codi compost";
         } else {
-          phaseTitle.textContent = "Fase 3 · Codi final";
+          phaseTitle.textContent = "Fase 5 · Transcripció final";
         }
 
         step1.classList.toggle("done", currentPhase > 1);
         step2.classList.toggle("done", currentPhase > 2);
         step3.classList.toggle("done", currentPhase > 3);
+        step4.classList.toggle("done", currentPhase > 4);
+        step5.classList.toggle("done", currentPhase > 5);
       }
 
       function setMessage(el, text, type) {
@@ -811,60 +1012,176 @@
         el.classList.add("shake");
       }
 
+      function setPhaseVisible(phaseEl) {
+        [phase1, phase2, phase3, phase4, phase5].forEach((p) => {
+          p.classList.add("phase-hidden");
+          p.classList.remove("phase-visible");
+        });
+        phaseEl.classList.remove("phase-hidden");
+        phaseEl.classList.add("phase-visible");
+      }
+
+      function setInventory(items) {
+        inventoryList.innerHTML = "";
+        if (!items.length) {
+          const li = document.createElement("li");
+          li.textContent = "Cap objecte recollit encara.";
+          inventoryList.appendChild(li);
+          return;
+        }
+        items.forEach((txt) => {
+          const li = document.createElement("li");
+          li.textContent = txt;
+          inventoryList.appendChild(li);
+        });
+      }
+
+      let inventoryItems = [];
+      function addInventoryItem(text) {
+        if (!inventoryItems.includes(text)) {
+          inventoryItems.push(text);
+          setInventory(inventoryItems);
+        }
+      }
+
       btnPhase1.addEventListener("click", function () {
+        startTimer();
         const value = (codeInput.value || "").trim();
         if (value === PHASE_1_CODE) {
-          setMessage(msgPhase1, "Correcte. La porta s’obre amb un clic metàl·lic.", "success");
+          setMessage(
+            msgPhase1,
+            "Correcte. El sistema reconeix el codi real i desbloqueja la següent sala.",
+            "success"
+          );
           currentPhase = 2;
-          phase1.style.display = "none";
-          phase2.style.display = "block";
-          riddleInput.focus();
+          setPhaseVisible(phase2);
+          addInventoryItem(`Codi numèric: ${PHASE_1_CODE}`);
           updateUI();
         } else {
           errors++;
           updateUI();
-          setMessage(msgPhase1, "Codi incorrecte. Torna-ho a provar.", "error");
+          setMessage(
+            msgPhase1,
+            "Codi incorrecte. Pensa en com es combinen els fragments 53 i 13.",
+            "error"
+          );
           shake(phase1);
         }
       });
 
+      gridCells.forEach((cell) => {
+        cell.addEventListener("click", () => {
+          cell.classList.toggle("active");
+        });
+      });
+
       btnPhase2.addEventListener("click", function () {
-        const value = (riddleInput.value || "").trim().toLowerCase();
-        if (value === PHASE_2_WORD) {
+        startTimer();
+        const activeIndexes = gridCells
+          .map((cell, idx) => (cell.classList.contains("active") ? idx : -1))
+          .filter((idx) => idx !== -1);
+
+        const isSameLength = activeIndexes.length === GRID_SOLUTION.length;
+        const sameElements =
+          isSameLength &&
+          activeIndexes.every((idx) => GRID_SOLUTION.includes(idx)) &&
+          GRID_SOLUTION.every((idx) => activeIndexes.includes(idx));
+
+        if (sameElements) {
           setMessage(
             msgPhase2,
-            "Exacte. “Dos” té quatre lletres i multiplicar-lo per dos no canvia la paraula.",
+            "Patró estable detectat. El sistema accepta la combinació.",
             "success"
           );
           currentPhase = 3;
-          phase2.style.display = "none";
-          phase3.style.display = "block";
-          finalInput.focus();
+          setPhaseVisible(phase3);
+          addInventoryItem(`Patró d'interruptors: ${GRID_ACTIVE_COUNT} actius`);
           updateUI();
         } else {
           errors++;
           updateUI();
-          setMessage(msgPhase2, "No és la paraula correcta. Pensa-hi una mica més.", "error");
+          setMessage(
+            msgPhase2,
+            "Aquest patró no és estable. Prova una combinació menys simètrica.",
+            "error"
+          );
           shake(phase2);
         }
       });
 
       btnPhase3.addEventListener("click", function () {
-        const value = (finalInput.value || "").trim().toLowerCase();
-        if (value === FINAL_CODE) {
-          setMessage(msgPhase3, "Codi final correcte. La sortida es desbloqueja.", "success");
+        startTimer();
+        const value = (riddleInput.value || "").trim().toLowerCase();
+        if (value === PHASE_3_WORD) {
+          setMessage(
+            msgPhase3,
+            "Exacte. La paraula descodificada és “cinc”.",
+            "success"
+          );
           currentPhase = 4;
+          setPhaseVisible(phase4);
+          addInventoryItem(`Paraula clau: ${PHASE_3_WORD}`);
           updateUI();
-          finalPanel.style.display = "block";
         } else {
           errors++;
           updateUI();
           setMessage(
             msgPhase3,
-            "Aquest no és el codi final. Recorda: codi numèric + paraula, sense espais.",
+            "No és la paraula correcta. Pensa en una codificació molt comuna (Base64).",
             "error"
           );
           shake(phase3);
+        }
+      });
+
+      btnPhase4.addEventListener("click", function () {
+        startTimer();
+        const value = (compositeInput.value || "").trim().toLowerCase();
+        if (value === COMPOSITE_CODE) {
+          setMessage(
+            msgPhase4,
+            "Codi compost correcte. El sistema et deixa accedir al nucli.",
+            "success"
+          );
+          currentPhase = 5;
+          setPhaseVisible(phase5);
+          addInventoryItem(`Codi compost: ${COMPOSITE_CODE}`);
+          updateUI();
+        } else {
+          errors++;
+          updateUI();
+          setMessage(
+            msgPhase4,
+            "Aquest no és el codi compost correcte. Recorda l’ordre: codi + paraula + número.",
+            "error"
+          );
+          shake(phase4);
+        }
+      });
+
+      btnPhase5.addEventListener("click", function () {
+        startTimer();
+        const value = (finalInput.value || "").trim().toLowerCase();
+        if (value === FINAL_WORD) {
+          setMessage(
+            msgPhase5,
+            "Transcripció correcta. El sistema es rendeix.",
+            "success"
+          );
+          currentPhase = 6;
+          updateUI();
+          finalPanel.style.display = "block";
+          clearInterval(timerInterval);
+          timerInterval = null;
+        } else {
+          errors++;
+          updateUI();
+          setMessage(
+            msgPhase5,
+            "No coincideix amb la transcripció esperada. Converteix tots els números a paraules, sense espais.",
+            "error"
+          );
+          shake(phase5);
         }
       });
 
@@ -872,18 +1189,24 @@
         if (e.key === "Enter") btnPhase1.click();
       });
       riddleInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") btnPhase2.click();
+        if (e.key === "Enter") btnPhase3.click();
+      });
+      compositeInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") btnPhase4.click();
       });
       finalInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") btnPhase3.click();
+        if (e.key === "Enter") btnPhase5.click();
       });
 
       updateUI();
       codeInput.focus();
+      setInventory(inventoryItems);
     })();
   </script>
 </body>
 </html>
+
+
 
 
 
