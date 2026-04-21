@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<title>UFO Catcher 3D</title>
+<style>
+    body { margin:0; overflow:hidden; background:#111; }
+    #score {
+        position:fixed; top:20px; left:20px;
+        color:white; font-family:Arial; font-size:22px;
+    }
+</style>
+</head>
+<body>
+<div id="score">Punts: 0</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+
+<script>
+// --------------------------------------------------
+// ESCENA BÀSICA
+// --------------------------------------------------
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x222222);
+
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0, 12, 22);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// --------------------------------------------------
+// LLUMS
+// --------------------------------------------------
+const light = new THREE.DirectionalLight(0xffffff, 1.2);
+light.position.set(5, 10, 5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+// --------------------------------------------------
+// BASE DE LA MÀQUINA
+// --------------------------------------------------
+const floorGeo = new THREE.BoxGeometry(20, 1, 20);
+const floorMat = new THREE.MeshStandardMaterial({color:0x333333});
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.position.y = -0.5;
+scene.add(floor);
+
+// --------------------------------------------------
+// OBJECTES A ATRAPAR
+// --------------------------------------------------
+const prizes = [];
+for (let i = 0; i < 10; i++) {
+    const g = new THREE.SphereGeometry(0.8, 16, 16);
+    const m = new THREE.MeshStandardMaterial({color: Math.random()*0xffffff});
+    const s = new THREE.Mesh(g, m);
+    s.position.set(
+        (Math.random()*14)-7,
+        0.8,
+        (Math.random()*14)-7
+    );
+    scene.add(s);
+    prizes.push(s);
+}
+
+// --------------------------------------------------
+// GRUA
+// --------------------------------------------------
+const clawGroup = new THREE.Group();
+scene.add(clawGroup);
+
+clawGroup.position.set(0, 8, 0);
+
+const clawBody = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.5, 1.5, 16),
+    new THREE.MeshStandardMaterial({color:0xdddddd})
+);
+clawGroup.add(clawBody);
+
+// Pinces
+const leftClaw = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 1, 0.2),
+    new THREE.MeshStandardMaterial({color:0xff4444})
+);
+leftClaw.position.set(-0.4, -1, 0);
+clawGroup.add(leftClaw);
+
+const rightClaw = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 1, 0.2),
+    new THREE.MeshStandardMaterial({color:0x44ff44})
+);
+rightClaw.position.set(0.4, -1, 0);
+clawGroup.add(rightClaw);
+
+// Estat de la grua
+let clawY = 8;
+let lowering = false;
+let rising = false;
+let holding = null;
+let score = 0;
+
+// --------------------------------------------------
+// CONTROLS
+// --------------------------------------------------
+const keys = {};
+onkeydown = e => keys[e.key.toLowerCase()] = true;
+onkeyup   = e => keys[e.key.toLowerCase()] = false;
+
+// --------------------------------------------------
+// LOOP PRINCIPAL
+// --------------------------------------------------
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Moviment horitzontal
+    if (!lowering && !rising) {
+        if (keys["a"]) clawGroup.position.x -= 0.15;
+        if (keys["d"]) clawGroup.position.x += 0.15;
+        if (keys["w"]) clawGroup.position.z -= 0.15;
+        if (keys["s"]) clawGroup.position.z += 0.15;
+
+        clawGroup.position.x = THREE.MathUtils.clamp(clawGroup.position.x, -8, 8);
+        clawGroup.position.z = THREE.MathUtils.clamp(clawGroup.position.z, -8, 8);
+    }
+
+    // Baixar la grua
+    if (keys[" "] && !lowering && !rising) {
+        lowering = true;
+    }
+
+    if (lowering) {
+        clawY -= 0.25;
+        if (clawY <= 1.5) {
+            lowering = false;
+            rising = true;
+
+            // Tancar pinces
+            leftClaw.position.x = -0.2;
+            rightClaw.position.x = 0.2;
+
+            // Comprovar si agafa objecte
+            for (const p of prizes) {
+                const dist = p.position.distanceTo(clawGroup.position);
+                if (dist < 1.2) {
+                    holding = p;
+                    break;
+                }
+            }
+        }
+    }
+
+    // Pujar la grua
+    if (rising) {
+        clawY += 0.25;
+
+        if (holding) {
+            holding.position.set(
+                clawGroup.position.x,
+                clawY - 1.5,
+                clawGroup.position.z
+            );
+        }
+
+        if (clawY >= 8) {
+            rising = false;
+
+            // Obrir pinces
+            leftClaw.position.x = -0.4;
+            rightClaw.position.x = 0.4;
+
+            if (holding) {
+                // Puntuar i eliminar objecte
+                score++;
+                document.getElementById("score").textContent = "Punts: " + score;
+                scene.remove(holding);
+                prizes.splice(prizes.indexOf(holding), 1);
+                holding = null;
+            }
+        }
+    }
+
+    clawGroup.position.y = clawY;
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Resize
+onresize = () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+};
+</script>
+</body>
+</html>
