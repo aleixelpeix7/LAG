@@ -4,53 +4,90 @@
 <meta charset="UTF-8">
 <title>Laser Maze 3D</title>
 <style>
-    body { margin:0; overflow:hidden; background:#050509; }
+    body { margin:0; overflow:hidden; background:#000; }
     #ui {
         position:fixed; top:20px; left:20px;
-        color:white; font-family:Arial, sans-serif; font-size:16px;
-        background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:6px;
+        color:#eee; font-family:Arial, sans-serif; font-size:14px;
+        background:rgba(0,0,0,0.6); padding:10px 14px; border-radius:6px;
+        border:1px solid #444;
     }
-    #win {
+    #winMenu {
         position:fixed; top:50%; left:50%;
         transform:translate(-50%,-50%);
-        color:#0f0; font-family:Arial, sans-serif; font-size:28px;
-        background:rgba(0,0,0,0.8); padding:18px 26px; border-radius:8px;
+        color:#eee; font-family:Arial, sans-serif; font-size:18px;
+        background:rgba(0,0,0,0.85); padding:18px 26px; border-radius:8px;
+        border:1px solid #666;
         display:none;
+        text-align:center;
+    }
+    #winMenu button {
+        margin:8px; padding:6px 14px;
+        background:#1e88e5; color:white; border:none; border-radius:4px;
+        cursor:pointer; font-size:14px;
+    }
+    #winMenu button:hover {
+        background:#42a5f5;
     }
 </style>
 </head>
 <body>
 <div id="ui">
-    <div><b>Laser Maze 3D</b></div>
+    <div><b>Laser Maze 3D — Sci‑Fi</b></div>
+    <div>Nivell: <span id="levelLabel">1</span></div>
     <div>Click: seleccionar mirall</div>
-    <div>Q / E: rotar mirall seleccionat</div>
+    <div>Fletxes ← →: rotar mirall seleccionat</div>
 </div>
-<div id="win">Nivell completat!</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<div id="winMenu">
+    <div id="winText" style="margin-bottom:10px;">Nivell completat!</div>
+    <button id="nextBtn">Següent nivell</button>
+    <button id="retryBtn">Reinicia nivell</button>
+</div>
 
-<script>
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
+import { EffectComposer } from 'https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'https://unpkg.com/three@0.152.2/examples/jsm/postprocessing/UnrealBloomPass.js';
+
 // --------------------------------------------------
-// ESCENA BÀSICA
+// ESCENA, CÀMERA, RENDERER
 // --------------------------------------------------
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050509);
+scene.background = new THREE.Color(0x05060a);
 
 const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
-camera.position.set(0, 15, 25);
+camera.position.set(0, 30, 35);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
+
+// --------------------------------------------------
+// POSTPROCESSING (GLOW)
+// --------------------------------------------------
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+
+const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(innerWidth, innerHeight),
+    1.2,  // strength
+    0.8,  // radius
+    0.1   // threshold
+);
+composer.addPass(bloomPass);
 
 // --------------------------------------------------
 // LLUMS
 // --------------------------------------------------
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-dirLight.position.set(10, 20, 10);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(15, 30, 10);
 dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
 scene.add(dirLight);
 
 scene.add(new THREE.AmbientLight(0x404040));
@@ -59,124 +96,260 @@ scene.add(new THREE.AmbientLight(0x404040));
 // SÒL I ENTORN
 // --------------------------------------------------
 const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(40, 40),
-    new THREE.MeshStandardMaterial({color:0x111111, roughness:0.8, metalness:0.1})
+    new THREE.PlaneGeometry(50, 50),
+    new THREE.MeshStandardMaterial({
+        color:0x20232a,
+        metalness:0.4,
+        roughness:0.6
+    })
 );
 floor.rotation.x = -Math.PI/2;
 floor.receiveShadow = true;
 scene.add(floor);
 
-const borderMat = new THREE.MeshStandardMaterial({color:0x222244, metalness:0.4, roughness:0.4});
-const borderGeo = new THREE.BoxGeometry(40, 2, 1);
-const border1 = new THREE.Mesh(borderGeo, borderMat);
-border1.position.set(0, 1, -20);
-const border2 = border1.clone(); border2.position.z = 20;
-const border3 = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 40), borderMat);
-border3.position.set(-20, 1, 0);
-const border4 = border3.clone(); border4.position.x = 20;
-scene.add(border1, border2, border3, border4);
+const wallMat = new THREE.MeshStandardMaterial({
+    color:0x181a20,
+    metalness:0.6,
+    roughness:0.4
+});
+const wallGeoX = new THREE.BoxGeometry(50, 5, 1);
+const wallGeoZ = new THREE.BoxGeometry(1, 5, 50);
+
+const wall1 = new THREE.Mesh(wallGeoX, wallMat); wall1.position.set(0, 2.5, -25);
+const wall2 = new THREE.Mesh(wallGeoX, wallMat); wall2.position.set(0, 2.5, 25);
+const wall3 = new THREE.Mesh(wallGeoZ, wallMat); wall3.position.set(-25, 2.5, 0);
+const wall4 = new THREE.Mesh(wallGeoZ, wallMat); wall4.position.set(25, 2.5, 0);
+[wall1, wall2, wall3, wall4].forEach(w => { w.receiveShadow = true; w.castShadow = true; });
+scene.add(wall1, wall2, wall3, wall4);
 
 // --------------------------------------------------
-// EMISSOR DE LÀSER
+// MATERIALS
 // --------------------------------------------------
-const emitter = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshStandardMaterial({color:0xff0000, emissive:0x550000})
-);
-emitter.position.set(-12, 0.5, 0);
-emitter.castShadow = true;
-scene.add(emitter);
-
-// Direcció inicial del làser
-let laserOrigin = new THREE.Vector3().copy(emitter.position).add(new THREE.Vector3(0, 0.2, 0));
-let laserDir = new THREE.Vector3(1, 0, 0).normalize();
-
-// --------------------------------------------------
-// OBJECTIU
-// --------------------------------------------------
-const target = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 1.2, 1.2),
-    new THREE.MeshStandardMaterial({color:0x00ff88, emissive:0x003311})
-);
-target.position.set(12, 0.6, 6);
-target.castShadow = true;
-scene.add(target);
-
-// --------------------------------------------------
-// MIRALLS
-// --------------------------------------------------
-const mirrors = [];
-const mirrorMat = new THREE.MeshStandardMaterial({
-    color:0x88ccff,
+const emitterMat = new THREE.MeshStandardMaterial({
+    color:0xff4444,
+    emissive:0xaa0000,
+    metalness:0.8,
+    roughness:0.3
+});
+const targetMatBase = new THREE.MeshStandardMaterial({
+    color:0x00ff99,
+    emissive:0x003322,
+    metalness:0.9,
+    roughness:0.2
+});
+const mirrorBaseMat = new THREE.MeshStandardMaterial({
+    color:0xb0bec5,
     metalness:1.0,
     roughness:0.05
 });
-
-function createMirror(x, z, rotY) {
-    const mirror = new THREE.Mesh(
-        new THREE.BoxGeometry(0.2, 3, 4),
-        mirrorMat.clone()
-    );
-    mirror.position.set(x, 1.5, z);
-    mirror.rotation.y = rotY;
-    mirror.castShadow = true;
-    mirror.userData.isMirror = true;
-    scene.add(mirror);
-    mirrors.push(mirror);
-    return mirror;
-}
-
-// Nivell simple però interessant
-createMirror(-4, 0, Math.PI/4);
-createMirror(2, 2, -Math.PI/4);
-createMirror(6, 4, Math.PI/6);
+const obstacleMat = new THREE.MeshStandardMaterial({
+    color:0x263238,
+    metalness:0.7,
+    roughness:0.4
+});
 
 // --------------------------------------------------
-// LÀSER (GEOMETRIA PER VISUALITZAR EL FEIX)
+// OBJECTES GLOBALS
 // --------------------------------------------------
-const laserMat = new THREE.LineBasicMaterial({color:0xff0000});
+let emitter, target;
+let mirrors = [];
+let obstacles = [];
 let laserLine = null;
 
-// --------------------------------------------------
-// RAYCASTING
-// --------------------------------------------------
 const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let selectedMirror = null;
+const keys = {};
+
+let levelIndex = 0;
+const levelLabel = document.getElementById('levelLabel');
+const winMenu = document.getElementById('winMenu');
+const winText = document.getElementById('winText');
+const nextBtn = document.getElementById('nextBtn');
+const retryBtn = document.getElementById('retryBtn');
+
+let levelCompleted = false;
+
+// --------------------------------------------------
+// NIVELLS (resolubles)
+// --------------------------------------------------
+// Cada nivell: posicions d’emissor, target i miralls (posició + rotació inicial)
+const levels = [
+    // Nivell 1: molt fàcil, 1 mirall
+    {
+        emitter: { x:-15, z:0, dirX:1, dirZ:0 },
+        target:  { x:10,  z:0 },
+        mirrors: [
+            { x:-2, z:0, rotY:Math.PI/4 }
+        ],
+        obstacles: []
+    },
+    // Nivell 2: 2 miralls, rebot simple
+    {
+        emitter: { x:-15, z:-5, dirX:1, dirZ:0 },
+        target:  { x:12,  z:5 },
+        mirrors: [
+            { x:-5, z:-5, rotY:Math.PI/4 },
+            { x:4,  z:0,  rotY:-Math.PI/4 }
+        ],
+        obstacles: []
+    },
+    // Nivell 3: 3 miralls, rebot doble
+    {
+        emitter: { x:-15, z:-8, dirX:1, dirZ:0 },
+        target:  { x:12,  z:8 },
+        mirrors: [
+            { x:-7, z:-8, rotY:Math.PI/4 },
+            { x:0,  z:-2, rotY:-Math.PI/4 },
+            { x:7,  z:3,  rotY:Math.PI/6 }
+        ],
+        obstacles: []
+    },
+    // Nivell 4: 3 miralls + obstacles
+    {
+        emitter: { x:-15, z:-8, dirX:1, dirZ:0 },
+        target:  { x:10,  z:10 },
+        mirrors: [
+            { x:-8, z:-6, rotY:Math.PI/3 },
+            { x:-1, z:0,  rotY:-Math.PI/4 },
+            { x:6,  z:5,  rotY:Math.PI/6 }
+        ],
+        obstacles: [
+            { x:-2, z:4 },
+            { x:3,  z:-3 }
+        ]
+    },
+    // Nivell 5: 4 miralls, rebot triple
+    {
+        emitter: { x:-15, z:-10, dirX:1, dirZ:0 },
+        target:  { x:12,  z:10 },
+        mirrors: [
+            { x:-9, z:-8, rotY:Math.PI/3 },
+            { x:-3, z:-3, rotY:-Math.PI/4 },
+            { x:3,  z:0,  rotY:Math.PI/6 },
+            { x:8,  z:5,  rotY:-Math.PI/5 }
+        ],
+        obstacles: [
+            { x:-1, z:4 },
+            { x:4,  z:-4 },
+            { x:7,  z:1 }
+        ]
+    }
+];
+
+// --------------------------------------------------
+// CREACIÓ D’OBJECTES DE NIVELL
+// --------------------------------------------------
+function clearLevel() {
+    if (emitter) scene.remove(emitter);
+    if (target) scene.remove(target);
+    mirrors.forEach(m => scene.remove(m));
+    obstacles.forEach(o => scene.remove(o));
+    mirrors = [];
+    obstacles = [];
+    selectedMirror = null;
+    if (laserLine) {
+        scene.remove(laserLine);
+        laserLine = null;
+    }
+}
+
+let laserOrigin = new THREE.Vector3();
+let laserDir = new THREE.Vector3(1, 0, 0);
+
+function createLevel(index) {
+    clearLevel();
+    const data = levels[index];
+
+    // Emissor
+    emitter = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 1.2, 1.2),
+        emitterMat
+    );
+    emitter.position.set(data.emitter.x, 0.6, data.emitter.z);
+    emitter.castShadow = true;
+    scene.add(emitter);
+
+    laserOrigin.copy(emitter.position).add(new THREE.Vector3(0.6, 0.1, 0));
+    laserDir.set(data.emitter.dirX, 0, data.emitter.dirZ).normalize();
+
+    // Target
+    target = new THREE.Mesh(
+        new THREE.BoxGeometry(1.4, 1.4, 1.4),
+        targetMatBase.clone()
+    );
+    target.position.set(data.target.x, 0.7, data.target.z);
+    target.castShadow = true;
+    scene.add(target);
+
+    // Miralls
+    data.mirrors.forEach(m => {
+        const mirror = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, 3, 4),
+            mirrorBaseMat.clone()
+        );
+        mirror.position.set(m.x, 1.5, m.z);
+        mirror.rotation.y = m.rotY;
+        mirror.castShadow = true;
+        mirror.userData.isMirror = true;
+        scene.add(mirror);
+        mirrors.push(mirror);
+    });
+
+    // Obstacles
+    data.obstacles.forEach(o => {
+        const obs = new THREE.Mesh(
+            new THREE.BoxGeometry(2, 3, 2),
+            obstacleMat
+        );
+        obs.position.set(o.x, 1.5, o.z);
+        obs.castShadow = true;
+        obs.userData.isObstacle = true;
+        scene.add(obs);
+        obstacles.push(obs);
+    });
+
+    levelCompleted = false;
+    winMenu.style.display = 'none';
+    target.material.emissive.set(0x003322);
+    levelLabel.textContent = (index + 1).toString();
+}
 
 // --------------------------------------------------
 // SELECCIÓ DE MIRALLS
 // --------------------------------------------------
-const mouse = new THREE.Vector2();
-let selectedMirror = null;
-
-function onMouseDown(e) {
-    mouse.x = (e.clientX / innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+window.addEventListener('mousedown', e => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(mirrors);
 
     if (intersects.length > 0) {
         selectedMirror = intersects[0].object;
-        mirrors.forEach(m => m.material.color.set(0x88ccff));
-        selectedMirror.material.color.set(0xffff00);
+        mirrors.forEach(m => m.material.color.set(0xb0bec5));
+        selectedMirror.material.color.set(0xffeb3b);
     }
-}
-window.addEventListener('mousedown', onMouseDown);
+});
 
 // --------------------------------------------------
-// CONTROLS DE ROTACIÓ (Q / E)
+// TECLAT
 // --------------------------------------------------
-const keys = {};
-window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
-window.addEventListener('keyup',   e => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener('keydown', e => {
+    keys[e.key.toLowerCase()] = true;
+    keys[e.key] = true; // per ArrowLeft, etc.
+});
+window.addEventListener('keyup', e => {
+    keys[e.key.toLowerCase()] = false;
+    keys[e.key] = false;
+});
 
 // --------------------------------------------------
 // CÀLCUL DEL LÀSER AMB REFLEXIONS
 // --------------------------------------------------
-const MAX_BOUNCES = 5;
+const MAX_BOUNCES = 6;
 const laserPoints = [];
-
-let levelCompleted = false;
 
 function computeLaser() {
     laserPoints.length = 0;
@@ -187,14 +360,19 @@ function computeLaser() {
 
     let hitTarget = false;
 
+    const colliders = [
+        ...mirrors,
+        ...obstacles,
+        target,
+        wall1, wall2, wall3, wall4
+    ];
+
     for (let i = 0; i < MAX_BOUNCES; i++) {
         raycaster.set(origin, dir);
-        const objectsToTest = [...mirrors, target, border1, border2, border3, border4];
-        const intersects = raycaster.intersectObjects(objectsToTest, false);
+        const intersects = raycaster.intersectObjects(colliders, false);
 
         if (intersects.length === 0) {
-            // No col·lideix amb res: allargar el feix
-            laserPoints.push(origin.clone().add(dir.clone().multiplyScalar(50)));
+            laserPoints.push(origin.clone().add(dir.clone().multiplyScalar(80)));
             break;
         }
 
@@ -208,51 +386,88 @@ function computeLaser() {
         }
 
         if (hit.object.userData.isMirror) {
-            // Reflexió
+            // Normal aproximada del mirall
             const normal = new THREE.Vector3(0, 0, 1);
             hit.object.getWorldDirection(normal);
             normal.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/2);
             normal.normalize();
 
             dir = dir.clone().sub(normal.clone().multiplyScalar(2 * dir.dot(normal))).normalize();
-            origin = hitPoint.clone().add(dir.clone().multiplyScalar(0.001));
+            origin = hitPoint.clone().add(dir.clone().multiplyScalar(0.01));
         } else {
-            // Paret o altre: parar
+            // Obstacles o parets: parar
             break;
         }
     }
 
     if (laserLine) scene.remove(laserLine);
     const laserGeo = new THREE.BufferGeometry().setFromPoints(laserPoints);
+    const laserMat = new THREE.LineBasicMaterial({
+        color:0xff4444,
+        transparent:true,
+        opacity:1.0,
+        linewidth:4
+    });
     laserLine = new THREE.Line(laserGeo, laserMat);
     scene.add(laserLine);
 
     if (hitTarget && !levelCompleted) {
         levelCompleted = true;
-        document.getElementById('win').style.display = 'block';
+        winMenu.style.display = 'block';
         target.material.emissive.set(0x00ff00);
+        if (levelIndex === levels.length - 1) {
+            winText.textContent = 'Has completat tots els nivells!';
+            nextBtn.style.display = 'none';
+        } else {
+            winText.textContent = 'Nivell completat!';
+            nextBtn.style.display = 'inline-block';
+        }
     } else if (!hitTarget && levelCompleted) {
         levelCompleted = false;
-        document.getElementById('win').style.display = 'none';
-        target.material.emissive.set(0x003311);
+        winMenu.style.display = 'none';
+        target.material.emissive.set(0x003322);
     }
 }
+
+// --------------------------------------------------
+// MENÚ DE NIVELL COMPLETAT
+// --------------------------------------------------
+nextBtn.addEventListener('click', () => {
+    if (levelIndex < levels.length - 1) {
+        levelIndex++;
+        createLevel(levelIndex);
+    }
+});
+retryBtn.addEventListener('click', () => {
+    createLevel(levelIndex);
+});
 
 // --------------------------------------------------
 // LOOP
 // --------------------------------------------------
+let lastTime = performance.now();
+
 function animate() {
     requestAnimationFrame(animate);
+    const now = performance.now();
+    const delta = (now - lastTime) / 1000;
+    lastTime = now;
+    const deltaFactor = delta * 12; // per ajustar la velocitat de rotació
 
-    if (selectedMirror) {
-        const rotSpeed = 0.02;
-        if (keys['q']) selectedMirror.rotation.y += rotSpeed;
-        if (keys['e']) selectedMirror.rotation.y -= rotSpeed;
+    if (selectedMirror && !levelCompleted) {
+        if (keys['ArrowLeft']) {
+            selectedMirror.rotation.y += THREE.MathUtils.degToRad(5) * deltaFactor;
+        }
+        if (keys['ArrowRight']) {
+            selectedMirror.rotation.y -= THREE.MathUtils.degToRad(5) * deltaFactor;
+        }
     }
 
     computeLaser();
-    renderer.render(scene, camera);
+    composer.render();
 }
+
+createLevel(levelIndex);
 animate();
 
 // --------------------------------------------------
@@ -262,9 +477,11 @@ window.addEventListener('resize', () => {
     camera.aspect = innerWidth/innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
+    composer.setSize(innerWidth, innerHeight);
 });
 </script>
 </body>
 </html>
+
 
 
