@@ -1,452 +1,890 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-<meta charset="UTF-8">
-<title>Laser Maze 3D</title>
-<style>
-    body { margin:0; overflow:hidden; background:#000; }
-    #ui {
-        position:fixed; top:20px; left:20px;
-        color:#eee; font-family:Arial, sans-serif; font-size:14px;
-        background:rgba(0,0,0,0.6); padding:10px 14px; border-radius:6px;
-        border:1px solid #444;
+  <meta charset="UTF-8" />
+  <title>Escape Room Web</title>
+  <style>
+    :root {
+      --bg: #05060a;
+      --card: #10131a;
+      --accent: #ffcc4d;
+      --accent-soft: rgba(255, 204, 77, 0.12);
+      --text: #f5f5f5;
+      --muted: #9ca3af;
+      --error: #f97373;
+      --success: #4ade80;
+      --border: #1f2933;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.65);
+      --radius-lg: 18px;
+      --radius-md: 10px;
+      --radius-pill: 999px;
+      --transition-fast: 0.18s ease-out;
+      --transition-med: 0.25s ease;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
     }
-    #winMenu {
-        position:fixed; top:50%; left:50%;
-        transform:translate(-50%,-50%);
-        color:#eee; font-family:Arial, sans-serif; font-size:18px;
-        background:rgba(0,0,0,0.85); padding:18px 26px; border-radius:8px;
-        border:1px solid #666;
-        display:none;
-        text-align:center;
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    #winMenu button {
-        margin:8px; padding:6px 14px;
-        background:#1e88e5; color:white; border:none; border-radius:4px;
-        cursor:pointer; font-size:14px;
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      color: var(--text);
+      font-family: var(--font-main);
     }
-    #winMenu button:hover {
-        background:#42a5f5;
+
+    .wrapper {
+      width: 100%;
+      max-width: 960px;
+      padding: 24px;
     }
-</style>
+
+    .game {
+      background: radial-gradient(circle at top left, #111827 0, #020617 55%);
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: var(--shadow-soft);
+      padding: 24px 24px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0 0, rgba(255, 204, 77, 0.12), transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(56, 189, 248, 0.12), transparent 55%);
+      opacity: 0.7;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .game-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #22c55e, #15803d);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.25);
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-label {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .pill-value {
+      font-size: 0.8rem;
+      color: var(--text);
+    }
+
+    .progress-bar {
+      width: 140px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #facc15, #22c55e);
+      transition: width var(--transition-med);
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 780px) {
+      .content {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .status {
+        align-items: flex-start;
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.95), #020617);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 14px 14px 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(148, 163, 184, 0.08), transparent 55%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .panel-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .panel-title {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.7rem;
+      color: #e5e7eb;
+    }
+
+    .panel-body {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #e5e7eb;
+    }
+
+    .hint {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .hint-label {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.65rem;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+
+    .hint-text {
+      flex: 1;
+    }
+
+    .hidden-code {
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono",
+        "Courier New", monospace;
+      font-size: 0.8rem;
+      color: rgba(148, 163, 184, 0.18);
+      user-select: text;
+    }
+
+    .hidden-code span {
+      opacity: 0.18;
+    }
+
+    .hidden-code span.strong {
+      opacity: 0.9;
+      color: var(--accent);
+    }
+
+    .input-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      flex: 1;
+      padding: 7px 9px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+        background var(--transition-fast), transform 0.08s ease-out;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.4);
+      background: rgba(15, 23, 42, 1);
+      transform: translateY(-1px);
+    }
+
+    button {
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 7px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      background: linear-gradient(135deg, #facc15, #f97316);
+      color: #111827;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 10px 25px rgba(248, 181, 0, 0.35);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+        filter var(--transition-fast), background var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(248, 181, 0, 0.45);
+      filter: brightness(1.05);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 16px rgba(248, 181, 0, 0.35);
+      filter: brightness(0.98);
+    }
+
+    button.secondary {
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--muted);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      filter: none;
+      border-color: var(--accent);
+      color: #e5e7eb;
+    }
+
+    .msg {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      min-height: 1.1em;
+      color: var(--muted);
+    }
+
+    .msg.error {
+      color: var(--error);
+    }
+
+    .msg.success {
+      color: var(--success);
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .step {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .step-index {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .step.done .step-index {
+      border-color: var(--success);
+      background: radial-gradient(circle at 30% 30%, #22c55e, #15803d);
+      color: #022c22;
+    }
+
+    .step.done .step-label {
+      color: #e5e7eb;
+    }
+
+    .step-label {
+      font-size: 0.8rem;
+    }
+
+    .step-label span {
+      display: block;
+      color: #e5e7eb;
+    }
+
+    .step-label small {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .final-panel {
+      margin-top: 10px;
+      padding: 10px 11px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(22, 163, 74, 0.02));
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      font-size: 0.85rem;
+      color: #bbf7d0;
+      display: none;
+    }
+
+    .final-panel strong {
+      color: #4ade80;
+    }
+
+    .footer {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      gap: 10px;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tag {
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.7rem;
+    }
+
+    .hidden-note {
+      font-size: 0.7rem;
+      color: rgba(148, 163, 184, 0.35);
+      user-select: text;
+    }
+
+    .hidden-note span {
+      opacity: 0.25;
+    }
+
+    .hidden-note span.strong {
+      opacity: 0.95;
+      color: var(--accent);
+    }
+
+    .shake {
+      animation: shake 0.18s linear 0s 2;
+    }
+
+    @keyframes shake {
+      0% {
+        transform: translateX(0);
+      }
+      25% {
+        transform: translateX(-3px);
+      }
+      50% {
+        transform: translateX(3px);
+      }
+      75% {
+        transform: translateX(-2px);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+  </style>
 </head>
 <body>
-<div id="ui">
-    <div><b>Laser Maze 3D — Sci‑Fi</b></div>
-    <div>Nivell: <span id="levelLabel">1</span></div>
-    <div>Click: seleccionar mirall</div>
-    <div>Fletxes ← →: rotar mirall seleccionat</div>
-</div>
+  <div class="wrapper">
+    <div class="game">
+      <div class="game-inner">
+        <header class="header">
+          <div class="title-block">
+            <h1>
+              ESCAPE ROOM
+              <span style="font-size:0.8rem; font-weight:400; color:var(--muted);">
+                — Habitació tancada
+              </span>
+            </h1>
+            <div class="badge">
+              <span class="badge-dot"></span>
+              <span>Mode solitari</span>
+            </div>
+            <p class="subtitle">
+              Estàs tancat en una habitació virtual. Tot el que necessites per sortir és
+              <strong>en aquesta pàgina</strong>.
+            </p>
+          </div>
+          <div class="status">
+            <div class="status-row">
+              <div class="pill">
+                <span class="pill-label">Fase</span>
+                <span class="pill-value" id="phaseLabel">1 / 3</span>
+              </div>
+              <div class="pill">
+                <span class="pill-label">Errors</span>
+                <span class="pill-value" id="errorCount">0</span>
+              </div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+        </header>
 
-<div id="winMenu">
-    <div id="winText" style="margin-bottom:10px;">Nivell completat!</div>
-    <button id="nextBtn">Següent nivell</button>
-    <button id="retryBtn">Reinicia nivell</button>
-</div>
+        <main class="content">
+          <!-- PANEL ESQUERRA: HISTÒRIA + PISTES -->
+          <section class="panel">
+            <div class="panel-inner">
+              <div class="panel-header">
+                <span class="panel-title">Context</span>
+                <span>Habitació 01 · Porta bloquejada</span>
+              </div>
+              <div class="panel-body">
+                <p>
+                  Et despertes en una habitació fosca. A la porta hi ha un teclat numèric i una
+                  pantalla antiga que mostra un missatge:
+                </p>
+                <p style="margin-top:6px; font-style:italic; color:var(--muted);">
+                  “Només els que saben <strong>llegir entre línies</strong> poden sortir.”
+                </p>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-// --------------------------------------------------
-// ESCENA, CÀMERA, RENDERER
-// --------------------------------------------------
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x05060a);
+                <div class="hint" style="margin-top:12px;">
+                  <div class="hint-label">Pista 1</div>
+                  <div class="hint-text">
+                    El teclat de la porta demana un codi de <strong>4 xifres</strong>.  
+                    No hi ha res a les parets… però potser el codi ja és
+                    <strong>davant teu</strong>.
+                  </div>
+                </div>
 
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
-camera.position.set(0, 30, 35);
-camera.lookAt(0, 0, 0);
+                <p style="margin-top:10px; font-size:0.85rem; color:var(--muted);">
+                  Alguna cosa en el codi font d’aquesta pàgina sembla sospitosa.  
+                  Fixa’t en aquest “fragment tècnic” que algú ha deixat:
+                </p>
 
-const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.body.appendChild(renderer.domElement);
+                <pre class="hidden-code" style="margin-top:6px;">
+// system.log
+// door.status = "locked";
+// door.code   = <span class="strong">3142</span>;
+// TODO: amagar millor aquest valor abans que algú l'utilitzi per escapar
+                </pre>
 
-// --------------------------------------------------
-// LLUMS
-// --------------------------------------------------
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-dirLight.position.set(15, 30, 10);
-dirLight.castShadow = true;
-dirLight.shadow.mapSize.set(2048, 2048);
-scene.add(dirLight);
+                <div class="hint" style="margin-top:12px;">
+                  <div class="hint-label">Pista 2</div>
+                  <div class="hint-text">
+                    Quan aconsegueixis obrir la porta amb el codi correcte,  
+                    descobriràs que la sortida encara és lluny.  
+                    Guarda el número al cap: potser el necessitaràs més endavant.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-scene.add(new THREE.AmbientLight(0x404040));
+          <!-- PANEL DRETA: INTERACCIÓ / FASES -->
+          <section class="panel">
+            <div class="panel-inner">
+              <div class="panel-header">
+                <span class="panel-title">Terminal d'escapada</span>
+                <span id="phaseTitle">Fase 1 · Teclat de la porta</span>
+              </div>
+              <div class="panel-body" id="phaseContainer">
+                <!-- FASE 1 -->
+                <div id="phase1">
+                  <p>
+                    Introdueix el <strong>codi numèric de 4 xifres</strong> que obre la porta.
+                  </p>
+                  <div class="input-row">
+                    <input
+                      type="number"
+                      id="codeInput"
+                      placeholder="Codi de 4 xifres"
+                      autocomplete="off"
+                    />
+                    <button id="btnPhase1">Validar</button>
+                  </div>
+                  <div class="msg" id="msgPhase1"></div>
+                </div>
 
-// --------------------------------------------------
-// SÒL I PARETS
-// --------------------------------------------------
-const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50),
-    new THREE.MeshStandardMaterial({
-        color:0x20232a,
-        metalness:0.4,
-        roughness:0.6
-    })
-);
-floor.rotation.x = -Math.PI/2;
-floor.receiveShadow = true;
-scene.add(floor);
+                <!-- FASE 2 -->
+                <div id="phase2" style="display:none;">
+                  <p>
+                    Has entrat a una segona sala. A la paret hi ha escrit:
+                  </p>
+                  <p style="margin-top:6px; font-style:italic; color:var(--muted);">
+                    “Sóc un número de quatre lletres, però no sóc un número.  
+                    Si em multipliques per dos, continuo sent el mateix.”
+                  </p>
 
-const wallMat = new THREE.MeshStandardMaterial({
-    color:0x181a20,
-    metalness:0.6,
-    roughness:0.4
-});
-const wallGeoX = new THREE.BoxGeometry(50, 5, 1);
-const wallGeoZ = new THREE.BoxGeometry(1, 5, 50);
+                  <div class="hint" style="margin-top:10px;">
+                    <div class="hint-label">Pista</div>
+                    <div class="hint-text">
+                      Pensa en una <strong>paraula en català</strong> que descrigui un número,
+                      però que no sigui una xifra.  
+                      La resposta és una sola paraula, en minúscules.
+                    </div>
+                  </div>
 
-const wall1 = new THREE.Mesh(wallGeoX, wallMat); wall1.position.set(0, 2.5, -25);
-const wall2 = new THREE.Mesh(wallGeoX, wallMat); wall2.position.set(0, 2.5, 25);
-const wall3 = new THREE.Mesh(wallGeoZ, wallMat); wall3.position.set(-25, 2.5, 0);
-const wall4 = new THREE.Mesh(wallGeoZ, wallMat); wall4.position.set(25, 2.5, 0);
-[wall1, wall2, wall3, wall4].forEach(w => { w.receiveShadow = true; w.castShadow = true; });
-scene.add(wall1, wall2, wall3, wall4);
+                  <div class="input-row">
+                    <input
+                      type="text"
+                      id="riddleInput"
+                      placeholder="Escriu la paraula (en català)"
+                      autocomplete="off"
+                    />
+                    <button id="btnPhase2">Validar</button>
+                  </div>
+                  <div class="msg" id="msgPhase2"></div>
+                </div>
 
-// --------------------------------------------------
-// MATERIALS
-// --------------------------------------------------
-const emitterMat = new THREE.MeshStandardMaterial({
-    color:0xff4444,
-    emissive:0xaa0000,
-    metalness:0.8,
-    roughness:0.3
-});
-const targetMatBase = new THREE.MeshStandardMaterial({
-    color:0x00ff99,
-    emissive:0x003322,
-    metalness:0.9,
-    roughness:0.2
-});
-const mirrorBaseMat = new THREE.MeshStandardMaterial({
-    color:0xb0bec5,
-    metalness:1.0,
-    roughness:0.05
-});
-const obstacleMat = new THREE.MeshStandardMaterial({
-    color:0x263238,
-    metalness:0.7,
-    roughness:0.4
-});
+                <!-- FASE 3 -->
+                <div id="phase3" style="display:none;">
+                  <p>
+                    Davant teu hi ha un últim terminal.  
+                    El missatge diu:
+                  </p>
+                  <p style="margin-top:6px; font-style:italic; color:var(--muted);">
+                    “Per sortir, combina el que has après.  
+                    Primer, el codi de la porta.  
+                    Després, la paraula que has descobert.  
+                    Escriu-ho tot seguit, sense espais.”
+                  </p>
 
-// --------------------------------------------------
-// OBJECTES GLOBALS
-// --------------------------------------------------
-let emitter, target;
-let mirrors = [];
-let obstacles = [];
-let laserLine = null;
+                  <div class="hint" style="margin-top:10px;">
+                    <div class="hint-label">Exemple</div>
+                    <div class="hint-text">
+                      Si el codi fos <code>1234</code> i la paraula fos <code>zero</code>,  
+                      hauries d’escriure: <code>1234zero</code>.
+                    </div>
+                  </div>
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-let selectedMirror = null;
-const keys = {};
+                  <div class="input-row">
+                    <input
+                      type="text"
+                      id="finalInput"
+                      placeholder="Codi + paraula (sense espais)"
+                      autocomplete="off"
+                    />
+                    <button id="btnPhase3">Sortir</button>
+                  </div>
+                  <div class="msg" id="msgPhase3"></div>
 
-let levelIndex = 0;
-const levelLabel = document.getElementById('levelLabel');
-const winMenu = document.getElementById('winMenu');
-const winText = document.getElementById('winText');
-const nextBtn = document.getElementById('nextBtn');
-const retryBtn = document.getElementById('retryBtn');
+                  <div class="final-panel" id="finalPanel">
+                    <strong>Has sortit!</strong>  
+                    Has resolt totes les fases d’aquest escape room web.  
+                    Pots tancar la pestanya… o tornar a jugar i provar de fer-ho amb
+                    <em>zero errors</em>.
+                  </div>
+                </div>
+              </div>
 
-let levelCompleted = false;
+              <div style="margin-top:12px;">
+                <div class="steps">
+                  <div class="step" id="step1">
+                    <div class="step-index">1</div>
+                    <div class="step-label">
+                      <span>Teclat de la porta</span>
+                      <small>Troba el codi numèric ocult a la pàgina.</small>
+                    </div>
+                  </div>
+                  <div class="step" id="step2">
+                    <div class="step-index">2</div>
+                    <div class="step-label">
+                      <span>Endevinalla</span>
+                      <small>Resol la pista de text i escriu la paraula correcta.</small>
+                    </div>
+                  </div>
+                  <div class="step" id="step3">
+                    <div class="step-index">3</div>
+                    <div class="step-label">
+                      <span>Codi final</span>
+                      <small>Combina el codi i la paraula per desbloquejar la sortida.</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
 
-// --------------------------------------------------
-// NIVELLS
-// --------------------------------------------------
-const levels = [
-    {
-        emitter: { x:-15, z:0, dirX:1, dirZ:0 },
-        target:  { x:10,  z:0 },
-        mirrors: [
-            { x:-2, z:0, rotY:Math.PI/4 }
-        ],
-        obstacles: []
-    },
-    {
-        emitter: { x:-15, z:-5, dirX:1, dirZ:0 },
-        target:  { x:12,  z:5 },
-        mirrors: [
-            { x:-5, z:-5, rotY:Math.PI/4 },
-            { x:4,  z:0,  rotY:-Math.PI/4 }
-        ],
-        obstacles: []
-    },
-    {
-        emitter: { x:-15, z:-8, dirX:1, dirZ:0 },
-        target:  { x:12,  z:8 },
-        mirrors: [
-            { x:-7, z:-8, rotY:Math.PI/4 },
-            { x:0,  z:-2, rotY:-Math.PI/4 },
-            { x:7,  z:3,  rotY:Math.PI/6 }
-        ],
-        obstacles: []
-    },
-    {
-        emitter: { x:-15, z:-8, dirX:1, dirZ:0 },
-        target:  { x:10,  z:10 },
-        mirrors: [
-            { x:-8, z:-6, rotY:Math.PI/3 },
-            { x:-1, z:0,  rotY:-Math.PI/4 },
-            { x:6,  z:5,  rotY:Math.PI/6 }
-        ],
-        obstacles: [
-            { x:-2, z:4 },
-            { x:3,  z:-3 }
-        ]
-    },
-    {
-        emitter: { x:-15, z:-10, dirX:1, dirZ:0 },
-        target:  { x:12,  z:10 },
-        mirrors: [
-            { x:-9, z:-8, rotY:Math.PI/3 },
-            { x:-3, z:-3, rotY:-Math.PI/4 },
-            { x:3,  z:0,  rotY:Math.PI/6 },
-            { x:8,  z:5,  rotY:-Math.PI/5 }
-        ],
-        obstacles: [
-            { x:-1, z:4 },
-            { x:4,  z:-4 },
-            { x:7,  z:1 }
-        ]
-    }
-];
+        <footer class="footer">
+          <div class="footer-left">
+            <div class="dot"></div>
+            <span>Tot el que necessites és en aquesta pàgina. No hi ha trampes.</span>
+          </div>
+          <div class="footer-right">
+            <span class="tag">HTML · CSS · JS pur</span>
+            <span class="hidden-note">
+              <span>// recorda:</span>
+              <span class="strong"> la paraula és “dos”</span>
+            </span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
 
-// --------------------------------------------------
-// NIVELL: CREACIÓ I NETEJA
-// --------------------------------------------------
-let laserOrigin = new THREE.Vector3();
-let laserDir = new THREE.Vector3(1, 0, 0);
+  <script>
+    (function () {
+      const PHASE_1_CODE = "3142";
+      const PHASE_2_WORD = "dos";
+      const FINAL_CODE = PHASE_1_CODE + PHASE_2_WORD; // "3142dos"
 
-function clearLevel() {
-    if (emitter) scene.remove(emitter);
-    if (target) scene.remove(target);
-    mirrors.forEach(m => scene.remove(m));
-    obstacles.forEach(o => scene.remove(o));
-    mirrors = [];
-    obstacles = [];
-    selectedMirror = null;
-    if (laserLine) {
-        scene.remove(laserLine);
-        laserLine = null;
-    }
-}
+      let currentPhase = 1;
+      let errors = 0;
 
-function createLevel(index) {
-    clearLevel();
-    const data = levels[index];
+      const phaseLabel = document.getElementById("phaseLabel");
+      const phaseTitle = document.getElementById("phaseTitle");
+      const progressFill = document.getElementById("progressFill");
+      const errorCount = document.getElementById("errorCount");
 
-    emitter = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 1.2, 1.2),
-        emitterMat
-    );
-    emitter.position.set(data.emitter.x, 0.6, data.emitter.z);
-    emitter.castShadow = true;
-    scene.add(emitter);
+      const phase1 = document.getElementById("phase1");
+      const phase2 = document.getElementById("phase2");
+      const phase3 = document.getElementById("phase3");
 
-    laserOrigin.copy(emitter.position).add(new THREE.Vector3(0.6, 0.1, 0));
-    laserDir.set(data.emitter.dirX, 0, data.emitter.dirZ).normalize();
+      const msgPhase1 = document.getElementById("msgPhase1");
+      const msgPhase2 = document.getElementById("msgPhase2");
+      const msgPhase3 = document.getElementById("msgPhase3");
 
-    target = new THREE.Mesh(
-        new THREE.BoxGeometry(1.4, 1.4, 1.4),
-        targetMatBase.clone()
-    );
-    target.position.set(data.target.x, 0.7, data.target.z);
-    target.castShadow = true;
-    scene.add(target);
+      const codeInput = document.getElementById("codeInput");
+      const riddleInput = document.getElementById("riddleInput");
+      const finalInput = document.getElementById("finalInput");
 
-    data.mirrors.forEach(m => {
-        const mirror = new THREE.Mesh(
-            new THREE.BoxGeometry(0.2, 3, 4),
-            mirrorBaseMat.clone()
-        );
-        mirror.position.set(m.x, 1.5, m.z);
-        mirror.rotation.y = m.rotY;
-        mirror.castShadow = true;
-        mirror.userData.isMirror = true;
-        scene.add(mirror);
-        mirrors.push(mirror);
-    });
+      const btnPhase1 = document.getElementById("btnPhase1");
+      const btnPhase2 = document.getElementById("btnPhase2");
+      const btnPhase3 = document.getElementById("btnPhase3");
 
-    data.obstacles.forEach(o => {
-        const obs = new THREE.Mesh(
-            new THREE.BoxGeometry(2, 3, 2),
-            obstacleMat
-        );
-        obs.position.set(o.x, 1.5, o.z);
-        obs.castShadow = true;
-        obs.userData.isObstacle = true;
-        scene.add(obs);
-        obstacles.push(obs);
-    });
+      const step1 = document.getElementById("step1");
+      const step2 = document.getElementById("step2");
+      const step3 = document.getElementById("step3");
 
-    levelCompleted = false;
-    winMenu.style.display = 'none';
-    target.material.emissive.set(0x003322);
-    levelLabel.textContent = (index + 1).toString();
-}
+      const finalPanel = document.getElementById("finalPanel");
 
-// --------------------------------------------------
-// SELECCIÓ DE MIRALLS
-// --------------------------------------------------
-window.addEventListener('mousedown', e => {
-    const rect = renderer.domElement.getBoundingClientRect();
-    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      function updateUI() {
+        phaseLabel.textContent = currentPhase + " / 3";
+        errorCount.textContent = errors;
 
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(mirrors);
+        const progress = (currentPhase - 1) * 50;
+        progressFill.style.width = progress + "%";
 
-    if (intersects.length > 0) {
-        selectedMirror = intersects[0].object;
-        mirrors.forEach(m => m.material.color.set(0xb0bec5));
-        selectedMirror.material.color.set(0xffeb3b);
-    }
-});
-
-// --------------------------------------------------
-// TECLAT
-// --------------------------------------------------
-window.addEventListener('keydown', e => {
-    keys[e.key] = true;
-});
-window.addEventListener('keyup', e => {
-    keys[e.key] = false;
-});
-
-// --------------------------------------------------
-// LÀSER AMB REFLEXIONS
-// --------------------------------------------------
-const MAX_BOUNCES = 6;
-const laserPoints = [];
-
-function computeLaser() {
-    laserPoints.length = 0;
-    let origin = laserOrigin.clone();
-    let dir = laserDir.clone();
-
-    laserPoints.push(origin.clone());
-
-    let hitTarget = false;
-
-    const colliders = [
-        ...mirrors,
-        ...obstacles,
-        target,
-        wall1, wall2, wall3, wall4
-    ];
-
-    for (let i = 0; i < MAX_BOUNCES; i++) {
-        raycaster.set(origin, dir);
-        const intersects = raycaster.intersectObjects(colliders, false);
-
-        if (intersects.length === 0) {
-            laserPoints.push(origin.clone().add(dir.clone().multiplyScalar(80)));
-            break;
-        }
-
-        const hit = intersects[0];
-        const hitPoint = hit.point.clone();
-        laserPoints.push(hitPoint);
-
-        if (hit.object === target) {
-            hitTarget = true;
-            break;
-        }
-
-        if (hit.object.userData.isMirror) {
-            const normal = new THREE.Vector3(0, 0, 1);
-            hit.object.getWorldDirection(normal);
-            normal.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/2);
-            normal.normalize();
-
-            dir = dir.clone().sub(normal.clone().multiplyScalar(2 * dir.dot(normal))).normalize();
-            origin = hitPoint.clone().add(dir.clone().multiplyScalar(0.01));
+        if (currentPhase === 1) {
+          phaseTitle.textContent = "Fase 1 · Teclat de la porta";
+        } else if (currentPhase === 2) {
+          phaseTitle.textContent = "Fase 2 · Endevinalla";
         } else {
-            break;
+          phaseTitle.textContent = "Fase 3 · Codi final";
         }
-    }
 
-    if (laserLine) scene.remove(laserLine);
-    const laserGeo = new THREE.BufferGeometry().setFromPoints(laserPoints);
-    const laserMat = new THREE.LineBasicMaterial({
-        color:0xff5555,
-        transparent:true,
-        opacity:1.0
-    });
-    laserLine = new THREE.Line(laserGeo, laserMat);
-    scene.add(laserLine);
+        step1.classList.toggle("done", currentPhase > 1);
+        step2.classList.toggle("done", currentPhase > 2);
+        step3.classList.toggle("done", currentPhase > 3);
+      }
 
-    if (hitTarget && !levelCompleted) {
-        levelCompleted = true;
-        winMenu.style.display = 'block';
-        target.material.emissive.set(0x00ff00);
-        if (levelIndex === levels.length - 1) {
-            winText.textContent = 'Has completat tots els nivells!';
-            nextBtn.style.display = 'none';
+      function setMessage(el, text, type) {
+        el.textContent = text || "";
+        el.classList.remove("error", "success");
+        if (type) el.classList.add(type);
+      }
+
+      function shake(el) {
+        el.classList.remove("shake");
+        void el.offsetWidth;
+        el.classList.add("shake");
+      }
+
+      btnPhase1.addEventListener("click", function () {
+        const value = (codeInput.value || "").trim();
+        if (value === PHASE_1_CODE) {
+          setMessage(msgPhase1, "Correcte. La porta s’obre amb un clic metàl·lic.", "success");
+          currentPhase = 2;
+          phase1.style.display = "none";
+          phase2.style.display = "block";
+          riddleInput.focus();
+          updateUI();
         } else {
-            winText.textContent = 'Nivell completat!';
-            nextBtn.style.display = 'inline-block';
+          errors++;
+          updateUI();
+          setMessage(msgPhase1, "Codi incorrecte. Torna-ho a provar.", "error");
+          shake(phase1);
         }
-    } else if (!hitTarget && levelCompleted) {
-        levelCompleted = false;
-        winMenu.style.display = 'none';
-        target.material.emissive.set(0x003322);
-    }
-}
+      });
 
-// --------------------------------------------------
-// MENÚ
-// --------------------------------------------------
-nextBtn.addEventListener('click', () => {
-    if (levelIndex < levels.length - 1) {
-        levelIndex++;
-        createLevel(levelIndex);
-    }
-});
-retryBtn.addEventListener('click', () => {
-    createLevel(levelIndex);
-});
-
-// --------------------------------------------------
-// LOOP
-// --------------------------------------------------
-let lastTime = performance.now();
-
-function animate() {
-    requestAnimationFrame(animate);
-    const now = performance.now();
-    const delta = (now - lastTime) / 1000;
-    lastTime = now;
-    const deltaFactor = delta * 12;
-
-    if (selectedMirror && !levelCompleted) {
-        if (keys['ArrowLeft']) {
-            selectedMirror.rotation.y += THREE.Math.degToRad(5) * deltaFactor;
+      btnPhase2.addEventListener("click", function () {
+        const value = (riddleInput.value || "").trim().toLowerCase();
+        if (value === PHASE_2_WORD) {
+          setMessage(
+            msgPhase2,
+            "Exacte. “Dos” té quatre lletres i multiplicar-lo per dos no canvia la paraula.",
+            "success"
+          );
+          currentPhase = 3;
+          phase2.style.display = "none";
+          phase3.style.display = "block";
+          finalInput.focus();
+          updateUI();
+        } else {
+          errors++;
+          updateUI();
+          setMessage(msgPhase2, "No és la paraula correcta. Pensa-hi una mica més.", "error");
+          shake(phase2);
         }
-        if (keys['ArrowRight']) {
-            selectedMirror.rotation.y -= THREE.Math.degToRad(5) * deltaFactor;
+      });
+
+      btnPhase3.addEventListener("click", function () {
+        const value = (finalInput.value || "").trim().toLowerCase();
+        if (value === FINAL_CODE) {
+          setMessage(msgPhase3, "Codi final correcte. La sortida es desbloqueja.", "success");
+          currentPhase = 4;
+          updateUI();
+          finalPanel.style.display = "block";
+        } else {
+          errors++;
+          updateUI();
+          setMessage(
+            msgPhase3,
+            "Aquest no és el codi final. Recorda: codi numèric + paraula, sense espais.",
+            "error"
+          );
+          shake(phase3);
         }
-    }
+      });
 
-    computeLaser();
-    renderer.render(scene, camera);
-}
+      codeInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") btnPhase1.click();
+      });
+      riddleInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") btnPhase2.click();
+      });
+      finalInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") btnPhase3.click();
+      });
 
-createLevel(levelIndex);
-animate();
-
-// --------------------------------------------------
-// RESIZE
-// --------------------------------------------------
-window.addEventListener('resize', () => {
-    camera.aspect = innerWidth/innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
-});
-</script>
+      updateUI();
+      codeInput.focus();
+    })();
+  </script>
 </body>
 </html>
+
 
 
 
