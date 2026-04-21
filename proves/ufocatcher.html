@@ -14,11 +14,11 @@
 <body>
 <div id="score">Punts: 0</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 // --------------------------------------------------
-// ESCENA BÀSICA
+// ESCENA
 // --------------------------------------------------
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x222222);
@@ -37,31 +37,28 @@ document.body.appendChild(renderer.domElement);
 const light = new THREE.DirectionalLight(0xffffff, 1.2);
 light.position.set(5, 10, 5);
 scene.add(light);
-
 scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
 // --------------------------------------------------
-// BASE DE LA MÀQUINA
+// SÒL
 // --------------------------------------------------
-const floorGeo = new THREE.BoxGeometry(20, 1, 20);
-const floorMat = new THREE.MeshStandardMaterial({color:0x333333});
-const floor = new THREE.Mesh(floorGeo, floorMat);
+const floor = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 1, 20),
+    new THREE.MeshStandardMaterial({color:0x333333})
+);
 floor.position.y = -0.5;
 scene.add(floor);
 
 // --------------------------------------------------
-// OBJECTES A ATRAPAR
+// OBJECTES
 // --------------------------------------------------
 const prizes = [];
 for (let i = 0; i < 10; i++) {
-    const g = new THREE.SphereGeometry(0.8, 16, 16);
-    const m = new THREE.MeshStandardMaterial({color: Math.random()*0xffffff});
-    const s = new THREE.Mesh(g, m);
-    s.position.set(
-        (Math.random()*14)-7,
-        0.8,
-        (Math.random()*14)-7
+    const s = new THREE.Mesh(
+        new THREE.SphereGeometry(0.8, 16, 16),
+        new THREE.MeshStandardMaterial({color: Math.random()*0xffffff})
     );
+    s.position.set((Math.random()*14)-7, 0.8, (Math.random()*14)-7);
     scene.add(s);
     prizes.push(s);
 }
@@ -70,9 +67,8 @@ for (let i = 0; i < 10; i++) {
 // GRUA
 // --------------------------------------------------
 const clawGroup = new THREE.Group();
-scene.add(clawGroup);
-
 clawGroup.position.set(0, 8, 0);
+scene.add(clawGroup);
 
 const clawBody = new THREE.Mesh(
     new THREE.CylinderGeometry(0.5, 0.5, 1.5, 16),
@@ -80,7 +76,6 @@ const clawBody = new THREE.Mesh(
 );
 clawGroup.add(clawBody);
 
-// Pinces
 const leftClaw = new THREE.Mesh(
     new THREE.BoxGeometry(0.2, 1, 0.2),
     new THREE.MeshStandardMaterial({color:0xff4444})
@@ -95,7 +90,7 @@ const rightClaw = new THREE.Mesh(
 rightClaw.position.set(0.4, -1, 0);
 clawGroup.add(rightClaw);
 
-// Estat de la grua
+// Estat
 let clawY = 8;
 let lowering = false;
 let rising = false;
@@ -110,7 +105,7 @@ onkeydown = e => keys[e.key.toLowerCase()] = true;
 onkeyup   = e => keys[e.key.toLowerCase()] = false;
 
 // --------------------------------------------------
-// LOOP PRINCIPAL
+// LOOP
 // --------------------------------------------------
 function animate() {
     requestAnimationFrame(animate);
@@ -126,7 +121,7 @@ function animate() {
         clawGroup.position.z = THREE.MathUtils.clamp(clawGroup.position.z, -8, 8);
     }
 
-    // Baixar la grua
+    // Baixar
     if (keys[" "] && !lowering && !rising) {
         lowering = true;
     }
@@ -141,10 +136,9 @@ function animate() {
             leftClaw.position.x = -0.2;
             rightClaw.position.x = 0.2;
 
-            // Comprovar si agafa objecte
+            // Comprovar objecte
             for (const p of prizes) {
-                const dist = p.position.distanceTo(clawGroup.position);
-                if (dist < 1.2) {
+                if (p.position.distanceTo(clawGroup.position) < 1.2) {
                     holding = p;
                     break;
                 }
@@ -152,7 +146,7 @@ function animate() {
         }
     }
 
-    // Pujar la grua
+    // Pujar
     if (rising) {
         clawY += 0.25;
 
@@ -172,7 +166,6 @@ function animate() {
             rightClaw.position.x = 0.4;
 
             if (holding) {
-                // Puntuar i eliminar objecte
                 score++;
                 document.getElementById("score").textContent = "Punts: " + score;
                 scene.remove(holding);
@@ -198,3 +191,4 @@ onresize = () => {
 </script>
 </body>
 </html>
+
