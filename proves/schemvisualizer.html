@@ -2,59 +2,234 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8" />
-  <title>Visualitzador NBT + Mods (MVP)</title>
+  <title>Visualitzador NBT + Mods</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #111;
-      color: #eee;
-      font-family: system-ui, sans-serif;
+    :root{
+      --bg:#002244;
+      --accent:#7CCF35;
+      --nav-bg: rgba(0,0,0,0.7);
+      --link-red:#E7180B;
+      --link-red-hover:#FB2C36;
     }
-    #ui {
+
+    #discord-widget {
       position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-      background: rgba(0,0,0,0.7);
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 13px;
+      right: 0;
+      bottom: 0;
+      margin: 20px;
+      z-index: 9999;
     }
-    #ui input {
+
+    html,body{height:100%; margin:0; padding:0;}
+    *,*::before,*::after{box-sizing:border-box}
+
+    body {
+      background-color: var(--bg);
+      font-family: Arial, sans-serif;
+      color: var(--accent);
+    }
+
+    nav {
+      background-color: var(--nav-bg);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    nav ul { list-style:none; display:flex; justify-content:space-between; align-items:center; margin:0; padding:0; }
+    nav li.logo { display:flex; align-items:center; }
+    nav li.logo a { display:flex; align-items:center; text-decoration:none; }
+    nav li.logo img { height:60px; margin-right:0.5rem; vertical-align:middle; }
+    nav a { color:white; text-decoration:none; font-weight:bold; transition:color 0.3s; }
+    nav a:hover { color:#ffff66; }
+
+    main { padding:2rem; min-height: calc(100vh - 120px); }
+
+    .lag-card {
       display: block;
-      margin-bottom: 6px;
+      width: fit-content;
+      padding: 16px 26px;
+      margin: 18px 0;
+      background: #001829;
+      border: 2px solid #7CCF35;
+      border-radius: 10px;
+      color: #7CCF35;
+      font-size: 18px;
+      font-weight: bold;
+      text-decoration: none;
+      transition: 0.25s;
+      cursor: pointer;
     }
+
+    .lag-card:hover {
+      background: #00283a;
+      border-color: #A6FF5A;
+      color: #A6FF5A;
+      transform: translateX(6px);
+    }
+
+    .controls-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:1rem;
+      align-items:flex-start;
+    }
+
+    .panel {
+      background:#001829;
+      border-radius:10px;
+      padding:1rem 1.5rem;
+      border:1px solid rgba(124,207,53,0.3);
+      max-width:420px;
+      flex:1 1 260px;
+    }
+
+    .panel h2 {
+      margin-top:0;
+      font-size:18px;
+      color:#cfeea6;
+    }
+
+    .panel label {
+      display:block;
+      margin:0.5rem 0 0.25rem;
+      font-size:13px;
+      color:#cfeea6;
+    }
+
+    .panel input[type="file"] {
+      width:100%;
+      font-size:12px;
+      color:#eee;
+    }
+
+    .panel small {
+      font-size:11px;
+      color:#9acb8a;
+    }
+
     #log {
-      max-height: 150px;
-      overflow-y: auto;
-      font-family: monospace;
-      font-size: 11px;
-      margin-top: 6px;
-      background: rgba(0,0,0,0.6);
-      padding: 4px;
-      border-radius: 4px;
+      margin-top:0.75rem;
+      max-height:140px;
+      overflow-y:auto;
+      font-family:monospace;
+      font-size:11px;
+      background:rgba(0,0,0,0.6);
+      padding:6px;
+      border-radius:6px;
+      color:#d8ffd0;
     }
-    canvas {
-      display: block;
+
+    #viewer-wrap {
+      margin-top:2rem;
+      background:#001829;
+      border-radius:10px;
+      border:1px solid rgba(124,207,53,0.4);
+      padding:0.5rem;
+    }
+
+    #viewer-title {
+      padding:0.25rem 0.75rem 0.5rem;
+      font-size:14px;
+      color:#cfeea6;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    #viewer-title span {
+      font-size:12px;
+      color:#8fbf7a;
+    }
+
+    #c {
+      width:100%;
+      height:60vh;
+      display:block;
+      border-radius:8px;
+      background:#000814;
+    }
+
+    footer {
+      padding:1rem 2rem;
+      font-size:12px;
+      color:#9acb8a;
+      text-align:center;
+      opacity:0.8;
     }
   </style>
 </head>
 <body>
-  <div id="ui">
-    <label>
-      NBT / Schem:
-      <input type="file" id="nbtFile" accept=".nbt,.schem,.mcstructure" />
-    </label>
-    <label>
-      Mod / Resource pack (.jar / .zip):
-      <input type="file" id="modFile" accept=".jar,.zip" />
-    </label>
-    <button id="btnRender">Renderitzar exemple</button>
-    <div id="log"></div>
-  </div>
-  <canvas id="c"></canvas>
+  <nav>
+    <ul>
+      <li class="logo">
+        <a href="#">
+          <img src="https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/51/Grass_Block_JE7_BE6.png" alt="Logo">
+          <span>Visualitzador NBT + Mods</span>
+        </a>
+      </li>
+      <li><a href="#">MVP Web estàtica</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <div class="controls-row">
+      <div class="panel">
+        <h2>Fitxers</h2>
+        <label for="nbtFile">NBT / Schem / Structure</label>
+        <input type="file" id="nbtFile" accept=".nbt,.schem,.mcstructure" />
+        <small>Si no en carregues cap, es mostrarà una estructura 5×5×5 de prova.</small>
+
+        <label for="modFile" style="margin-top:0.75rem;">Mod / Resource pack (.jar / .zip)</label>
+        <input type="file" id="modFile" accept=".jar,.zip" />
+        <small>S’usarà la primera textura de bloc trobada per al bloc de prova del mod.</small>
+
+        <div style="margin-top:0.75rem;">
+          <div id="btnVanilla" class="lag-card">Bloc vanilla de prova</div>
+          <div id="btnStructure" class="lag-card">Estructura NBT / 5×5×5</div>
+          <div id="btnModBlock" class="lag-card">Bloc de mod des del JAR</div>
+        </div>
+
+        <div id="log"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Com funciona aquest MVP</h2>
+        <p style="font-size:13px; line-height:1.4;">
+          Aquest prototip funciona <strong>100% en web estàtica</strong>:
+        </p>
+        <ul style="font-size:13px; padding-left:1.1rem; margin-top:0.25rem;">
+          <li>Carrega NBT al navegador (sense enviar res enlloc).</li>
+          <li>Carrega JAR/ZIP de mods i resource packs amb JSZip.</li>
+          <li>Renderitza blocs i estructures amb Three.js.</li>
+        </ul>
+        <p style="font-size:13px; line-height:1.4;">
+          Ara mateix:
+        </p>
+        <ul style="font-size:13px; padding-left:1.1rem; margin-top:0.25rem;">
+          <li><strong>Bloc vanilla:</strong> usa la textura real de <code>grass_block_top</code>.</li>
+          <li><strong>Estructura:</strong> mostra un cub 5×5×5 (o NBT més endavant).</li>
+          <li><strong>Bloc de mod:</strong> agafa la primera textura de bloc del JAR.</li>
+        </ul>
+        <p style="font-size:12px; color:#9acb8a;">
+          Des d’aquí, es pot afegir el sistema complet de blockstates/models/textures.
+        </p>
+      </div>
+    </div>
+
+    <div id="viewer-wrap">
+      <div id="viewer-title">
+        <div>Vista 3D</div>
+        <span id="viewer-status">Esperant acció…</span>
+      </div>
+      <canvas id="c"></canvas>
+    </div>
+  </main>
+
+  <footer>
+    MVP en un sol HTML · Web estàtica · Three.js + JSZip + NBT
+  </footer>
 
   <!-- Three.js -->
   <script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
@@ -63,47 +238,55 @@
   <!-- JSZip -->
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
-  <!-- nbt.js (versió browser) -->
+  <!-- nbt.js (browser) -->
   <script src="https://cdn.jsdelivr.net/npm/nbt@1.0.4/lib/nbt-browser.min.js"></script>
 
   <script>
-    // ---------- UTILITATS BÀSIQUES ----------
+    // ---------- LOG ----------
     const logEl = document.getElementById('log');
+    const statusEl = document.getElementById('viewer-status');
     function log(msg) {
       console.log(msg);
       logEl.textContent += msg + "\\n";
       logEl.scrollTop = logEl.scrollHeight;
     }
+    function setStatus(msg) {
+      statusEl.textContent = msg;
+    }
 
-    // ---------- THREE.JS SETUP ----------
+    // ---------- THREE.JS ----------
     const canvas = document.getElementById('c');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio || 1);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x202020);
+    scene.background = new THREE.Color(0x000814);
 
-    const camera = new THREE.PerspectiveCamera(60, 2, 0.1, 1000);
-    camera.position.set(20, 20, 20);
+    const camera = new THREE.PerspectiveCamera(60, 2, 0.1, 2000);
+    camera.position.set(18, 18, 18);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
     controls.update();
 
-    const light = new THREE.DirectionalLight(0xffffff, 1.0);
-    light.position.set(30, 50, 30);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(30, 50, 30);
+    scene.add(dirLight);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
 
-    window.addEventListener('resize', onWindowResize);
-    function onWindowResize() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+    const grid = new THREE.GridHelper(40, 40, 0x7CCF35, 0x335577);
+    grid.position.y = 0;
+    scene.add(grid);
+
+    function onResize() {
+      const w = canvas.clientWidth || canvas.parentElement.clientWidth;
+      const h = canvas.clientHeight || (window.innerHeight * 0.6);
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }
-    onWindowResize();
+    window.addEventListener('resize', onResize);
+    onResize();
 
     function animate() {
       requestAnimationFrame(animate);
@@ -111,9 +294,10 @@
     }
     animate();
 
-    // ---------- ESTAT GLOBAL ----------
+    // ---------- ESTAT ----------
     let nbtData = null;
-    let resourceZip = null; // JSZip instance amb el .jar/.zip carregat
+    let resourceZip = null;
+    let modBlockTexturePath = null;
 
     // ---------- CARREGA NBT ----------
     document.getElementById('nbtFile').addEventListener('change', async (e) => {
@@ -122,20 +306,19 @@
       log("Carregant NBT: " + file.name);
       const arrayBuffer = await file.arrayBuffer();
 
-      // nbt.js espera un Buffer-like; fem servir nbt.parse
       nbt.parse(arrayBuffer, (error, data) => {
         if (error) {
           log("Error parsejant NBT: " + error);
+          setStatus("Error carregant NBT");
         } else {
           nbtData = data;
           log("NBT carregat. Root name: " + data.name);
-          // Aquí podries convertir-ho a una matriu 3D de blocs
-          // segons el format (schem, structure, etc.)
+          setStatus("NBT carregat (MVP encara no el converteix a blocs reals)");
         }
       });
     });
 
-    // ---------- CARREGA MOD / RESOURCE PACK (.jar / .zip) ----------
+    // ---------- CARREGA MOD / RESOURCE PACK ----------
     document.getElementById('modFile').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -145,76 +328,185 @@
       resourceZip = zip;
       log("ZIP/JAR carregat. Fitxers: " + Object.keys(zip.files).length);
 
-      // Aquí és on implementaries:
-      // - Escanejar assets/<modid>/blockstates/*.json
-      // - Escanejar assets/<modid>/models/block/*.json
-      // - Escanejar assets/<modid>/textures/block/*.png
-      // I omplir un resourceManager propi.
+      // Busquem la primera textura de bloc
+      modBlockTexturePath = null;
+      for (const path in zip.files) {
+        if (/assets\/[^/]+\/textures\/block\/.+\.png$/i.test(path)) {
+          modBlockTexturePath = path;
+          break;
+        }
+      }
+
+      if (modBlockTexturePath) {
+        log("Textura de bloc trobada: " + modBlockTexturePath);
+        setStatus("JAR carregat. Textura de bloc trobada per al bloc de prova.");
+      } else {
+        log("No s'ha trobat cap textura de bloc dins del JAR.");
+        setStatus("JAR carregat, però sense textures de bloc trobades.");
+      }
     });
 
-    // ---------- RESOURCE MANAGER (ESQUELET) ----------
-    const resourceManager = {
-      blockstates: new Map(), // "modid:block" -> JSON
-      models: new Map(),      // "modid:path/model" -> JSON
-      textures: new Map(),    // "modid:texture_name" -> THREE.Texture
+    // ---------- UTILITATS DE GEOMETRIA ----------
+    function clearSceneMeshes() {
+      // El grid i llums es queden; esborrem només malles de blocs
+      const toRemove = [];
+      scene.traverse(obj => {
+        if (obj.isMesh && obj !== grid) {
+          toRemove.push(obj);
+        }
+      });
+      toRemove.forEach(m => {
+        if (m.geometry) m.geometry.dispose();
+        if (m.material) {
+          if (Array.isArray(m.material)) {
+            m.material.forEach(mat => mat.dispose && mat.dispose());
+          } else {
+            m.material.dispose && m.material.dispose();
+          }
+        }
+        scene.remove(m);
+      });
+    }
 
-      async loadFromZip(zip) {
-        // TODO: recórrer zip.files i omplir blockstates/models/textures
-        // Exemple d’iteració:
-        // for (const path in zip.files) {
-        //   if (path.startsWith("assets/") && path.endsWith(".json")) { ... }
-        // }
-        log("resourceManager.loadFromZip() encara està per implementar.");
-      },
+    function createCubeMesh(size, material, x, y, z) {
+      const geo = new THREE.BoxGeometry(size, size, size);
+      const mesh = new THREE.Mesh(geo, material);
+      mesh.position.set(x, y, z);
+      scene.add(mesh);
+      return mesh;
+    }
 
-      getBlockModel(blockId, properties) {
-        // TODO:
-        // 1. Buscar blockstate per blockId
-        // 2. Triar variant segons properties
-        // 3. Resoldre model + parents
-        // 4. Retornar un objecte "model resolt" amb elements + textures
-        log("getBlockModel() encara està per implementar per " + blockId);
-        return null;
-      }
-    };
+    // ---------- 1) BLOC VANILLA ----------
+    async function renderVanillaBlock() {
+      clearSceneMeshes();
+      setStatus("Carregant bloc vanilla…");
+      log("Renderitzant bloc vanilla de prova…");
 
-    // ---------- GENERACIÓ D’UN BLOC D’EXEMPLE ----------
-    async function createExampleBlock() {
-      // MVP: un cub amb una textura hardcoded (per veure el pipeline)
-      const size = 1;
-      const geometry = new THREE.BoxGeometry(size, size, size);
-
-      // Exemple: textura d’herba de Minecraft d’un CDN (pots canviar-la)
       const textureUrl = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/refs/heads/1.20.4/assets/minecraft/textures/block/grass_block_top.png";
+      const loader = new THREE.TextureLoader();
 
-      const texLoader = new THREE.TextureLoader();
       const texture = await new Promise((resolve, reject) => {
-        texLoader.load(textureUrl, resolve, undefined, reject);
+        loader.load(textureUrl, resolve, undefined, reject);
       });
       texture.magFilter = THREE.NearestFilter;
       texture.minFilter = THREE.NearestFilter;
 
-      const material = new THREE.MeshLambertMaterial({ map: texture });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.set(0, 0.5, 0);
-      scene.add(mesh);
+      const mat = new THREE.MeshLambertMaterial({ map: texture });
+      createCubeMesh(1, mat, 0, 0.5, 0);
 
-      log("Bloc d’exemple creat amb textura grass_block_top.");
+      camera.position.set(4, 4, 4);
+      controls.target.set(0, 0.5, 0);
+      controls.update();
+
+      setStatus("Bloc vanilla renderitzat.");
+      log("Bloc vanilla renderitzat amb textura grass_block_top.");
     }
 
-    // ---------- BOTÓ: RENDERITZAR EXEMPLE ----------
-    document.getElementById('btnRender').addEventListener('click', async () => {
-      log("Renderitzant exemple...");
-      await createExampleBlock();
+    // ---------- 2) ESTRUCTURA 5×5×5 (MVP) ----------
+    async function renderStructure() {
+      clearSceneMeshes();
+      setStatus("Renderitzant estructura 5×5×5…");
+      log("Renderitzant estructura 5×5×5 de prova…");
 
-      // Aquí, en lloc de createExampleBlock(),
-      // acabaries fent:
-      // 1. Convertir nbtData -> matriu 3D de blocs
-      // 2. Per cada bloc:
-      //    - resourceManager.getBlockModel(blockId, properties)
-      //    - generar geometria a partir del model
-      //    - afegir-la a la escena
-    });
+      // Dos materials: un amb textura grass, un amb color
+      const loader = new THREE.TextureLoader();
+      const textureUrl = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/refs/heads/1.20.4/assets/minecraft/textures/block/grass_block_top.png";
+      const grassTex = await new Promise((resolve, reject) => {
+        loader.load(textureUrl, resolve, undefined, reject);
+      });
+      grassTex.magFilter = THREE.NearestFilter;
+      grassTex.minFilter = THREE.NearestFilter;
+
+      const matGrass = new THREE.MeshLambertMaterial({ map: grassTex });
+      const matStone = new THREE.MeshLambertMaterial({ color: 0x777777 });
+
+      const size = 1;
+      const half = 2; // per centrar 5×5×5
+
+      for (let x = 0; x < 5; x++) {
+        for (let y = 0; y < 5; y++) {
+          for (let z = 0; z < 5; z++) {
+            const useGrass = (x + y + z) % 2 === 0;
+            const mat = useGrass ? matGrass : matStone;
+            createCubeMesh(
+              size,
+              mat,
+              (x - half) * size,
+              (y + 0.5) * size,
+              (z - half) * size
+            );
+          }
+        }
+      }
+
+      camera.position.set(10, 12, 14);
+      controls.target.set(0, 2.5, 0);
+      controls.update();
+
+      if (nbtData) {
+        log("NB T està carregat, però aquest MVP encara no el converteix a blocs reals.");
+        setStatus("Estructura 5×5×5 renderitzada (NB T carregat, conversió pendent).");
+      } else {
+        setStatus("Estructura 5×5×5 renderitzada.");
+      }
+    }
+
+    // ---------- 3) BLOC DE MOD DES DEL JAR ----------
+    async function renderModBlock() {
+      clearSceneMeshes();
+
+      if (!resourceZip) {
+        log("Cap JAR/ZIP carregat. No es pot renderitzar bloc de mod.");
+        setStatus("Carrega un JAR/ZIP primer.");
+        return;
+      }
+      if (!modBlockTexturePath) {
+        log("No s'ha trobat textura de bloc dins del JAR.");
+        setStatus("No hi ha textura de bloc disponible al JAR.");
+        return;
+      }
+
+      setStatus("Carregant bloc de mod des del JAR…");
+      log("Renderitzant bloc de mod amb textura: " + modBlockTexturePath);
+
+      const file = resourceZip.file(modBlockTexturePath);
+      if (!file) {
+        log("Error: la textura trobada ja no existeix al zip?");
+        setStatus("Error amb la textura del JAR.");
+        return;
+      }
+
+      const blob = await file.async("blob");
+      const url = URL.createObjectURL(blob);
+
+      const loader = new THREE.TextureLoader();
+      const texture = await new Promise((resolve, reject) => {
+        loader.load(url, resolve, undefined, reject);
+      });
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+
+      const mat = new THREE.MeshLambertMaterial({ map: texture });
+      createCubeMesh(1, mat, 0, 0.5, 0);
+
+      camera.position.set(4, 4, 4);
+      controls.target.set(0, 0.5, 0);
+      controls.update();
+
+      setStatus("Bloc de mod renderitzat des del JAR.");
+      log("Bloc de mod renderitzat correctament.");
+      URL.revokeObjectURL(url);
+    }
+
+    // ---------- BOTONS ----------
+    document.getElementById('btnVanilla').addEventListener('click', renderVanillaBlock);
+    document.getElementById('btnStructure').addEventListener('click', renderStructure);
+    document.getElementById('btnModBlock').addEventListener('click', renderModBlock);
+
+    // Missatge inicial
+    log("MVP carregat. Tria una acció: bloc vanilla, estructura 5×5×5 o bloc de mod.");
+    setStatus("Llest per renderitzar.");
   </script>
 </body>
 </html>
+
