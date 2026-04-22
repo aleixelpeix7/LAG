@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <title>Visualitzador NBT + Mods (MVP)</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #111;
+      color: #eee;
+      font-family: system-ui, sans-serif;
+    }
+    #ui {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    #ui input {
+      display: block;
+      margin-bottom: 6px;
+    }
+    #log {
+      max-height: 150px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 11px;
+      margin-top: 6px;
+      background: rgba(0,0,0,0.6);
+      padding: 4px;
+      border-radius: 4px;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <label>
+      NBT / Schem:
+      <input type="file" id="nbtFile" accept=".nbt,.schem,.mcstructure" />
+    </label>
+    <label>
+      Mod / Resource pack (.jar / .zip):
+      <input type="file" id="modFile" accept=".jar,.zip" />
+    </label>
+    <button id="btnRender">Renderitzar exemple</button>
+    <div id="log"></div>
+  </div>
+  <canvas id="c"></canvas>
+
+  <!-- Three.js -->
+  <script src="https://unpkg.com/three@0.161.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.161.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- JSZip -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <!-- nbt.js (versió browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/nbt@1.0.4/lib/nbt-browser.min.js"></script>
+
+  <script>
+    // ---------- UTILITATS BÀSIQUES ----------
+    const logEl = document.getElementById('log');
+    function log(msg) {
+      console.log(msg);
+      logEl.textContent += msg + "\\n";
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ---------- THREE.JS SETUP ----------
+    const canvas = document.getElementById('c');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x202020);
+
+    const camera = new THREE.PerspectiveCamera(60, 2, 0.1, 1000);
+    camera.position.set(20, 20, 20);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    controls.update();
+
+    const light = new THREE.DirectionalLight(0xffffff, 1.0);
+    light.position.set(30, 50, 30);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+
+    window.addEventListener('resize', onWindowResize);
+    function onWindowResize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    onWindowResize();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // ---------- ESTAT GLOBAL ----------
+    let nbtData = null;
+    let resourceZip = null; // JSZip instance amb el .jar/.zip carregat
+
+    // ---------- CARREGA NBT ----------
+    document.getElementById('nbtFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      log("Carregant NBT: " + file.name);
+      const arrayBuffer = await file.arrayBuffer();
+
+      // nbt.js espera un Buffer-like; fem servir nbt.parse
+      nbt.parse(arrayBuffer, (error, data) => {
+        if (error) {
+          log("Error parsejant NBT: " + error);
+        } else {
+          nbtData = data;
+          log("NBT carregat. Root name: " + data.name);
+          // Aquí podries convertir-ho a una matriu 3D de blocs
+          // segons el format (schem, structure, etc.)
+        }
+      });
+    });
+
+    // ---------- CARREGA MOD / RESOURCE PACK (.jar / .zip) ----------
+    document.getElementById('modFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      log("Carregant ZIP/JAR: " + file.name);
+      const arrayBuffer = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      resourceZip = zip;
+      log("ZIP/JAR carregat. Fitxers: " + Object.keys(zip.files).length);
+
+      // Aquí és on implementaries:
+      // - Escanejar assets/<modid>/blockstates/*.json
+      // - Escanejar assets/<modid>/models/block/*.json
+      // - Escanejar assets/<modid>/textures/block/*.png
+      // I omplir un resourceManager propi.
+    });
+
+    // ---------- RESOURCE MANAGER (ESQUELET) ----------
+    const resourceManager = {
+      blockstates: new Map(), // "modid:block" -> JSON
+      models: new Map(),      // "modid:path/model" -> JSON
+      textures: new Map(),    // "modid:texture_name" -> THREE.Texture
+
+      async loadFromZip(zip) {
+        // TODO: recórrer zip.files i omplir blockstates/models/textures
+        // Exemple d’iteració:
+        // for (const path in zip.files) {
+        //   if (path.startsWith("assets/") && path.endsWith(".json")) { ... }
+        // }
+        log("resourceManager.loadFromZip() encara està per implementar.");
+      },
+
+      getBlockModel(blockId, properties) {
+        // TODO:
+        // 1. Buscar blockstate per blockId
+        // 2. Triar variant segons properties
+        // 3. Resoldre model + parents
+        // 4. Retornar un objecte "model resolt" amb elements + textures
+        log("getBlockModel() encara està per implementar per " + blockId);
+        return null;
+      }
+    };
+
+    // ---------- GENERACIÓ D’UN BLOC D’EXEMPLE ----------
+    async function createExampleBlock() {
+      // MVP: un cub amb una textura hardcoded (per veure el pipeline)
+      const size = 1;
+      const geometry = new THREE.BoxGeometry(size, size, size);
+
+      // Exemple: textura d’herba de Minecraft d’un CDN (pots canviar-la)
+      const textureUrl = "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/refs/heads/1.20.4/assets/minecraft/textures/block/grass_block_top.png";
+
+      const texLoader = new THREE.TextureLoader();
+      const texture = await new Promise((resolve, reject) => {
+        texLoader.load(textureUrl, resolve, undefined, reject);
+      });
+      texture.magFilter = THREE.NearestFilter;
+      texture.minFilter = THREE.NearestFilter;
+
+      const material = new THREE.MeshLambertMaterial({ map: texture });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(0, 0.5, 0);
+      scene.add(mesh);
+
+      log("Bloc d’exemple creat amb textura grass_block_top.");
+    }
+
+    // ---------- BOTÓ: RENDERITZAR EXEMPLE ----------
+    document.getElementById('btnRender').addEventListener('click', async () => {
+      log("Renderitzant exemple...");
+      await createExampleBlock();
+
+      // Aquí, en lloc de createExampleBlock(),
+      // acabaries fent:
+      // 1. Convertir nbtData -> matriu 3D de blocs
+      // 2. Per cada bloc:
+      //    - resourceManager.getBlockModel(blockId, properties)
+      //    - generar geometria a partir del model
+      //    - afegir-la a la escena
+    });
+  </script>
+</body>
+</html>
