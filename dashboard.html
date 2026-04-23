@@ -57,7 +57,27 @@
   <p id="errorMsg" style="color:red; margin-top:10px; display:none;">Contrasenya incorrecta</p>
 </div>
 
+<script>
+// 🔐 ENTER PER ENTRAR
+document.getElementById("passwordInput").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") checkPassword();
+});
+</script>
+
 <h1>📊 Dashboard de Visites</h1>
+
+<!-- 🔄 BOTÓ DE RECÀRREGA -->
+<button onclick="reloadDashboard()" style="
+  padding:10px 20px; font-size:16px; border:none; border-radius:5px;
+  background:#4fc3f7; color:#000; cursor:pointer; margin-bottom:20px;">
+  🔄 Recarregar visites
+</button>
+
+<script>
+function reloadDashboard() {
+  document.location.reload();
+}
+</script>
 
 <div class="card">
   <h2>Resum General</h2>
@@ -77,7 +97,7 @@
   <p><b>Persones diferents:</b> <span id="monthUnique"></span></p>
 </div>
 
-<!-- 🆕 NOVA SECCIÓ: PERSONES ÚNIQUES -->
+<!-- 🆕 PERSONES ÚNIQUES -->
 <div class="card">
   <h2>Persones úniques</h2>
   <table>
@@ -112,7 +132,7 @@
 const BIN_ID = "69e0a46a856a6821893d4e93"; 
 const API_KEY = "$2a$10$vSL5AAttVx4kzowkgdmWfuxS0hbwUDgiLn1KFLyqH7ySIPwYmvF6.";
 
-// IPs d'AWS/Netlify (prefixos comuns)
+// IPs d'AWS/Netlify
 const AWS_IP_PREFIXES = [
   "54.", "18.", "3.", "35.", "100.54."
 ];
@@ -161,12 +181,10 @@ async function loadData() {
   document.getElementById("weekUnique").textContent = weekUnique.size;
   document.getElementById("monthUnique").textContent = monthUnique.size;
 
-  // 🆕 GENERAR PERSONES ÚNIQUES
+  // 🆕 PERSONES ÚNIQUES
   const uniqueMap = new Map();
   realVisits.forEach(v => {
-    if (!uniqueMap.has(v.ip)) {
-      uniqueMap.set(v.ip, v); // Guardem la primera visita d'aquesta IP
-    }
+    if (!uniqueMap.has(v.ip)) uniqueMap.set(v.ip, v);
   });
 
   const uniqueList = Array.from(uniqueMap.values());
@@ -183,7 +201,7 @@ async function loadData() {
     uniqueTbody.appendChild(tr);
   });
 
-  // TAULA COMPLETA DE VISITES
+  // TAULA COMPLETA
   const tbody = document.getElementById("table");
   realVisits.forEach(v => {
     const tr = document.createElement("tr");
@@ -200,7 +218,7 @@ async function loadData() {
 loadData();
 
 // 🔐 CONTRASENYA
-const PASSWORD = "dashboard2026"; // Canvia-la aquí
+const PASSWORD = "dashboard2026";
 
 function checkPassword() {
   const input = document.getElementById("passwordInput").value;
@@ -214,6 +232,9 @@ function checkPassword() {
 
 </body>
 </html>
+
+
+
 
 
 
