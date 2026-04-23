@@ -75,7 +75,7 @@ document.getElementById("passwordInput").addEventListener("keydown", function(e)
 
 <script>
 function reloadDashboard() {
-  document.location.reload();
+  loadData(); // NOMÉS recarrega les dades
 }
 </script>
 
@@ -132,7 +132,6 @@ function reloadDashboard() {
 const BIN_ID = "69e0a46a856a6821893d4e93"; 
 const API_KEY = "$2a$10$vSL5AAttVx4kzowkgdmWfuxS0hbwUDgiLn1KFLyqH7ySIPwYmvF6.";
 
-// IPs d'AWS/Netlify
 const AWS_IP_PREFIXES = [
   "54.", "18.", "3.", "35.", "100.54."
 ];
@@ -152,6 +151,11 @@ function isBot(v) {
 }
 
 async function loadData() {
+
+  // 🧹 Netejar taules abans d'omplir-les
+  document.getElementById("uniquePeople").innerHTML = "";
+  document.getElementById("table").innerHTML = "";
+
   const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
     headers: { "X-Access-Key": API_KEY }
   });
@@ -232,6 +236,7 @@ function checkPassword() {
 
 </body>
 </html>
+
 
 
 
