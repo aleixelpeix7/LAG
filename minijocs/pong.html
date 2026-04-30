@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pong | LAG</title>
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: #002244;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+      color: #FAFAF9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    nav {
+      background-color: rgba(0, 0, 0, 0.7);
+      position: sticky;
+      top: 0;
+      width: 100%;
+      padding: 1rem 2rem;
+      z-index: 100;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav li.logo img {
+      height: 60px;
+      margin-right: 0.5rem;
+    }
+
+    nav li.enllacos {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    nav a:hover { color: #ffff66; }
+
+    /* Pantalla del joc */
+    #chronoScreen {
+      margin-top: 40px;
+      background: #0f172a;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #334155;
+      width: 900px;
+      max-width: 95%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+
+    canvas {
+      background: #111;
+      border: 2px solid #fff;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+  <ul>
+    <li class="logo">
+      <a href="https://lagg.netlify.app">
+        <img src="assets/logo.png" alt="Logo GLS" />
+      </a>
+    </li>
+    <li class="enllacos">
+      <a href="https://lagg.netlify.app">Inici</a>
+      <a href="https://lagg.netlify.app/minijocs/">Minijocs</a>
+      <a href="https://lagg.netlify.app/minecraft/">Minecraft</a>
+      <a href="https://lagg.netlify.app/jocs3d/">Jocs 3D</a>
+      <a href="https://lagg.netlify.app/eines/">Eines</a>
+      <a href="https://lagg.netlify.app/contacte">Contactar</a>
+    </li>
+  </ul>
+</nav>
+
+<!-- 🎮 PONG INTEGRAT -->
+<div id="chronoScreen">
+  <h2>🏓 Pong</h2>
+
+  <canvas id="pongCanvas" width="800" height="500"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById("pongCanvas");
+const ctx = canvas.getContext("2d");
+
+let player = { x: 20, y: canvas.height/2 - 40, w: 10, h: 80, score: 0 };
+let ai = { x: canvas.width - 30, y: canvas.height/2 - 40, w: 10, h: 80, score: 0 };
+let ball = { x: canvas.width/2, y: canvas.height/2, r: 8, vx: 5, vy: 5 };
+
+let up = false, down = false;
+
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp") up = true;
+    if (e.key === "ArrowDown") down = true;
+});
+document.addEventListener("keyup", e => {
+    if (e.key === "ArrowUp") up = false;
+    if (e.key === "ArrowDown") down = false;
+});
+
+function resetBall() {
+    ball.x = canvas.width/2;
+    ball.y = canvas.height/2;
+    ball.vx = (Math.random() > 0.5 ? 5 : -5);
+    ball.vy = (Math.random() * 4 - 2);
+}
+
+function update() {
+    // Player movement
+    if (up) player.y -= 6;
+    if (down) player.y += 6;
+    player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
+
+    // AI movement
+    if (ai.y + ai.h/2 < ball.y) ai.y += 4;
+    else ai.y -= 4;
+    ai.y = Math.max(0, Math.min(canvas.height - ai.h, ai.y));
+
+    // Ball movement
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    // Wall bounce
+    if (ball.y < 0 || ball.y > canvas.height) ball.vy *= -1;
+
+    // Player collision
+    if (ball.x - ball.r < player.x + player.w &&
+        ball.y > player.y && ball.y < player.y + player.h) {
+        ball.vx *= -1.1;
+        ball.vy += (Math.random() * 2 - 1);
+    }
+
+    // AI collision
+    if (ball.x + ball.r > ai.x &&
+        ball.y > ai.y && ball.y < ai.y + ai.h) {
+        ball.vx *= -1.1;
+        ball.vy += (Math.random() * 2 - 1);
+    }
+
+    // Score
+    if (ball.x < 0) { ai.score++; resetBall(); }
+    if (ball.x > canvas.width) { player.score++; resetBall(); }
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Middle line
+    ctx.fillStyle = "#444";
+    for (let i = 0; i < canvas.height; i += 20) {
+        ctx.fillRect(canvas.width/2 - 2, i, 4, 10);
+    }
+
+    // Player & AI
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+    ctx.fillRect(ai.x, ai.y, ai.w, ai.h);
+
+    // Ball
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Score
+    ctx.font = "40px Arial";
+    ctx.fillText(player.score, canvas.width/2 - 60, 50);
+    ctx.fillText(ai.score, canvas.width/2 + 30, 50);
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
