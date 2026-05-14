@@ -2,7 +2,7 @@
 <html lang="ca">
 <head>
 <meta charset="UTF-8" />
-<title>Drone Delivery 3D - Low Poly Cartoon</title>
+<title>Drone Delivery 3D - Cartoon City</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
   body{margin:0;overflow:hidden;background:#87ceeb;font-family:system-ui;color:#fff}
@@ -13,22 +13,21 @@
     font-size:16px;text-shadow:0 0 6px #000;z-index:10;
   }
   #hud span.box{
-    background:rgba(0,0,0,.4);
-    padding:6px 10px;
+    background:rgba(0,0,0,.45);
+    padding:6px 12px;
     border-radius:999px;
-    border:1px solid rgba(255,255,255,.2);
+    border:1px solid rgba(255,255,255,.25);
   }
   #help{
-    position:fixed;top:40px;left:10px;
-    font-size:13px;opacity:.9;text-shadow:0 0 4px #000;
-    z-index:10;
+    position:fixed;top:42px;left:10px;
+    font-size:13px;opacity:.95;text-shadow:0 0 4px #000;z-index:10;
   }
   #minimap{
     position:fixed;bottom:10px;left:10px;
-    width:140px;height:140px;
+    width:150px;height:150px;
     border-radius:50%;
-    border:2px solid rgba(255,255,255,.8);
-    background:rgba(0,0,0,.4);
+    border:2px solid rgba(255,255,255,.9);
+    background:rgba(0,0,0,.55);
     z-index:10;
   }
 </style>
@@ -40,7 +39,7 @@
   <span class="box">Distància: <span id="dist">0</span> m</span>
 </div>
 <div id="help">
-  WASD / Fletxes = moure · Espai = pujar · Shift = baixar
+  WASD / Fletxes = girar i avançar · Espai = pujar · Shift = baixar
 </div>
 
 <canvas id="bg"></canvas>
@@ -54,74 +53,82 @@ const mapCtx = mapCanvas.getContext("2d");
 const scoreEl = document.getElementById("score");
 const distEl  = document.getElementById("dist");
 
-// THREE bàsic
+// Renderer
 const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x87ceeb, 1); // cel cartoon
+renderer.setClearColor(0x87ceeb, 1);
 
+// Escena i càmera
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x87ceeb, 80, 260);
+scene.fog = new THREE.Fog(0x87ceeb, 90, 280);
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 500);
-camera.position.set(0, 20, 40);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 600);
+camera.position.set(0, 25, 50);
 
-// Llum cartoon
-const hemi = new THREE.HemisphereLight(0xffffff, 0x88c070, 0.9);
+// Llums
+const hemi = new THREE.HemisphereLight(0xffffff, 0x88c070, 0.95);
 scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 0.7);
-sun.position.set(60,80,40);
+sun.position.set(80,100,60);
 scene.add(sun);
 
-// Terra verd
+// Terra
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(400,400),
+  new THREE.PlaneGeometry(500,500),
   new THREE.MeshStandardMaterial({color:0x7ccf5b, roughness:0.9})
 );
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-// Carrers grisos
+// Carrers
 const roads = new THREE.Group();
 scene.add(roads);
 (function createRoads(){
-  const mat = new THREE.MeshStandardMaterial({color:0xdddddd, roughness:1});
-  for(let i=-160;i<=160;i+=40){
-    const r1 = new THREE.Mesh(new THREE.PlaneGeometry(400,8), mat);
+  const mat = new THREE.MeshStandardMaterial({color:0xe5e5e5, roughness:1});
+  for(let i=-200;i<=200;i+=50){
+    const r1 = new THREE.Mesh(new THREE.PlaneGeometry(500,10), mat);
     r1.rotation.x = -Math.PI/2;
     r1.position.z = i;
     roads.add(r1);
-    const r2 = new THREE.Mesh(new THREE.PlaneGeometry(8,400), mat);
+    const r2 = new THREE.Mesh(new THREE.PlaneGeometry(10,500), mat);
     r2.rotation.x = -Math.PI/2;
     r2.position.x = i;
     roads.add(r2);
   }
 })();
 
-// Edificis low‑poly de colors
+// Edificis cartoon millorats
 const buildings = new THREE.Group();
 scene.add(buildings);
 (function createBuildings(){
-  const palette = [0xffb347,0xff6961,0x77dd77,0x84b6f4,0xfdfd96,0xcdb4db];
+  const palette = [0xffb347,0xff6961,0x77dd77,0x84b6f4,0xfdfd96,0xcdb4db,0xffdac1];
   const rng = (a,b)=>a+Math.random()*(b-a);
-  for(let x=-160;x<=160;x+=40){
-    for(let z=-160;z<=160;z+=40){
-      if(Math.abs(x)<40 && Math.abs(z)<40) continue; // zona base
+  for(let gx=-200;gx<=200;gx+=50){
+    for(let gz=-200;gz<=200;gz+=50){
+      if(Math.abs(gx)<70 && Math.abs(gz)<70) continue; // zona base
       const count = 1+Math.floor(Math.random()*3);
       for(let i=0;i<count;i++){
-        const w = rng(8,14);
-        const d = rng(8,14);
-        const h = rng(10,40);
+        const w = rng(10,18);
+        const d = rng(10,18);
+        const h = rng(18,55);
         const geo = new THREE.BoxGeometry(w,h,d);
         const col = palette[Math.floor(Math.random()*palette.length)];
-        const mat = new THREE.MeshStandardMaterial({color:col, roughness:0.8});
-        const m = new THREE.Mesh(geo, mat);
-        m.position.set(
-          x + rng(-10,10),
+        const mat = new THREE.MeshStandardMaterial({color:col, roughness:0.85});
+        const b = new THREE.Mesh(geo, mat);
+        b.position.set(
+          gx + rng(-12,12),
           h/2,
-          z + rng(-10,10)
+          gz + rng(-12,12)
         );
-        buildings.add(m);
+        // “finestres” falses amb una franja
+        const stripeGeo = new THREE.BoxGeometry(w*0.95, h*0.12, d*1.01);
+        const stripeMat = new THREE.MeshStandardMaterial({color:0xffffff, emissive:0xffffff, emissiveIntensity:0.15});
+        const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+        stripe.position.y = h*0.6;
+        b.add(stripe);
+
+        buildings.add(b);
       }
     }
   }
@@ -131,55 +138,62 @@ scene.add(buildings);
 const base = new THREE.Group();
 scene.add(base);
 const basePad = new THREE.Mesh(
-  new THREE.CylinderGeometry(10,10,1,32),
+  new THREE.CylinderGeometry(12,12,1.2,32),
   new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.8})
 );
-basePad.position.y = 0.5;
+basePad.position.y = 0.6;
 base.add(basePad);
 const baseRing = new THREE.Mesh(
-  new THREE.TorusGeometry(8,0.4,12,48),
-  new THREE.MeshStandardMaterial({color:0x3b82f6, emissive:0x3b82f6, emissiveIntensity:0.7})
+  new THREE.TorusGeometry(9,0.5,14,48),
+  new THREE.MeshStandardMaterial({color:0x3b82f6, emissive:0x3b82f6, emissiveIntensity:0.8})
 );
 baseRing.rotation.x = Math.PI/2;
-baseRing.position.y = 1.2;
+baseRing.position.y = 1.4;
 base.add(baseRing);
 
-// Dron low‑poly cartoon
+// Dron amb yaw i front clar
 const drone = new THREE.Group();
 scene.add(drone);
 (function createDrone(){
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(3,1,3),
+    new THREE.BoxGeometry(3.2,1.1,3.2),
     new THREE.MeshStandardMaterial({color:0xffffff})
   );
-  body.position.y = 0.5;
+  body.position.y = 0.7;
   drone.add(body);
 
   const nose = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4,0.7,1.2),
+    new THREE.BoxGeometry(1.6,0.8,1.6),
     new THREE.MeshStandardMaterial({color:0x3b82f6})
   );
-  nose.position.set(0,0.6,1.8);
+  nose.position.set(0,0.9,2.1);
   drone.add(nose);
+
+  const eye = new THREE.Mesh(
+    new THREE.BoxGeometry(0.8,0.4,0.2),
+    new THREE.MeshStandardMaterial({color:0x000000, emissive:0x000000})
+  );
+  eye.position.set(0,0.9,2.9);
+  drone.add(eye);
 
   const armMat = new THREE.MeshStandardMaterial({color:0xcccccc});
   const rotorMat = new THREE.MeshStandardMaterial({color:0x111111});
   drone.rotors = [];
 
-  const armGeo = new THREE.BoxGeometry(3.6,0.2,0.4);
+  const armGeo = new THREE.BoxGeometry(4.2,0.25,0.45);
   const armFront = new THREE.Mesh(armGeo, armMat);
-  armFront.position.set(0,0.9,1.4);
+  armFront.position.set(0,1.1,1.7);
   drone.add(armFront);
   const armBack = new THREE.Mesh(armGeo, armMat);
-  armBack.position.set(0,0.9,-1.4);
+  armBack.position.set(0,1.1,-1.7);
   drone.add(armBack);
 
-  const rotorGeo = new THREE.CylinderGeometry(0.5,0.5,0.15,12);
+  const rotorGeo = new THREE.CylinderGeometry(0.55,0.55,0.18,14);
   const positions = [
-    [1.8,1.1,1.4],
-    [-1.8,1.1,1.4],
-    [1.8,1.1,-1.4],
-    [-1.8,1.1,-1.4],
+    [2.1,1.25,1.7],
+    [-2.1,1.25,1.7],
+    [2.1,1.25,-1.7],
+    [-2.1,1.25,-1.7],
   ];
   positions.forEach(p=>{
     const r = new THREE.Mesh(rotorGeo, rotorMat);
@@ -190,48 +204,48 @@ scene.add(drone);
   });
 
   const pkg = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4,1,1.4),
+    new THREE.BoxGeometry(1.6,1.1,1.6),
     new THREE.MeshStandardMaterial({color:0xf97316})
   );
-  pkg.position.y = -0.3;
+  pkg.position.y = -0.1;
   drone.add(pkg);
 
-  drone.position.set(0,6,0);
+  drone.position.set(0,7,0);
 })();
 
-// Fletxa 3D que apunta al destí
+// Fletxa 3D cap al destí
 const arrow = new THREE.Group();
 scene.add(arrow);
 (function createArrow(){
   const shaft = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1,0.1,3,8),
+    new THREE.CylinderGeometry(0.12,0.12,3.2,8),
     new THREE.MeshBasicMaterial({color:0xffffff})
   );
   shaft.rotation.z = Math.PI/2;
   arrow.add(shaft);
   const head = new THREE.Mesh(
-    new THREE.ConeGeometry(0.4,1,12),
+    new THREE.ConeGeometry(0.5,1.1,12),
     new THREE.MeshBasicMaterial({color:0x22c55e})
   );
-  head.position.x = 1.8;
+  head.position.x = 1.9;
   head.rotation.z = Math.PI/2;
   arrow.add(head);
 })();
 
 // Destí
 const target = new THREE.Mesh(
-  new THREE.CylinderGeometry(2.5,2.5,0.6,24),
-  new THREE.MeshStandardMaterial({color:0x22c55e, emissive:0x16a34a, emissiveIntensity:0.7})
+  new THREE.CylinderGeometry(2.8,2.8,0.7,24),
+  new THREE.MeshStandardMaterial({color:0x22c55e, emissive:0x16a34a, emissiveIntensity:0.8})
 );
-target.position.set(40,0.3,40);
+target.position.set(60,0.35,60);
 scene.add(target);
 
 const targetRing = new THREE.Mesh(
-  new THREE.TorusGeometry(3.2,0.25,10,32),
+  new THREE.TorusGeometry(3.5,0.28,12,40),
   new THREE.MeshBasicMaterial({color:0x22c55e})
 );
 targetRing.rotation.x = Math.PI/2;
-targetRing.position.copy(target.position).setY(0.6);
+targetRing.position.copy(target.position).setY(0.7);
 scene.add(targetRing);
 
 // Controls
@@ -239,67 +253,95 @@ const keys = {};
 window.addEventListener("keydown", e=>keys[e.code]=true);
 window.addEventListener("keyup",   e=>keys[e.code]=false);
 
+// Física del dron (yaw + velocitat alta)
+let yaw = 0; // angle al voltant de Y
 const vel = new THREE.Vector3();
+const accelForward = 55;   // ràpid
+const accelStrafe  = 35;
+const accelVert    = 45;
+const damping      = 0.90;
+const maxSpeed     = 45;
+
 let score = 0;
 
 function resetTarget(){
-  const r = 160;
+  const r = 200;
   const a = Math.random()*Math.PI*2;
-  const d = 40 + Math.random()*(r-40);
+  const d = 60 + Math.random()*(r-60);
   const x = Math.cos(a)*d;
   const z = Math.sin(a)*d;
-  target.position.set(x,0.3,z);
-  targetRing.position.copy(target.position).setY(0.6);
+  target.position.set(x,0.35,z);
+  targetRing.position.copy(target.position).setY(0.7);
 }
 
 function updateDrone(dt){
-  const dir = new THREE.Vector3(
-    (keys["KeyA"]||keys["ArrowLeft"]?-1:0) + (keys["KeyD"]||keys["ArrowRight"]?1:0),
-    (keys["Space"]?1:0) + (keys["ShiftLeft"]||keys["ShiftRight"]?-1:0),
-    (keys["KeyW"]||keys["ArrowUp"]?-1:0) + (keys["KeyS"]||keys["ArrowDown"]?1:0)
-  );
+  // gir (yaw)
+  const turnLeft  = keys["KeyA"] || keys["ArrowLeft"];
+  const turnRight = keys["KeyD"] || keys["ArrowRight"];
+  const turnSpeed = 2.8; // rad/s
+  if(turnLeft)  yaw += turnSpeed*dt;
+  if(turnRight) yaw -= turnSpeed*dt;
 
-  if(dir.lengthSq()>0){
-    dir.normalize().multiplyScalar(22*dt);
-    vel.add(dir);
-  }
+  // vector front i lateral segons yaw
+  const forward = new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)*-1);
+  const right   = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0,1,0)).negate();
 
-  vel.multiplyScalar(0.9);
-  vel.clampLength(0,25);
+  // avançar / retrocedir
+  const goForward  = keys["KeyW"] || keys["ArrowUp"];
+  const goBackward = keys["KeyS"] || keys["ArrowDown"];
+  if(goForward)  vel.addScaledVector(forward, accelForward*dt);
+  if(goBackward) vel.addScaledVector(forward, -accelForward*0.6*dt);
 
+  // strafe opcional (Q/E)
+  if(keys["KeyQ"]) vel.addScaledVector(right, -accelStrafe*dt);
+  if(keys["KeyE"]) vel.addScaledVector(right,  accelStrafe*dt);
+
+  // vertical
+  if(keys["Space"])      vel.y += accelVert*dt;
+  if(keys["ShiftLeft"] || keys["ShiftRight"]) vel.y -= accelVert*dt;
+
+  // damping i límit
+  vel.multiplyScalar(damping);
+  vel.clampLength(0, maxSpeed);
+
+  // aplicar moviment
   drone.position.addScaledVector(vel, dt);
-  drone.position.y = Math.max(3, Math.min(60, drone.position.y));
+  drone.position.y = Math.max(4, Math.min(70, drone.position.y));
 
-  // inclinació cartoon
-  drone.rotation.z += (-vel.x*0.05 - drone.rotation.z)*0.15;
-  drone.rotation.x += ( vel.z*0.05 - drone.rotation.x)*0.15;
+  // aplicar rotació al dron
+  drone.rotation.y = yaw;
+  drone.rotation.z += (-vel.x*0.03 - drone.rotation.z)*0.18;
+  drone.rotation.x += ( vel.z*0.03 - drone.rotation.x)*0.18;
 
   // hèlixs
   if(drone.rotors){
-    drone.rotors.forEach(r=>r.rotation.y += 25*dt);
+    drone.rotors.forEach(r=>r.rotation.y += 35*dt);
   }
 
-  // càmera segueix
-  const camOffset = new THREE.Vector3(0,18,32);
-  const desired = drone.position.clone().add(camOffset);
-  camera.position.lerp(desired, 0.08);
-  camera.lookAt(drone.position.x, drone.position.y, drone.position.z);
+  // càmera suau darrere del dron
+  const camOffsetLocal = new THREE.Vector3(0, 18, -32);
+  const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yaw);
+  const camOffsetWorld = camOffsetLocal.clone().applyQuaternion(q);
+  const desiredCamPos = drone.position.clone().add(camOffsetWorld);
+  camera.position.lerp(desiredCamPos, 0.12);
+  const lookAtPos = drone.position.clone().add(new THREE.Vector3(0,4,0));
+  camera.lookAt(lookAtPos);
 
   // fletxa cap al destí
-  arrow.position.copy(drone.position).setY(drone.position.y+5);
+  arrow.position.copy(drone.position).setY(drone.position.y+6);
   arrow.lookAt(target.position.x, target.position.y+2, target.position.z);
 
   // distància i entrega
   const dist = drone.position.distanceTo(target.position);
   distEl.textContent = dist.toFixed(1);
-  if(dist<4 && Math.abs(drone.position.y-4)<3){
+  if(dist<5 && Math.abs(drone.position.y-4)<4){
     score++;
     scoreEl.textContent = score;
     resetTarget();
   }
 }
 
-// mini‑mapa top‑down
+// mini‑mapa rotatiu (el dron sempre mira amunt)
 function drawMinimap(){
   const ctx = mapCtx;
   const w = mapCanvas.width;
@@ -310,49 +352,60 @@ function drawMinimap(){
   ctx.save();
   ctx.translate(r,r);
 
-  // fons
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  // fons circular
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
   ctx.beginPath();
   ctx.arc(0,0,r,0,Math.PI*2);
   ctx.fill();
 
-  const scale = 0.25; // 400 -> 100
+  // rotar mapa segons yaw (dron sempre amunt)
+  ctx.rotate(-yaw);
+
+  const scale = 0.25; // 500 -> 125
 
   // carrers
-  ctx.strokeStyle = "rgba(220,220,220,0.6)";
+  ctx.strokeStyle = "rgba(230,230,230,0.7)";
   ctx.lineWidth = 2;
-  for(let i=-160;i<=160;i+=40){
+  for(let i=-200;i<=200;i+=50){
     ctx.beginPath();
-    ctx.moveTo(-200*scale, i*scale);
-    ctx.lineTo( 200*scale, i*scale);
+    ctx.moveTo(-250*scale, i*scale);
+    ctx.lineTo( 250*scale, i*scale);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(i*scale, -200*scale);
-    ctx.lineTo(i*scale,  200*scale);
+    ctx.moveTo(i*scale, -250*scale);
+    ctx.lineTo(i*scale,  250*scale);
     ctx.stroke();
   }
 
   // base
   ctx.fillStyle = "#3b82f6";
   ctx.beginPath();
-  ctx.arc(0,0,6,0,Math.PI*2);
+  ctx.arc(0,0,7,0,Math.PI*2);
   ctx.fill();
 
   // destí
   ctx.fillStyle = "#22c55e";
   ctx.beginPath();
-  ctx.arc(target.position.x*scale, target.position.z*scale, 5, 0, Math.PI*2);
+  ctx.arc(target.position.x*scale, target.position.z*scale, 6, 0, Math.PI*2);
   ctx.fill();
 
-  // dron
+  // dron (triangle apuntant amunt)
+  ctx.save();
+  ctx.translate(drone.position.x*scale, drone.position.z*scale);
+  ctx.rotate(yaw); // perquè després hem girat el mapa
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.arc(drone.position.x*scale, drone.position.z*scale, 4, 0, Math.PI*2);
+  ctx.moveTo(0,-7);
+  ctx.lineTo(5,5);
+  ctx.lineTo(-5,5);
+  ctx.closePath();
   ctx.fill();
+  ctx.restore();
 
   ctx.restore();
 }
 
+// bucle
 let last = performance.now();
 function loop(now){
   requestAnimationFrame(loop);
@@ -360,8 +413,8 @@ function loop(now){
   last = now;
 
   updateDrone(dt);
-  targetRing.rotation.z += 0.8*dt;
-  baseRing.rotation.z -= 0.4*dt;
+  targetRing.rotation.z += 0.9*dt;
+  baseRing.rotation.z -= 0.5*dt;
 
   renderer.render(scene, camera);
   drawMinimap();
@@ -377,5 +430,6 @@ window.addEventListener("resize", ()=>{
 
 </body>
 </html>
+
 
 
