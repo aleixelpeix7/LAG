@@ -6,211 +6,159 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-body{background:#05070b;overflow:hidden;color:#fff}
-#ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:16px}
-#title{font-size:24px;font-weight:700;text-shadow:0 0 8px #000}
-#info{font-size:13px;opacity:.8;margin-top:4px}
-#hud{display:flex;justify-content:space-between;font-size:14px;text-shadow:0 0 6px #000}
-#hud span{background:rgba(0,0,0,.4);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.1)}
-canvas{position:fixed;inset:0;width:100%;height:100%}
+body { margin:0; overflow:hidden; background:#05070b; color:white; font-family:Arial }
+#hud {
+  position:fixed; top:10px; left:10px; right:10px;
+  display:flex; justify-content:space-between;
+  font-size:18px; text-shadow:0 0 6px black;
+}
+canvas { width:100%; height:100%; display:block; }
 </style>
-
 </head>
+
 <body>
 
-<div id="ui">
-  <div>
-    <div id="title">Drone Delivery 3D</div>
-    <div id="info">WASD/Fletxes = moure · Espai = pujar · Shift = baixar</div>
-  </div>
-  <div id="hud">
-    <span>Paquets entregats: <span id="score">0</span></span>
-    <span>Distància: <span id="dist">0</span> m</span>
-  </div>
+<div id="hud">
+  <div>Paquets: <span id="score">0</span></div>
+  <div>Distància: <span id="dist">0</span> m</div>
 </div>
 
 <canvas id="bg"></canvas>
 
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 
 <script>
-const canvas=document.getElementById("bg");
-const scoreEl=document.getElementById("score");
-const distEl=document.getElementById("dist");
+const canvas = document.getElementById("bg");
+const scoreEl = document.getElementById("score");
+const distEl = document.getElementById("dist");
 
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(devicePixelRatio);
-renderer.setSize(innerWidth,innerHeight);
-renderer.setClearColor(0x05070b,1);
 
-const scene=new THREE.Scene();
-scene.fog=new THREE.Fog(0x05070b,40,200);
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x05070b, 40, 200);
 
-const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,500);
-camera.position.set(0,15,30);
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
+camera.position.set(0, 12, 26);
 
-const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.enablePan=false;
-controls.enableZoom=false;
-controls.target.set(0,5,0);
-controls.update();
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enablePan = false;
+controls.enableZoom = false;
 
-scene.add(new THREE.HemisphereLight(0x88bbff,0x223344,0.6));
-const dir=new THREE.DirectionalLight(0xffffff,0.9);
-dir.position.set(30,50,20);
-scene.add(dir);
+scene.add(new THREE.HemisphereLight(0x88bbff, 0x223344, 0.6));
 
-const ground=new THREE.Mesh(
-  new THREE.PlaneGeometry(400,400,40,40),
-  new THREE.MeshStandardMaterial({color:0x11141c,roughness:.9})
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(400,400),
+  new THREE.MeshStandardMaterial({ color:0x11141c })
 );
-ground.rotation.x=-Math.PI/2;
+ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-const buildings=new THREE.Group();
-scene.add(buildings);
-
-function createBuildings(){
-  const rng=(a,b)=>a+Math.random()*(b-a);
-  for(let i=0;i<120;i++){
-    const w=rng(4,10),d=rng(4,10),h=rng(6,40);
-    const m=new THREE.Mesh(
-      new THREE.BoxGeometry(w,h,d),
-      new THREE.MeshStandardMaterial({color:0x1f2937})
-    );
-    const x=rng(-180,180),z=rng(-180,180);
-    if(Math.abs(x)<25 && Math.abs(z)<25) continue;
-    m.position.set(x,h/2,z);
-    buildings.add(m);
-  }
-}
-createBuildings();
-
-const drone=new THREE.Group();
+// Drone
+const drone = new THREE.Group();
 scene.add(drone);
 
-function createDrone(){
-  const body=new THREE.Mesh(
-    new THREE.BoxGeometry(2.5,0.8,3),
-    new THREE.MeshStandardMaterial({color:0x4ade80})
-  );
-  drone.add(body);
-
-  const arm=new THREE.Mesh(
-    new THREE.BoxGeometry(4.5,0.2,0.2),
-    new THREE.MeshStandardMaterial({color:0x9ca3af})
-  );
-  arm.position.y=0.4;
-  drone.add(arm);
-
-  drone.rotors=[];
-  const rotorGeo=new THREE.CylinderGeometry(0.4,0.4,0.15,16);
-  const rotorMat=new THREE.MeshStandardMaterial({color:0xf9fafb});
-  [[2.1,0.6],[-2.1,0.6]].forEach(([x,z])=>{
-    const r=new THREE.Mesh(rotorGeo,rotorMat);
-    r.rotation.x=Math.PI/2;
-    r.position.set(x,0.6,z);
-    drone.add(r);
-    drone.rotors.push(r);
-  });
-
-  const pkg=new THREE.Mesh(
-    new THREE.BoxGeometry(1.2,0.8,1.2),
-    new THREE.MeshStandardMaterial({color:0xf97316})
-  );
-  pkg.position.y=-0.9;
-  drone.add(pkg);
-
-  drone.position.set(0,8,0);
-}
-createDrone();
-
-const target=new THREE.Mesh(
-  new THREE.CylinderGeometry(2.5,2.5,0.4,24),
-  new THREE.MeshStandardMaterial({color:0x22c55e,emissive:0x16a34a,emissiveIntensity:.6})
+const body = new THREE.Mesh(
+  new THREE.BoxGeometry(2.5,0.8,3),
+  new THREE.MeshStandardMaterial({ color:0x4ade80 })
 );
-target.position.set(30,0.2,30);
+drone.add(body);
+
+const pkg = new THREE.Mesh(
+  new THREE.BoxGeometry(1.2,0.8,1.2),
+  new THREE.MeshStandardMaterial({ color:0xf97316 })
+);
+pkg.position.y = -1;
+drone.add(pkg);
+
+drone.position.set(0,5,0);
+
+// Target
+const target = new THREE.Mesh(
+  new THREE.CylinderGeometry(2.5,2.5,0.4,24),
+  new THREE.MeshStandardMaterial({ color:0x22c55e, emissive:0x16a34a })
+);
+target.position.set(20,0.2,20);
 scene.add(target);
 
-const ring=new THREE.Mesh(
+const ring = new THREE.Mesh(
   new THREE.TorusGeometry(3.2,0.12,8,32),
-  new THREE.MeshBasicMaterial({color:0x4ade80})
+  new THREE.MeshBasicMaterial({ color:0x4ade80 })
 );
-ring.rotation.x=Math.PI/2;
+ring.rotation.x = Math.PI/2;
 ring.position.copy(target.position);
 scene.add(ring);
 
-const keys={};
-onkeydown=e=>keys[e.code]=true;
-onkeyup=e=>keys[e.code]=false;
+// Controls
+const keys = {};
+onkeydown = e => keys[e.code] = true;
+onkeyup   = e => keys[e.code] = false;
 
-const vel=new THREE.Vector3();
-let score=0;
+const vel = new THREE.Vector3();
+let score = 0;
 
-function resetTarget(){
-  const r=150,a=Math.random()*Math.PI*2,d=40+Math.random()*(r-40);
-  const x=Math.cos(a)*d,z=Math.sin(a)*d;
-  target.position.set(x,0.2,z);
+function resetTarget() {
+  const a = Math.random()*Math.PI*2;
+  const d = 40 + Math.random()*120;
+  target.position.set(Math.cos(a)*d, 0.2, Math.sin(a)*d);
   ring.position.copy(target.position);
 }
 
-function updateDrone(dt){
-  const dir=new THREE.Vector3(
-    (keys["KeyA"]||keys["ArrowLeft"]?-1:0)+(keys["KeyD"]||keys["ArrowRight"]?1:0),
-    (keys["Space"]?1:0)+(keys["ShiftLeft"]||keys["ShiftRight"]?-1:0),
-    (keys["KeyW"]||keys["ArrowUp"]?-1:0)+(keys["KeyS"]||keys["ArrowDown"]?1:0)
+function updateDrone(dt) {
+  const dir = new THREE.Vector3(
+    (keys["KeyA"]?-1:0) + (keys["KeyD"]?1:0),
+    (keys["Space"]?1:0) + (keys["ShiftLeft"]?-1:0),
+    (keys["KeyW"]?-1:0) + (keys["KeyS"]?1:0)
   );
 
-  if(dir.lengthSq()>0){
+  if (dir.lengthSq() > 0) {
     dir.normalize().multiplyScalar(18*dt);
     vel.add(dir);
   }
 
   vel.multiplyScalar(0.9);
   vel.clampLength(0,20);
-  drone.position.addScaledVector(vel,dt);
 
-  drone.position.y=Math.max(2,Math.min(60,drone.position.y));
+  drone.position.addScaledVector(vel, dt);
 
-  drone.rotation.z+=(-vel.x*0.04-drone.rotation.z)*0.1;
-  drone.rotation.x+=(vel.z*0.04-drone.rotation.x)*0.1;
+  drone.position.y = Math.max(2, Math.min(60, drone.position.y));
 
-  drone.rotors.forEach(r=>r.rotation.y+=20*dt);
+  const dist = drone.position.distanceTo(target.position);
+  distEl.textContent = dist.toFixed(1);
 
-  const camOff=new THREE.Vector3(0,12,26);
-  camera.position.lerp(drone.position.clone().add(camOff),0.08);
-  controls.target.lerp(drone.position.clone().add(new THREE.Vector3(0,3,0)),0.15);
-  controls.update();
-
-  const dist=drone.position.distanceTo(target.position);
-  distEl.textContent=dist.toFixed(1);
-
-  if(dist<4 && Math.abs(drone.position.y-4)<3){
+  if (dist < 4 && Math.abs(drone.position.y - 4) < 3) {
     score++;
-    scoreEl.textContent=score;
+    scoreEl.textContent = score;
     resetTarget();
   }
+
+  camera.position.lerp(drone.position.clone().add(new THREE.Vector3(0,12,26)), 0.08);
+  controls.target.lerp(drone.position.clone(), 0.1);
+  controls.update();
 }
 
-let last=performance.now();
-function loop(now){
+let last = performance.now();
+function loop(now) {
   requestAnimationFrame(loop);
-  const dt=Math.min((now-last)/1000,0.05);
-  last=now;
+  const dt = Math.min((now-last)/1000, 0.05);
+  last = now;
+
   updateDrone(dt);
-  ring.rotation.z+=0.8*dt;
-  renderer.render(scene,camera);
+  ring.rotation.z += 0.8*dt;
+
+  renderer.render(scene, camera);
 }
 loop(performance.now());
 
-onresize=()=>{
-  camera.aspect=innerWidth/innerHeight;
+onresize = () => {
+  camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
+  renderer.setSize(innerWidth, innerHeight);
 };
 </script>
 
 </body>
 </html>
+
