@@ -4,18 +4,17 @@
 <meta charset="UTF-8" />
 <title>Drone Delivery 3D</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
 <style>
-body { margin:0; overflow:hidden; background:#05070b; color:white; font-family:Arial }
-#hud {
-  position:fixed; top:10px; left:10px; right:10px;
-  display:flex; justify-content:space-between;
-  font-size:18px; text-shadow:0 0 6px black;
-}
-canvas { width:100%; height:100%; display:block; }
+  body{margin:0;overflow:hidden;background:#05070b;color:#fff;font-family:system-ui}
+  #hud{
+    position:fixed;top:10px;left:10px;right:10px;
+    display:flex;justify-content:space-between;
+    font-size:16px;text-shadow:0 0 6px #000;
+    z-index:10;
+  }
+  canvas{display:block;width:100%;height:100%}
 </style>
 </head>
-
 <body>
 
 <div id="hud">
@@ -26,32 +25,36 @@ canvas { width:100%; height:100%; display:block; }
 <canvas id="bg"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-
 <script>
 const canvas = document.getElementById("bg");
 const scoreEl = document.getElementById("score");
-const distEl = document.getElementById("dist");
+const distEl  = document.getElementById("dist");
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
-renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(devicePixelRatio);
+// Renderer
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x05070b, 1);
 
+// Escena i càmera
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x05070b, 40, 200);
 
-const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 500);
-camera.position.set(0, 12, 26);
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  500
+);
+camera.position.set(0, 15, 30);
 
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enablePan = false;
-controls.enableZoom = false;
+// Llum
+scene.add(new THREE.HemisphereLight(0x88bbff, 0x223344, 0.7));
 
-scene.add(new THREE.HemisphereLight(0x88bbff, 0x223344, 0.6));
-
+// Terra
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(400,400),
-  new THREE.MeshStandardMaterial({ color:0x11141c })
+  new THREE.PlaneGeometry(200,200),
+  new THREE.MeshStandardMaterial({color:0x11141c, roughness:0.9})
 );
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
@@ -62,13 +65,13 @@ scene.add(drone);
 
 const body = new THREE.Mesh(
   new THREE.BoxGeometry(2.5,0.8,3),
-  new THREE.MeshStandardMaterial({ color:0x4ade80 })
+  new THREE.MeshStandardMaterial({color:0x4ade80})
 );
 drone.add(body);
 
 const pkg = new THREE.Mesh(
   new THREE.BoxGeometry(1.2,0.8,1.2),
-  new THREE.MeshStandardMaterial({ color:0xf97316 })
+  new THREE.MeshStandardMaterial({color:0xf97316})
 );
 pkg.position.y = -1;
 drone.add(pkg);
@@ -78,14 +81,15 @@ drone.position.set(0,5,0);
 // Target
 const target = new THREE.Mesh(
   new THREE.CylinderGeometry(2.5,2.5,0.4,24),
-  new THREE.MeshStandardMaterial({ color:0x22c55e, emissive:0x16a34a })
+  new THREE.MeshStandardMaterial({color:0x22c55e, emissive:0x16a34a})
 );
 target.position.set(20,0.2,20);
 scene.add(target);
 
+// Anell
 const ring = new THREE.Mesh(
   new THREE.TorusGeometry(3.2,0.12,8,32),
-  new THREE.MeshBasicMaterial({ color:0x4ade80 })
+  new THREE.MeshBasicMaterial({color:0x4ade80})
 );
 ring.rotation.x = Math.PI/2;
 ring.position.copy(target.position);
@@ -93,27 +97,27 @@ scene.add(ring);
 
 // Controls
 const keys = {};
-onkeydown = e => keys[e.code] = true;
-onkeyup   = e => keys[e.code] = false;
+window.addEventListener("keydown", e => keys[e.code] = true);
+window.addEventListener("keyup",   e => keys[e.code] = false);
 
 const vel = new THREE.Vector3();
 let score = 0;
 
-function resetTarget() {
+function resetTarget(){
   const a = Math.random()*Math.PI*2;
   const d = 40 + Math.random()*120;
   target.position.set(Math.cos(a)*d, 0.2, Math.sin(a)*d);
   ring.position.copy(target.position);
 }
 
-function updateDrone(dt) {
+function updateDrone(dt){
   const dir = new THREE.Vector3(
-    (keys["KeyA"]?-1:0) + (keys["KeyD"]?1:0),
-    (keys["Space"]?1:0) + (keys["ShiftLeft"]?-1:0),
-    (keys["KeyW"]?-1:0) + (keys["KeyS"]?1:0)
+    (keys["KeyA"]||keys["ArrowLeft"]?-1:0) + (keys["KeyD"]||keys["ArrowRight"]?1:0),
+    (keys["Space"]?1:0) + (keys["ShiftLeft"]||keys["ShiftRight"]?-1:0),
+    (keys["KeyW"]||keys["ArrowUp"]?-1:0) + (keys["KeyS"]||keys["ArrowDown"]?1:0)
   );
 
-  if (dir.lengthSq() > 0) {
+  if(dir.lengthSq()>0){
     dir.normalize().multiplyScalar(18*dt);
     vel.add(dir);
   }
@@ -122,25 +126,26 @@ function updateDrone(dt) {
   vel.clampLength(0,20);
 
   drone.position.addScaledVector(vel, dt);
-
   drone.position.y = Math.max(2, Math.min(60, drone.position.y));
+
+  // Càmera enganxada darrere del drone
+  const camOffset = new THREE.Vector3(0, 12, 26);
+  const desired = drone.position.clone().add(camOffset);
+  camera.position.lerp(desired, 0.1);
+  camera.lookAt(drone.position.x, drone.position.y, drone.position.z);
 
   const dist = drone.position.distanceTo(target.position);
   distEl.textContent = dist.toFixed(1);
 
-  if (dist < 4 && Math.abs(drone.position.y - 4) < 3) {
+  if(dist < 4 && Math.abs(drone.position.y - 4) < 3){
     score++;
     scoreEl.textContent = score;
     resetTarget();
   }
-
-  camera.position.lerp(drone.position.clone().add(new THREE.Vector3(0,12,26)), 0.08);
-  controls.target.lerp(drone.position.clone(), 0.1);
-  controls.update();
 }
 
 let last = performance.now();
-function loop(now) {
+function loop(now){
   requestAnimationFrame(loop);
   const dt = Math.min((now-last)/1000, 0.05);
   last = now;
@@ -152,11 +157,11 @@ function loop(now) {
 }
 loop(performance.now());
 
-onresize = () => {
-  camera.aspect = innerWidth/innerHeight;
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-};
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 </script>
 
 </body>
